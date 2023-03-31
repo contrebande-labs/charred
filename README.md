@@ -4,4 +4,4 @@ Tired of text-to-image models that can't spell or deal with fonts and typography
 
 The short term realistic objective is to first port the [Stable UnCLIP 2.1](https://arxiv.org/abs/2204.06125) [Karlo](https://github.com/kakaobrain/karlo)-[derived](https://github.com/Stability-AI/stablediffusion/blob/main/doc/UNCLIP.MD) [code base](https://github.com/Stability-AI/stablediffusion) to [JAX](https://github.com/google/jax)/[FLAX](https://github.com/google/flax). Secondly we will integrate the [Hugging-Face JAX/FLAX ControlNet implementation](https://github.com/huggingface/community-events/tree/main/jax-controlnet-sprint) into the mix for better typographic control over the generated images.
 
-In the long term, we shall explore the applicable improvements brought on by [Imagen](https://arxiv.org/abs/2205.11487) and CANINE-c & the likes to the aforementioned technologies.
+In the long term, we shall explore the applicable improvements brought on by [Imagen](https://arxiv.org/abs/2205.11487), CANINE-c & the likes to the aforementioned technologies.
