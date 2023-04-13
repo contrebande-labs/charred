@@ -1,3 +1,7 @@
+<div style="text-align:center"><img
+src="https://repository-images.githubusercontent.com/621984782/64f865ef-5858-4ce0-bdcc-c51f53552545"
+     alt="Markdown Monster icon" /></div>
+
 # CHARacter-awaRE Diffusion: Multilingual Character-Aware Encoders for Font-Aware Diffusers That Can Actually Spell
 
 Tired of text-to-image models that can't spell or deal with fonts and typography correctly ? [The secret seems to be in the use of multilingual, tokenization-free, character-aware transformer encoders](https://arxiv.org/abs/2212.10562) such as [ByT5](https://arxiv.org/abs/2105.13626) and [CANINE-c](https://arxiv.org/abs/2103.06874). To this, and as per [Peter von Platen](https://github.com/patrickvonplaten)'s suggestion, we also introduce a typographic [ControlNet](https://arxiv.org/abs/2302.05543) trained on an automatically-generated dataset of rasterized text layout images paired with multilingual specifications of the font, weight, kerning, leading, slant and any other typographic attributes supported by the [CSS3](https://www.w3.org/Style/CSS/) [Text](https://www.w3.org/TR/css-text-3/), [Fonts](https://www.w3.org/TR/css-fonts-3) & [Writing Modes](https://www.w3.org/TR/css-writing-modes-3/) modules as implemented by the latest version of [Chromium](https://www.chromium.org/Home/).
