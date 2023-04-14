@@ -20,7 +20,7 @@ from huggingface_hub import create_repo, upload_folder
 from torchvision import transforms
 from tqdm.auto import tqdm
 
-from transformers import CLIPImageProcessor, ByT5Tokenizer, FlaxT5EncoderModel, set_seed
+from transformers import ByT5Tokenizer, FlaxT5EncoderModel, set_seed
 
 from diffusers import (
     FlaxAutoencoderKL,
@@ -31,6 +31,8 @@ from diffusers import (
 )
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from diffusers.utils import check_min_version
+
+from image_processing_byt5_flax import ByT5ImageProcessor
 
 
 # Will error if the minimal version of diffusers is not installed. Remove at your own risks.
@@ -540,17 +542,13 @@ def main():
         scheduler = FlaxPNDMScheduler(
             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
         )
-        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-            "CompVis/stable-diffusion-safety-checker", from_pt=True
-        )
         pipeline = FlaxStableDiffusionPipeline(
             text_encoder=text_encoder,
             vae=vae,
             unet=unet,
             tokenizer=tokenizer,
             scheduler=scheduler,
-            safety_checker=safety_checker,
-            feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
+            feature_extractor=ByT5ImageProcessor(),
         )
 
         pipeline.save_pretrained(
@@ -559,7 +557,6 @@ def main():
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
                 "unet": get_params_to_save(state.params),
-                "safety_checker": safety_checker.params,
             },
         )
 
