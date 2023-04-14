@@ -19,7 +19,7 @@ from flax.training.common_utils import shard
 from huggingface_hub import create_repo, upload_folder
 from torchvision import transforms
 from tqdm.auto import tqdm
-from transformers import CLIPImageProcessor, CLIPTokenizer, FlaxCLIPTextModel, set_seed
+from transformers import CLIPImageProcessor, ByT5Tokenizer, FlaxT5EncoderModel, set_seed
 
 from diffusers import (
     FlaxAutoencoderKL,
@@ -374,10 +374,10 @@ def main():
         weight_dtype = jnp.bfloat16
 
     # Load models and create wrapper for stable diffusion
-    tokenizer = CLIPTokenizer.from_pretrained(
+    tokenizer = ByT5Tokenizer.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
     )
-    text_encoder = FlaxCLIPTextModel.from_pretrained(
+    text_encoder = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
