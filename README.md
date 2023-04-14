@@ -7,7 +7,7 @@ src="https://repository-images.githubusercontent.com/621984782/64f865ef-5858-4ce
 Tired of text-to-image models that can't spell or deal with fonts and typography correctly ? [The secret seems to be in the use of multilingual, tokenization-free, character-aware transformer encoders](https://arxiv.org/abs/2212.10562) such as [ByT5](https://arxiv.org/abs/2105.13626) and [CANINE-c](https://arxiv.org/abs/2103.06874).
 
 
-## Replace CLIP with ByT5
+## Replace CLIP with ByT5 in HF's `text-to-image` Pipeline
 
 AS part of the [Hugging Face JAX Diffuser Sprint](https://github.com/huggingface/community-events/tree/main/jax-controlnet-sprint), we will replace [CLIP](https://arxiv.org/abs/2103.00020)'s tokenizer and encoder with [ByT5](https://arxiv.org/abs/2105.13626)'s in the [HF's JAX/FLAX text-to-image pre-training code](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image_flax.py) and run it on the sponsored TPU ressources provided by Google for the event.
 
