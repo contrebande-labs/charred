@@ -20,8 +20,8 @@ More specifically, here are the main tasks we will try to accomplish during the 
   - Implement checkpoint milestone snapshot uploading to cloud storage: we need to be able to download the model for local inference benchmarking to make sure we are on the right track. There seems to be [rudimentary checkpoint support in the original code](https://huggingface.co/docs/diffusers/training/text2image#save-and-load-checkpoints).
   - No time for politics. NSFW filtering will be turned off. So we get `FlaxStableDiffusionSafetyChecker` out of the way.
 - Replace CLIP with ByT5 in [original code](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image_flax.py):
-  - Replacing `CLIPTokenizer` with `ByT5Tokenizer`. Since this will run on the CPUs, there is no need for JAX/FLAX unless there is hope for huge performance improvements. This should be trivial.
-  - Replacing `FlaxCLIPTextModel` with `FlaxT5EncoderModel`. This *might* be almost as easy as replacing the tokenizer.
+  - ~~Replacing `CLIPTokenizer` with `ByT5Tokenizer`. Since this will run on the CPUs, there is no need for JAX/FLAX unless there is hope for huge performance improvements. This should be trivial.~~ Merged. Needs testing.
+  - ~~Replacing `FlaxCLIPTextModel` with `FlaxT5EncoderModel`. This *might* be almost as easy as replacing the tokenizer.~~ Merged. Needs testing.
   - Rewrite `CLIPImageProcessor` for ByT5. This is still under investigation. It's unclear how hard it will be.
   - Adapt `FlaxAutoencoderKL`, `FlaxUNet2DConditionModel` and `FlaxStableDiffusionSafetyChecker` for ByT5. Same as for `CLIPImageProcessor`.
 
