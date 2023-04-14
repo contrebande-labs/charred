@@ -29,7 +29,7 @@ from diffusers import (
     FlaxStableDiffusionPipeline,
     FlaxUNet2DConditionModel,
 )
-from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
+
 from diffusers.utils import check_min_version
 
 from image_processing_byt5_flax import ByT5ImageProcessor
