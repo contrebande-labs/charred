@@ -1,11 +1,10 @@
-<div style="text-align:center"><img
+<h1 style="text-align:center"><img
 src="https://repository-images.githubusercontent.com/621984782/64f865ef-5858-4ce0-bdcc-c51f53552545"
-     alt="Markdown Monster icon" /></div>
+     alt="Markdown Monster icon" /></h1>
 
 # CHARacter-awaRE Diffusion: Multilingual Character-Aware Encoders for Font-Aware Diffusers That Can Actually Spell
 
 Tired of text-to-image models that can't spell or deal with fonts and typography correctly ? [The secret seems to be in the use of multilingual, tokenization-free, character-aware transformer encoders](https://arxiv.org/abs/2212.10562) such as [ByT5](https://arxiv.org/abs/2105.13626) and [CANINE-c](https://arxiv.org/abs/2103.06874).
-
 
 ## Replace CLIP with ByT5 in HF's `text-to-image` Pipeline
 
@@ -25,8 +24,6 @@ More specifically, here are the main tasks we will try to accomplish during the 
   - Replacing `FlaxCLIPTextModel` with `FlaxT5EncoderModel`. This *might* be almost as easy as replacing the tokenizer.
   - Rewrite `CLIPImageProcessor` for ByT5. This is still under investigation. It's unclear how hard it will be.
   - Adapt `FlaxAutoencoderKL`, `FlaxUNet2DConditionModel` and `FlaxStableDiffusionSafetyChecker` for ByT5. Same as for `CLIPImageProcessor`.
-
-
 
 ## Introducing a Calligraphic & Typographic ControlNet
 
