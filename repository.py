@@ -14,7 +14,7 @@ from diffusers import (
     FlaxStableDiffusionPipeline,
 )
 
-from image_processing import ByT5ImageProcessor
+from preprocessing import ByT5ImageProcessor
 
 def create_repository(args):
 

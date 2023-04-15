@@ -8,7 +8,7 @@ from diffusers.utils import check_min_version
 
 # internal code
 from args import parse_args
-from model import setup_model
+from architecture import setup_model
 from optimizer import setup_optimizer
 from repository import create_repository, save_to_repository
 from training_loop import training_loop
