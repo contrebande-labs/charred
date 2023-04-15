@@ -14,21 +14,24 @@
 # limitations under the License.
 """Image processor class for ByT5."""
 
-
 from transformers import CLIPImageProcessor
 
-from transformers.utils import is_vision_available, logging
-
-
-logger = logging.get_logger(__name__)
-
-
-if is_vision_available():
-    import PIL
-
+# TODO: change that for JAX equivalents
+from torchvision import transforms
 
 # TODO: hard-code values from: https://huggingface.co/openai/clip-vit-base-patch32/blob/main/preprocessor_config.json
 # TODO: JAXify the code in CLIPImageProcessor (nice to have)
 class ByT5ImageProcessor(CLIPImageProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+def setup_train_transforms(args):
+  return transforms.Compose(
+        [
+            transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
+            transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+        ]
+    )
