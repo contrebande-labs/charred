@@ -19,18 +19,16 @@ def setup_model(args):
       weight_dtype = jnp.bfloat16
 
   # Load models and create wrapper for stable diffusion
-  tokenizer = ByT5Tokenizer.from_pretrained(
-      args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
-  )
+  tokenizer = ByT5Tokenizer()
+ 
   text_encoder = FlaxT5EncoderModel.from_pretrained(
-
-      args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype
+      args.pretrained_text_encoder_model_name_or_path, revision=args.pretrained_text_encoder_model_revision, dtype=weight_dtype
   )
   vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-      args.pretrained_model_name_or_path, revision=args.revision, subfolder="vae", dtype=weight_dtype
+      args.pretrained_diffusion_model_name_or_path, revision=args.pretrained_diffusion_model_revision, subfolder="vae", dtype=weight_dtype
   )
   unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-      args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype
+      args.pretrained_diffusion_model_name_or_path, revision=args.pretrained_diffusion_model_revision, subfolder="unet", dtype=weight_dtype
   )
 
   return tokenizer, text_encoder, vae, vae_params, unet, unet_params
