@@ -23,7 +23,7 @@ More specifically, here are the main tasks we will try to accomplish during the 
   - ~~Replacing `CLIPTokenizer` with `ByT5Tokenizer`. Since this will run on the CPUs, there is no need for JAX/FLAX unless there is hope for huge performance improvements. This should be trivial.~~ Merged. Needs testing.
   - ~~Replacing `FlaxCLIPTextModel` with `FlaxT5EncoderModel`. This *might* be almost as easy as replacing the tokenizer.~~ Merged. Needs testing.
   - ~~Rewrite `CLIPImageProcessor` for ByT5. This is still under investigation. It's unclear how hard it will be.~~ Mostly done. Needs testing.
-  - Adapt `FlaxAutoencoderKL`, `FlaxUNet2DConditionModel` and `FlaxStableDiffusionSafetyChecker` for ByT5.
+  - Adapt `FlaxAutoencoderKL` and `FlaxUNet2DConditionModel` for ByT5 if necessary.
   - ~~Break down the main pretraining loop into many functions in different source files for readability and easier maintenance.~~
 
 ## Introducing a Calligraphic & Typographic ControlNet
