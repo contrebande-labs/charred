@@ -1,4 +1,3 @@
-import os
 import argparse
 
 def parse_args():
@@ -34,7 +33,8 @@ def parse_args():
     parser.add_argument(
         "--dataset_name",
         type=str,
-        default=None,
+        default="contrebande/charred-dataset",
+        required=True,
         help=(
             "The name of the Dataset (from the HuggingFace hub) to train on (could be your own, possibly private,"
             " dataset). It can also be a path pointing to a local copy of a dataset in your filesystem,"

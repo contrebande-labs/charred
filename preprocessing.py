@@ -4,7 +4,6 @@ import random
 import numpy as np
 from torchvision import transforms
 
-
 from transformers import CLIPImageProcessor
 
 # Preprocessing the datasets.
