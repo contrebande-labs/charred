@@ -1,10 +1,10 @@
 import jax.numpy as jnp
 import jax
 
-def loss_fn(params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
-  return lambda : _loss_fn(params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet)
+def loss_fn(vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
+  return lambda state_params: _loss_fn(state_params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet, unet_params)
 
-def _loss_fn(params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
+def _loss_fn(state_params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
     # Convert images to latent space
     vae_outputs = vae.apply(
         {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
@@ -39,7 +39,7 @@ def _loss_fn(params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_
 
     # Predict the noise residual and compute loss
     model_pred = unet.apply(
-        {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+        {"params": state_params}, noisy_latents, timesteps, encoder_hidden_states, train=True
     ).sample
 
     # Get the target for loss depending on the prediction type

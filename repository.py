@@ -12,8 +12,7 @@ from diffusers import (
     FlaxPNDMScheduler,
     FlaxStableDiffusionPipeline,
 )
-
-from preprocessing import ByT5ImageProcessor
+from transformers import CLIPImageProcessor
 
 def create_repository(args):
 
@@ -42,7 +41,7 @@ def save_to_repository(args, tokenizer, text_encoder, text_encoder_params, vae, 
         unet=unet,
         tokenizer=tokenizer,
         scheduler=scheduler,
-        feature_extractor=ByT5ImageProcessor(),
+        feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
     )
 
     pipeline.save_pretrained(
