@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax
 
 def loss_fn(vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
-  return lambda state_params: _loss_fn(state_params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet, unet_params)
+  return lambda state_params: _loss_fn(state_params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet)
 
 def _loss_fn(state_params, vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet):
     # Convert images to latent space
