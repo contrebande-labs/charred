@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument(
         "--dataset_name",
         type=str,
-        default="contrebande/charred-dataset",
+        default="contrebande/charred",
         required=True,
         help=(
             "The name of the Dataset (from the HuggingFace hub) to train on (could be your own, possibly private,"
@@ -81,7 +81,7 @@ def parse_args():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="sd-model-finetuned",
+        default="charred",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
@@ -180,7 +180,7 @@ def parse_args():
     parser.add_argument(
         "--hub_model_id",
         type=str,
-        default=None,
+        default="contrebande/charred",
         help="The name of the repository to keep in sync with the local `output_dir`.",
     )
     parser.add_argument(

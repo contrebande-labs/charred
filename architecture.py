@@ -7,28 +7,29 @@ from diffusers import (
     FlaxUNet2DConditionModel,
 )
 
-def setup_model(args):
-  if args.seed is not None:
-      set_seed(args.seed)
+def setup_model(seed, mixed_precision, pretrained_text_encoder_model_name_or_path, pretrained_text_encoder_model_revision, pretrained_diffusion_model_name_or_path, pretrained_diffusion_model_revision):
 
-  weight_dtype = jnp.float32
+  if seed is not None:
+      set_seed(seed)
 
-  if args.mixed_precision == "fp16":
+  if mixed_precision == "fp16":
       weight_dtype = jnp.float16
-  elif args.mixed_precision == "bf16":
+  elif mixed_precision == "bf16":
       weight_dtype = jnp.bfloat16
+  else:
+      weight_dtype = jnp.float32
 
   # Load models and create wrapper for stable diffusion
   tokenizer = ByT5Tokenizer()
  
   text_encoder = FlaxT5EncoderModel.from_pretrained(
-      args.pretrained_text_encoder_model_name_or_path, revision=args.pretrained_text_encoder_model_revision, dtype=weight_dtype
+      pretrained_text_encoder_model_name_or_path, revision=pretrained_text_encoder_model_revision, dtype=weight_dtype
   )
   vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-      args.pretrained_diffusion_model_name_or_path, revision=args.pretrained_diffusion_model_revision, subfolder="vae", dtype=weight_dtype
+      pretrained_diffusion_model_name_or_path, revision=pretrained_diffusion_model_revision, subfolder="vae", dtype=weight_dtype
   )
   unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-      args.pretrained_diffusion_model_name_or_path, revision=args.pretrained_diffusion_model_revision, subfolder="unet", dtype=weight_dtype
+      pretrained_diffusion_model_name_or_path, revision=pretrained_diffusion_model_revision, subfolder="unet", dtype=weight_dtype
   )
 
   return tokenizer, text_encoder, vae, vae_params, unet, unet_params
