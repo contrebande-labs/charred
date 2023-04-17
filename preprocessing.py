@@ -4,8 +4,6 @@ import random
 import numpy as np
 from torchvision import transforms
 
-from transformers import CLIPImageProcessor
-
 # Preprocessing the datasets.
 # We need to tokenize input captions and transform the images.
 def _tokenize_captions(caption_column, tokenizer, examples, is_train):
@@ -33,18 +31,12 @@ def _preprocess_train(image_column, caption_column, tokenizer, train_transforms,
 def preprocess_train(image_column, caption_column, tokenizer, train_transforms):
     return lambda examples, is_train=True: _preprocess_train(image_column, caption_column, tokenizer, train_transforms, examples, is_train)
 
-# TODO: hard-code values from: https://huggingface.co/openai/clip-vit-base-patch32/blob/main/preprocessor_config.json
-# TODO: JAXify the code in CLIPImageProcessor (nice to have)
-class ByT5ImageProcessor(CLIPImageProcessor):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-def setup_train_transforms(args):
+def setup_train_transforms(resolution, center_crop, random_flip):
   return transforms.Compose(
         [
-            transforms.Resize(args.resolution, interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
-            transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
+            transforms.Resize(resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.CenterCrop(resolution) if center_crop else transforms.RandomCrop(resolution),
+            transforms.RandomHorizontalFlip() if random_flip else transforms.Lambda(lambda x: x),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]

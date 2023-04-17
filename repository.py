@@ -14,14 +14,14 @@ from diffusers import (
 )
 from transformers import CLIPImageProcessor
 
-def create_repository(args):
+def create_repository(output_dir, push_to_hub, hub_model_id, hub_token):
 
-  if args.output_dir is not None:
-      os.makedirs(args.output_dir, exist_ok=True)
+  if output_dir is not None:
+      os.makedirs(output_dir, exist_ok=True)
 
-  if args.push_to_hub:
+  if push_to_hub:
       repo_id = create_repo(
-          repo_id=args.hub_model_id or Path(args.output_dir).name, exist_ok=True, token=args.hub_token
+          repo_id=hub_model_id or Path(output_dir).name, exist_ok=True, token=hub_token
       ).repo_id
 
   return repo_id
@@ -29,7 +29,7 @@ def create_repository(args):
 def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
-def save_to_repository(args, tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, repo_id, state):
+def save_to_repository(output_dir, push_to_hub, tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, repo_id, state):
 
     scheduler = FlaxPNDMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
@@ -45,7 +45,7 @@ def save_to_repository(args, tokenizer, text_encoder, text_encoder_params, vae, 
     )
 
     pipeline.save_pretrained(
-        args.output_dir,
+        output_dir,
         params={
             "text_encoder": get_params_to_save(text_encoder_params),
             "vae": get_params_to_save(vae_params),
@@ -53,10 +53,10 @@ def save_to_repository(args, tokenizer, text_encoder, text_encoder_params, vae, 
         },
     )
 
-    if args.push_to_hub:
+    if push_to_hub:
         upload_folder(
             repo_id=repo_id,
-            folder_path=args.output_dir,
+            folder_path=output_dir,
             commit_message="End of training",
             ignore_patterns=["step_*", "epoch_*"],
         )

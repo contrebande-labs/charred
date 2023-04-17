@@ -6,24 +6,22 @@ from diffusers import (
 
 from loss import loss_fn
 
-def train_step(text_encoder, vae, unet):
+def train_step(text_encoder, text_encoder_params, vae, vae_params, unet):
 
-    # TODO: can we cahe the scheduler higher up, maybe in the main function or main training loop init?
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
     )
     noise_scheduler_state = noise_scheduler.create_state()
  
-    train_step_lambda = lambda state, text_encoder_params, vae_params, batch, train_rng:_train_step(
-    text_encoder, vae, unet,
-    noise_scheduler, noise_scheduler_state,
-    state, text_encoder_params, vae_params, batch, train_rng)
+    train_step_lambda = lambda state, batch, train_rng: _train_step(
+        text_encoder, text_encoder_params, vae, vae_params, unet, state,
+        noise_scheduler, noise_scheduler_state, batch, train_rng
+    )
 
-    # TODO:  can this be cached somewhere for reuse ?
     # Create parallel version of the train step
     return jax.pmap(train_step_lambda, "batch", donate_argnums=(0,))
 
-def _train_step(text_encoder, vae, unet, noise_scheduler, noise_scheduler_state, state, text_encoder_params, vae_params, batch, train_rng):
+def _train_step(text_encoder, text_encoder_params, vae, vae_params, unet, state, noise_scheduler, noise_scheduler_state, batch, train_rng):
 
     sample_rng, new_train_rng = jax.random.split(train_rng, 2)
 
@@ -38,4 +36,4 @@ def _train_step(text_encoder, vae, unet, noise_scheduler, noise_scheduler_state,
 
     metrics = jax.lax.pmean({"loss": loss}, axis_name="batch")
 
-    return new_state, metrics, new_train_rng
+    return new_state, new_train_rng, metrics

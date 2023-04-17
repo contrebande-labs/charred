@@ -1,10 +1,14 @@
 # TODO: change that for JAX equivalents
 import torch
 
+import jax
+
 def collate(tokenizer):
     return lambda examples: _collate(tokenizer, examples)
 
 def _collate(tokenizer, examples):
+
+    # TODO: replace with https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.stack.html
     pixel_values = torch.stack([example["pixel_values"] for example in examples])
     pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
     input_ids = [example["input_ids"] for example in examples]
@@ -19,3 +23,11 @@ def _collate(tokenizer, examples):
     batch = {k: v.numpy() for k, v in batch.items()}
 
     return batch
+
+def setup_dataloader(tokenizer, train_dataset, total_train_batch_size):
+
+  collate_lambda = collate(tokenizer)
+
+  return torch.utils.data.DataLoader(
+      train_dataset, shuffle=True, collate_fn=collate_lambda, batch_size=total_train_batch_size, drop_last=True
+  )
