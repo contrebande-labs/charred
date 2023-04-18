@@ -24,19 +24,9 @@ def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer
     # setting up the transform
     # TODO: pre-compute ByT5 embeddings too, if possible : https://huggingface.co/docs/datasets/stream#map
     # TODO: use map instead of set_transform
+    # TODO: download the image from the url or from the img_path? ValueError: --image_column' value 'image' needs to be one of: image_path, caption, NSFW, similarity, LICENSE, url, key, status, error_message, width, height, original_width, original_height, exif, md5
     #dataset.set_transform(dataset_transform(image_column, caption_column, tokenizer, resolution))
 
-    # Verify the column names for input/target.
-    column_names = dataset.column_names
-    if image_column not in column_names:
-        raise ValueError(
-            f"--image_column' value '{image_column}' needs to be one of: {', '.join(column_names)}"
-        )
-    if caption_column not in column_names:
-        raise ValueError(
-            f"--caption_column' value '{caption_column}' needs to be one of: {', '.join(column_names)}"
-        )
-    
     # TODO: save to disk
     #dataset.save_to_disk("/data/dataset/charred")
 
