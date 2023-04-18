@@ -5,9 +5,22 @@ name = "pypi"
 
 [packages]
 numpy = "*"
+jax = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
+optax = "*"
+transformers = "*"
+datasets = "*"
+diffusers = "*"
+flax = "*"
 
 [dev-packages]
 flake8 = "*"
+black = "*"
 
 [requires]
 python_version = "3.10"
+
+[pipenv]
+allow_prereleases = true
