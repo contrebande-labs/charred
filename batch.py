@@ -26,5 +26,6 @@ def setup_dataloader(tokenizer, train_dataset, train_batch_size):
   collate_lambda = collate(tokenizer)
 
   return torch.utils.data.DataLoader(
-      train_dataset, shuffle=True, collate_fn=collate_lambda, batch_size=train_batch_size, drop_last=True
+    # we don't shuffle here because the dataset is already shuffle 
+    train_dataset, shuffle=False, collate_fn=collate_lambda, batch_size=train_batch_size, drop_last=True
   )

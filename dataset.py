@@ -49,7 +49,7 @@ def dataset_transforms(tokenizer, resolution):
  
     return lambda example: _dataset_transforms(tokenizer, image_transforms, example)
 
-def setup_dataset(cache_dir, resolution, tokenizer):
+def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # loading the dataset
@@ -66,7 +66,7 @@ def setup_dataset(cache_dir, resolution, tokenizer):
             seed=27,
             buffer_size=10_000
         ).take(
-            n=1_000_000 # take 1M out of 170M
+            n=max_train_steps
         ).map(
             transforms=dataset_transforms(tokenizer, resolution),
             remove_columns=[],

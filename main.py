@@ -1,5 +1,4 @@
 # jax/flax
-import jax
 from flax import jax_utils
 from flax.training import train_state
 
@@ -16,19 +15,18 @@ def main():
 
     repo_id = create_repository(args.output_dir, args.push_to_hub, args.hub_model_id, args.hub_token)
 
-    # pipeline models setup
+    # Pipeline models setup
     tokenizer, text_encoder, vae, vae_params, unet, unet_params = setup_model(
         args.seed, args.mixed_precision,
         args.pretrained_text_encoder_model_name_or_path, args.pretrained_text_encoder_model_revision, 
         args.pretrained_diffusion_model_name_or_path, args.pretrained_diffusion_model_revision)
 
-    # Optimization & Scheduling
+    # Optimization & scheduling setup
     optimizer = setup_optimizer(args.learning_rate, args.adam_beta1, args.adam_beta2, args.adam_epsilon, args.adam_weight_decay, args.max_grad_norm)
 
-    # State
+    # State setup
+    # TODO: find out why we are passing params=unet_params. Only for shape?
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-
-    # Replicate the train state on each device
     replicated_state = jax_utils.replicate(state)
     replicated_text_encoder_params = jax_utils.replicate(text_encoder.params)
     replicated_vae_params = jax_utils.replicate(vae_params)

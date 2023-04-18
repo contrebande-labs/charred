@@ -1,6 +1,3 @@
-# python
-import math
-
 # misc. utils
 from tqdm.auto import tqdm
 import wandb
@@ -32,7 +29,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
       wandb.config.update(wandb_args)
   
   # dataset setup
-  train_dataset = setup_dataset(cache_dir, resolution, tokenizer)
+  train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
 
   # Initialize our training
   rng = jax.random.PRNGKey(seed)
@@ -41,22 +38,17 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
   # batch setup
   total_train_batch_size = train_batch_size * jax.local_device_count()
   train_dataloader = setup_dataloader(tokenizer, train_dataset, total_train_batch_size)
-  num_update_steps_per_epoch = math.ceil(len(train_dataloader))      
-  
+
   # Precompiled training step setup
   p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
 
-  # Epoch setup, scheduler and math around the number of training steps.
-  max_train_steps = num_train_epochs * num_update_steps_per_epoch
-  steps_per_epoch = len(train_dataset) // total_train_batch_size
-  distributed_num_train_epochs = math.ceil(max_train_steps / num_update_steps_per_epoch)
-  epochs = tqdm(range(distributed_num_train_epochs), desc="Epoch ... ", position=0)
-  global_step = 0
+  # Epoch setup
+  epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
   for epoch in epochs:
 
       train_metrics = []
  
-      train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
+      train_step_progress_bar = tqdm(total=max_train_steps, desc="Training...", position=1, leave=False)
 
       for batch in train_dataloader:
 
@@ -67,17 +59,13 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
           train_metrics.append(train_metric)
 
           train_step_progress_bar.update(1)
-          if jax.process_index() == 0:
-            print(metrics)
-            if log_wandb:
-                wandb.log(
-                    {
-                        "train_loss": train_metric["loss"],
-                    }
-                )
-          global_step += 1
-          if global_step >= max_train_steps:
-              break
+
+          if log_wandb:
+              wandb.log(
+                  {
+                      "train_loss": train_metric["loss"],
+                  }
+              )
 
       train_metric = jax_utils.unreplicate(train_metric)    # NOTE: @imflash217 thinks this would be an error because we should rather be doing this for every batch rather than just for every epoch
 

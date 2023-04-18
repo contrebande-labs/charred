@@ -70,8 +70,8 @@ def parse_args():
     parser.add_argument(
         "--max_train_steps",
         type=int,
-        default=None,
-        help="Total number of training steps to perform.  If provided, overrides num_train_epochs.",
+        default=1_000_000,
+        help="Total number of training steps per epoch to perform.",
     )
     parser.add_argument(
         "--learning_rate",
@@ -140,8 +140,8 @@ def parse_args():
     parser.add_argument(
         "--log_wandb",
         type=bool,
-        default=true,
-        choices=[true, flase],
+        default=True,
+        choices=[True, False],
         help=(
             "Whether to use WandB to log the metrics or not"
         ),
