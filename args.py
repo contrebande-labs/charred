@@ -137,6 +137,15 @@ def parse_args():
             "and an Nvidia Ampere GPU."
         ),
     )
+    parser.add_argument(
+        "--log_wandb",
+        type=bool,
+        default=true,
+        choices=[true, flase],
+        help=(
+            "Whether to use WandB to log the metrics or not"
+        ),
+    )
 
     args = parser.parse_args()
 
