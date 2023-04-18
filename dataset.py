@@ -14,13 +14,13 @@ def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer
     # TODO: drop images that are smaller than 1024x1024 https://huggingface.co/docs/datasets/stream#filter https://huggingface.co/docs/datasets/process#select-and-filter
     # TODO: drop images with watermarks (joined) https://laion.ai/blog/laion-5b/
     # TODO: drop images columns https://huggingface.co/docs/datasets/stream#rename-remove-and-cast
-    laion2b_en = load_dataset("laion/laion2b-en-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion2B-en"), streaming=True)
-    laion2b_multi = load_dataset("laion/laion2b-multi-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion2B-multi"), streaming=True)
-    laion2b_nolang = load_dataset("laion/laion1b-nolang-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion1B-nolang"), streaming=True)
+    laion2b_en = load_dataset("laion/laion2b-en-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion2B-en"), split='train', streaming=True)
+    laion2b_multi = load_dataset("laion/laion2b-multi-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion2B-multi"), split='train', streaming=True)
+    laion1b_nolang = load_dataset("laion/laion1b-nolang-vit-l-14-embeddings", cache_dir=os.path.join(cache_dir, "laion1B-nolang"), split='train', streaming=True)
 
     # concatenate the datasets
     # TODO: add probabilities https://huggingface.co/docs/datasets/process#interleave https://huggingface.co/docs/datasets/stream#interleave
-    dataset = interleave_datasets([laion2b_en, laion2b_multi, laion2b_nolang])
+    dataset = interleave_datasets([laion2b_en, laion2b_multi, laion1b_nolang])
 
     # setting up the transform
     dataset.set_transform(dataset_transform(image_column, caption_column, tokenizer, resolution))
