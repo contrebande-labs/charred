@@ -19,16 +19,17 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
     cache_dir,
     resolution,
     seed, max_train_steps, num_train_epochs, train_batch_size,
-    output_dir, push_to_hub, repo_id):
+    output_dir, push_to_hub, repo_id, log_wandb):
   
   # setup WandB for logging & tracking
-  wandb.init(project="charred")
-  wandb_args = {
-    "max_train_steps": max_train_steps, 
-    "num_train_epochs": num_train_epochs, 
-    "train_batch_size": train_batch_size
-  }
-  wandb.config.update(wandb_args)
+  if log_wandb:
+      wandb.init(project="charred")
+      wandb_args = {
+        "max_train_steps": max_train_steps, 
+        "num_train_epochs": num_train_epochs, 
+        "train_batch_size": train_batch_size
+      }
+      wandb.config.update(wandb_args)
   
   # dataset setup
   train_dataset = setup_dataset(cache_dir, resolution, tokenizer)
@@ -68,11 +69,12 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
           train_step_progress_bar.update(1)
           if jax.process_index() == 0:
             print(metrics)
-            wandb.log(
-              {
-                "train_loss": train_metric["loss"],
-              }
-            )
+            if log_wandb:
+                wandb.log(
+                    {
+                        "train_loss": train_metric["loss"],
+                    }
+                )
           global_step += 1
           if global_step >= max_train_steps:
               break
