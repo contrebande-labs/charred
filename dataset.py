@@ -3,7 +3,7 @@ from datasets import load_dataset, concatenate_datasets
 
 from preprocessing import preprocess_train, setup_train_transforms
 
-def setup_dataset(cache_dir, image_column, caption_column, resolution, center_crop, random_flip, tokenizer):
+def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer):
 
     # loading the datasets    
     laion2b_en = load_dataset("laion/laion2B-en", cache_dir=os.path.join(cache_dir, "laion2B-en"))
