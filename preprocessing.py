@@ -7,7 +7,7 @@ from torchvision import transforms
 
 # Preprocessing the datasets.
 # We need to tokenize input captions and transform the images.
-def _tokenize_captions(caption_column, tokenizer, examples, is_train):
+def tokenize_captions(caption_column, tokenizer, examples, is_train):
     captions = []
     for caption in examples[caption_column]:
         if isinstance(caption, str):
@@ -28,35 +28,24 @@ def _tokenize_captions(caption_column, tokenizer, examples, is_train):
     input_ids = inputs.input_ids
     return input_ids
 
-
-def _preprocess_train(
-    image_column, caption_column, tokenizer, train_transforms, examples, is_train
-):
+def _dataset_transform(image_column, caption_column, tokenizer, image_transforms, examples, is_train):
     images = [image.convert("RGB") for image in examples[image_column]]
-    examples["pixel_values"] = [train_transforms(image) for image in images]
-    examples["input_ids"] = _tokenize_captions(
-        caption_column, tokenizer, examples, is_train
-    )
+    examples["pixel_values"] = [image_transforms(image) for image in images]
+    examples["input_ids"] = tokenize_captions(caption_column, tokenizer, examples, is_train)
     return examples
 
+def dataset_transform(image_column, caption_column, tokenizer, resolution):
 
-def preprocess_train(image_column, caption_column, tokenizer, train_transforms):
-    return lambda examples, is_train=True: _preprocess_train(
-        image_column, caption_column, tokenizer, train_transforms, examples, is_train
-    )
-
-
-def setup_train_transforms(
-    resolution,
-):
-    return transforms.Compose(
+    # TODO: replace with https://jax.readthedocs.io/en/latest/jax.image.html
+    image_transforms = transforms.Compose(
         [
             transforms.Resize(
                 resolution, interpolation=transforms.InterpolationMode.LANCZOS
             ),
             transforms.RandomCrop(resolution),
-            transforms.Lambda(lambda x: x),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]
     )
+ 
+    return lambda examples, is_train=True: _dataset_transform(image_column, caption_column, tokenizer, image_transforms, examples, is_train)
