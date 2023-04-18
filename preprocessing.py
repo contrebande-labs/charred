@@ -31,12 +31,12 @@ def _preprocess_train(image_column, caption_column, tokenizer, train_transforms,
 def preprocess_train(image_column, caption_column, tokenizer, train_transforms):
     return lambda examples, is_train=True: _preprocess_train(image_column, caption_column, tokenizer, train_transforms, examples, is_train)
 
-def setup_train_transforms(resolution, center_crop, random_flip):
+def setup_train_transforms(resolution,):
   return transforms.Compose(
         [
-            transforms.Resize(resolution, interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.CenterCrop(resolution) if center_crop else transforms.RandomCrop(resolution),
-            transforms.RandomHorizontalFlip() if random_flip else transforms.Lambda(lambda x: x),
+            transforms.Resize(resolution, interpolation=transforms.InterpolationMode.LANCZOS),
+            transforms.RandomCrop(resolution),
+            transforms.Lambda(lambda x: x),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]

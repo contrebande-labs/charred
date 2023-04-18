@@ -1,5 +1,6 @@
 
 from architecture import setup_model
+from dataset import setup_dataset
 
 
 def main():
@@ -9,6 +10,8 @@ def main():
         pretrained_text_encoder_model_name_or_path="google/byt5-base", pretrained_text_encoder_model_revision=None, 
         # TODO: change for stabilityai/stable-diffusion-2-1" vae and unet converted to flax msgpack format?
         pretrained_diffusion_model_name_or_path="flax/stable-diffusion-2-1", pretrained_diffusion_model_revision=None)
+
+    setup_dataset("/data/", "image", "text", 1024, False, False, tokenizer)
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,4 @@
-# TODO: change that for JAX equivalents
 import torch
-
-import jax
 
 def collate(tokenizer):
     return lambda examples: _collate(tokenizer, examples)
@@ -24,10 +21,10 @@ def _collate(tokenizer, examples):
 
     return batch
 
-def setup_dataloader(tokenizer, train_dataset, total_train_batch_size):
+def setup_dataloader(tokenizer, train_dataset, train_batch_size):
 
   collate_lambda = collate(tokenizer)
 
   return torch.utils.data.DataLoader(
-      train_dataset, shuffle=True, collate_fn=collate_lambda, batch_size=total_train_batch_size, drop_last=True
+      train_dataset, shuffle=True, collate_fn=collate_lambda, batch_size=train_batch_size, drop_last=True
   )

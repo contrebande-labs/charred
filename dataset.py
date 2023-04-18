@@ -1,37 +1,22 @@
 import os
+from datasets import load_dataset, concatenate_datasets
 
-from datasets import load_dataset
+from preprocessing import preprocess_train, setup_train_transforms
 
-def setup_dataset(dataset_name, dataset_config_name, cache_dir, train_data_dir, image_column, caption_column):
-    # Get the datasets: you can either provide your own training and evaluation files (see below)
-    # or specify a Dataset from the hub (the dataset will be downloaded automatically from the datasets Hub).
+def setup_dataset(cache_dir, image_column, caption_column, resolution, center_crop, random_flip, tokenizer):
 
-    # In distributed training, the load_dataset function guarantees that only one local process can concurrently
-    # download the dataset.
-    if dataset_name is not None:
-        # Downloading and loading a dataset from the hub.
-        dataset = load_dataset(
-            dataset_name,
-            dataset_config_name,
-            cache_dir=cache_dir,
-        )
-    else:
-        data_files = {}
-        if train_data_dir is not None:
-            data_files["train"] = os.path.join(train_data_dir, "**")
-        dataset = load_dataset(
-            "imagefolder",
-            data_files=data_files,
-            cache_dir=cache_dir,
-        )
-        # See more about loading custom images at
-        # https://huggingface.co/docs/datasets/v2.4.0/en/image_load#imagefolder
+    # loading the datasets    
+    laion2b_en = load_dataset("laion/laion2B-en", cache_dir=os.path.join(cache_dir, "laion2B-en"))
+    laion2b_multi = load_dataset("laion/laion2B-multi", cache_dir=os.path.join(cache_dir, "laion2B-multi"))
+    laion2b_nolang = load_dataset("laion/laion2B-nolang", cache_dir=os.path.join(cache_dir, "laion2B-nolang"))
 
-    # Preprocessing the datasets.
-    # We need to tokenize inputs and targets.
-    column_names = dataset["train"].column_names
+    # concatenating the dataset and setting up the transforms
+    train_transforms = setup_train_transforms(resolution)
+    preprocess_train_lambda = preprocess_train(image_column, caption_column, tokenizer, train_transforms)
+    dataset = concatenate_datasets([laion2b_en, laion2b_multi, laion2b_nolang])["train"].with_transform(preprocess_train_lambda)
 
-    # 6. Get the column names for input/target.
+    # Verify the column names for input/target.
+    column_names = dataset.column_names
     if image_column not in column_names:
         raise ValueError(
             f"--image_column' value '{image_column}' needs to be one of: {', '.join(column_names)}"
@@ -40,5 +25,5 @@ def setup_dataset(dataset_name, dataset_config_name, cache_dir, train_data_dir, 
         raise ValueError(
             f"--caption_column' value '{caption_column}' needs to be one of: {', '.join(column_names)}"
         )
-    
+
     return dataset
