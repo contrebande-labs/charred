@@ -71,9 +71,9 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
             print(metrics)
             if log_wandb:
                 wandb.log(
-                  {
-                    "train_loss": train_metric["loss"],
-                  }
+                    {
+                        "train_loss": train_metric["loss"],
+                    }
                 )
           global_step += 1
           if global_step >= max_train_steps:
