@@ -1,38 +1,49 @@
 import os
-
 from pathlib import Path
 
-from huggingface_hub import create_repo
-
 import jax
+from diffusers import FlaxPNDMScheduler, FlaxStableDiffusionPipeline
 
 # hugging face
-from huggingface_hub import upload_folder
-from diffusers import (
-    FlaxPNDMScheduler,
-    FlaxStableDiffusionPipeline,
-)
+from huggingface_hub import create_repo, upload_folder
 from transformers import CLIPImageProcessor
 
+
 def create_repository(output_dir, push_to_hub, hub_model_id, hub_token):
+    if output_dir is not None:
+        os.makedirs(output_dir, exist_ok=True)
 
-  if output_dir is not None:
-      os.makedirs(output_dir, exist_ok=True)
+    if push_to_hub:
+        repo_id = create_repo(
+            repo_id=hub_model_id or Path(output_dir).name,
+            exist_ok=True,
+            token=hub_token,
+        ).repo_id
 
-  if push_to_hub:
-      repo_id = create_repo(
-          repo_id=hub_model_id or Path(output_dir).name, exist_ok=True, token=hub_token
-      ).repo_id
+    return repo_id
 
-  return repo_id
 
 def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
-def save_to_repository(output_dir, push_to_hub, tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, repo_id, state):
 
+def save_to_repository(
+    output_dir,
+    push_to_hub,
+    tokenizer,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
+    unet,
+    repo_id,
+    state,
+):
     scheduler = FlaxPNDMScheduler(
-        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+        beta_start=0.00085,
+        beta_end=0.012,
+        beta_schedule="scaled_linear",
+        skip_prk_steps=True,
     )
 
     pipeline = FlaxStableDiffusionPipeline(
@@ -41,7 +52,9 @@ def save_to_repository(output_dir, push_to_hub, tokenizer, text_encoder, text_en
         unet=unet,
         tokenizer=tokenizer,
         scheduler=scheduler,
-        feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
+        feature_extractor=CLIPImageProcessor.from_pretrained(
+            "openai/clip-vit-base-patch32"
+        ),
     )
 
     pipeline.save_pretrained(
