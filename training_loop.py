@@ -15,13 +15,13 @@ from repository import save_to_repository
 from training_step import train_step
 
 def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, state,
-    cache_dir, caption_column, image_column,
+    cache_dir,
     resolution,
     seed, max_train_steps, num_train_epochs, train_batch_size,
     output_dir, push_to_hub, repo_id):
   
   # dataset setup
-  train_dataset = setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer)
+  train_dataset = setup_dataset(cache_dir, resolution, tokenizer)
 
   # Initialize our training
   rng = jax.random.PRNGKey(seed)

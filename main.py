@@ -35,7 +35,7 @@ def main():
 
     # Train!
     training_loop(tokenizer, text_encoder, replicated_text_encoder_params, vae, replicated_vae_params, unet, replicated_state,
-        args.cache_dir, args.caption_column, args.image_column, args.resolution,
+        args.cache_dir, args.resolution,
         args.seed, args.max_train_steps, args.num_train_epochs, args.train_batch_size,
         args.output_dir, args.push_to_hub, repo_id)
 
