@@ -40,9 +40,7 @@ def main():
     )
 
     # State
-    state = train_state.TrainState.create(
-        apply_fn=unet.__call__, params=unet_params, tx=optimizer
-    )
+    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     # Replicate the train state on each device
     replicated_state = jax_utils.replicate(state)
@@ -69,6 +67,7 @@ def main():
         args.output_dir,
         args.push_to_hub,
         repo_id,
+        args=args,
     )
 
 

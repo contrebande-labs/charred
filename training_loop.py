@@ -3,6 +3,7 @@ import math
 
 # jax/flax
 import jax
+import wandb
 from flax import jax_utils
 from flax.training.common_utils import shard
 
@@ -34,11 +35,14 @@ def training_loop(
     output_dir,
     push_to_hub,
     repo_id,
+    args=None,
 ):
+    # setup WandB for logging & tracking
+    wandb.init(project="charred")
+    wandb.config.update(args)
+
     # dataset setup
-    train_dataset = setup_dataset(
-        cache_dir, image_column, caption_column, resolution, tokenizer
-    )
+    train_dataset = setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer)
 
     # Initialize our training
     rng = jax.random.PRNGKey(seed)
@@ -46,9 +50,7 @@ def training_loop(
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()
-    train_dataloader = setup_dataloader(
-        tokenizer, train_dataset, total_train_batch_size
-    )
+    train_dataloader = setup_dataloader(tokenizer, train_dataset, total_train_batch_size)
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
 
     # Precompiled training step setup
@@ -57,13 +59,11 @@ def training_loop(
     # Epoch setup, scheduler and math around the number of training steps.
     max_train_steps = num_train_epochs * num_update_steps_per_epoch
     steps_per_epoch = len(train_dataset) // total_train_batch_size
-    distributed_num_train_epochs = math.ceil(
-        max_train_steps / num_update_steps_per_epoch
-    )
+    distributed_num_train_epochs = math.ceil(max_train_steps / num_update_steps_per_epoch)
     epochs = tqdm(range(distributed_num_train_epochs), desc="Epoch ... ", position=0)
     global_step = 0
     for epoch in epochs:
-        train_metrics = []
+        train_metrics = {"loss": []}
 
         train_step_progress_bar = tqdm(
             total=steps_per_epoch, desc="Training...", position=1, leave=False
@@ -72,17 +72,21 @@ def training_loop(
         for batch in train_dataloader:
             batch = shard(batch)
 
-            state, train_rng, train_metric = p_train_step(state, batch, train_rng)
+            state, train_rng, metrics = p_train_step(state, batch, train_rng)
 
-            train_metrics.append(train_metric)
-
-            train_step_progress_bar.update(1)
-
+            metrics = jax_utils.unreplicate(metrics)
+            if jax.process_index() == 0:
+                print(metrics)
+                train_metrics["loss"].append(metrics["loss"])
+                train_step_progress_bar.update(1)
+                wandb.log(
+                    {
+                        "train_loss": metrics["loss"],
+                    }
+                )
             global_step += 1
             if global_step >= max_train_steps:
                 break
-
-        train_metric = jax_utils.unreplicate(train_metric)
 
         # Create the pipeline using using the trained modules and save it after every epoch
         save_to_repository(
@@ -99,7 +103,4 @@ def training_loop(
         )
 
         train_step_progress_bar.close()
-
-        epochs.write(
-            f"Epoch... ({epoch + 1}/{num_train_epochs} | Loss: {train_metric['loss']})"
-        )
+        epochs.write(f"Epoch... ({epoch + 1}/{num_train_epochs} | Loss: {train_metrics['loss']})")
