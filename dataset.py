@@ -27,7 +27,6 @@ def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer
     #dataset.set_transform(dataset_transform(image_column, caption_column, tokenizer, resolution))
 
     # Verify the column names for input/target.
-    print(dataset.column_names)
     column_names = dataset.column_names
     if image_column not in column_names:
         raise ValueError(
