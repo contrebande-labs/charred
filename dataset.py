@@ -9,7 +9,6 @@ def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # TODO: add language column for en and nolang
     # TODO: find out if we can use the image embeddings instead of recomputing them
-    # TODO: pre-compute ByT5 embeddings too, if possible : https://huggingface.co/docs/datasets/stream#map
     # TODO: remove duplicates with image embeddings https://arxiv.org/abs/2303.12733 https://github.com/LAION-AI/laion-dedup https://github.com/LAION-AI/image-deduplication-testset
     # TODO: drop images that are smaller than 1024x1024 https://huggingface.co/docs/datasets/stream#filter https://huggingface.co/docs/datasets/process#select-and-filter
     # TODO: drop images with watermarks (joined) https://laion.ai/blog/laion-5b/
@@ -23,9 +22,12 @@ def setup_dataset(cache_dir, image_column, caption_column, resolution, tokenizer
     dataset = interleave_datasets([laion2b_en, laion2b_multi, laion1b_nolang])
 
     # setting up the transform
-    dataset.set_transform(dataset_transform(image_column, caption_column, tokenizer, resolution))
+    # TODO: pre-compute ByT5 embeddings too, if possible : https://huggingface.co/docs/datasets/stream#map
+    # TODO: use map instead of set_transform
+    #dataset.set_transform(dataset_transform(image_column, caption_column, tokenizer, resolution))
 
     # Verify the column names for input/target.
+    print(dataset.column_names)
     column_names = dataset.column_names
     if image_column not in column_names:
         raise ValueError(
