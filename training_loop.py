@@ -16,7 +16,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
     cache_dir,
     resolution,
     seed, max_train_steps, num_train_epochs, train_batch_size,
-    output_dir, push_to_hub, repo_id, log_wandb):
+    output_dir, dataset_output_dir, push_to_hub, repo_id, log_wandb):
   
   # setup WandB for logging & tracking
   if log_wandb:
@@ -44,6 +44,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
   # Epoch setup
   epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
+  dataset_needs_saving = True
   for epoch in epochs:
 
       train_metrics = []
@@ -68,6 +69,10 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
               )
 
       train_metric = jax_utils.unreplicate(train_metric)    # NOTE: @imflash217 thinks this would be an error because we should rather be doing this for every batch rather than just for every epoch
+
+      if dataset_needs_saving:
+          dataset_needs_saving = False
+          train_dataset.save_to_disk(dataset_output_dir)
 
       # Create the pipeline using using the trained modules and save it after every epoch
       save_to_repository(output_dir, push_to_hub, 

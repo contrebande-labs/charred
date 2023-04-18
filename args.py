@@ -37,6 +37,12 @@ def parse_args():
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
+        "--dataset_output_dir",
+        type=str,
+        default="/data/dataset/output/charred",
+        help="The output directory where the model predictions and checkpoints will be written.",
+    )
+    parser.add_argument(
         "--cache_dir",
         type=str,
         default="/data/dataset/cache",

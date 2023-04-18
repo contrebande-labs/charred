@@ -1,12 +1,9 @@
 import os
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset
 from torchvision import transforms
 from PIL import Image
 import requests
-
-DATASET_OUTPUT_DIR = "/data/dataset/charred"
-SAVE_DATASET_TO_DISK = False
 
 def _dataset_transforms(tokenizer, image_transforms, example):
 
@@ -53,28 +50,22 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # loading the dataset
-
-    if os.path.isdir(DATASET_OUTPUT_DIR) and SAVE_DATASET_TO_DISK:
-        dataset = load_from_disk(DATASET_OUTPUT_DIR)
-    else:
-        dataset = load_dataset(
-            path="laion/laion-high-resolution",
-            cache_dir=os.path.join(cache_dir, "laion-high-resolution"),
-            split='train',
-            streaming=True
-        ).shuffle(
-            seed=27,
-            buffer_size=10_000
-        ).take(
-            n=max_train_steps
-        ).map(
-            transforms=dataset_transforms(tokenizer, resolution),
-            remove_columns=[],
-            batched=False #TODO: maybe batch this?
-        ).filter(
-            filter=lambda example: example["pass"]
-        )
-        if SAVE_DATASET_TO_DISK:
-            dataset.save_to_disk(DATASET_OUTPUT_DIR)
+    dataset = load_dataset(
+        path="laion/laion-high-resolution",
+        cache_dir=os.path.join(cache_dir, "laion-high-resolution"),
+        split='train',
+        streaming=True
+    ).shuffle(
+        seed=27,
+        buffer_size=10_000
+    ).take(
+        n=max_train_steps
+    ).map(
+        transforms=dataset_transforms(tokenizer, resolution),
+        remove_columns=[],
+        batched=False #TODO: maybe batch this?
+    ).filter(
+        filter=lambda example: example["pass"]
+    )
 
     return dataset
