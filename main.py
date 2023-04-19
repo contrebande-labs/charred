@@ -3,6 +3,7 @@ import jax
 from flax import jax_utils
 from flax.training import train_state
 from flax.core.frozen_dict import unfreeze
+import wandb
 
 from diffusers import (
     FlaxUNet2DConditionModel,
@@ -18,6 +19,16 @@ from training_loop import training_loop
 def main():
 
     args = parse_args()
+
+    # Setup WandB for logging & tracking
+    log_wandb = args.log_wandb
+    if log_wandb:
+        wandb.init(
+            entity="charred",
+            project="charred",
+            job_type="train",
+            config=args,
+        )
 
     # init random number generator
     seed = args.seed
@@ -60,7 +71,7 @@ def main():
     training_loop(tokenizer, text_encoder, replicated_text_encoder_params, vae, replicated_vae_params, unet, replicated_state,
         args.cache_dir, args.resolution,
         rng, args.max_train_steps, args.num_train_epochs, args.train_batch_size,
-        args.output_dir, args.dataset_output_dir, args.push_to_hub, repo_id, log_wandb=args.log_wandb)
+        args.output_dir, args.dataset_output_dir, args.push_to_hub, repo_id, log_wandb)
 
 if __name__ == "__main__":
     main()

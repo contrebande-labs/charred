@@ -1,9 +1,12 @@
+import time
+
 # misc. utils
 from tqdm.auto import tqdm
 import wandb
 
 # jax/flax
 import jax
+import jax.numpy as jnp
 from flax.training.common_utils import shard
 from flax import jax_utils
 
@@ -18,16 +21,6 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
     rng, max_train_steps, num_train_epochs, train_batch_size,
     output_dir, dataset_output_dir, push_to_hub, repo_id, log_wandb):
   
-  # setup WandB for logging & tracking
-  if log_wandb:
-      wandb.init(project="charred")
-      wandb_args = {
-        "max_train_steps": max_train_steps, 
-        "num_train_epochs": num_train_epochs,
-        "train_batch_size": train_batch_size
-      }
-      wandb.config.update(wandb_args)
-  
   # rng setup
   train_rngs = jax.random.split(rng, jax.local_device_count())
   
@@ -40,13 +33,28 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
   # Precompiled training step setup
   p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
+  
+  # setup WandB for logging & tracking
+  if log_wandb:
+    wandb.define_metric("*", step_metric="train/step")
+    wandb.define_metric("train/step", step_metric="walltime")
+    wandb_args = {
+        "max_train_steps": max_train_steps, 
+        "num_train_epochs": num_train_epochs,
+        "train_batch_size": train_batch_size,
+        "total_train_batch_size": total_train_batch_size,
+        "num_devices": jax.device_count(),
+    }
+    wandb.config.update(wandb_args)
 
   # Epoch setup
   epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
   dataset_needs_saving = True
+  step_i = 0
+  t0 = time.monotonic()
   for epoch in epochs:
 
-      train_metrics = []
+      unreplicated_train_metric = None
  
       train_step_progress_bar = tqdm(total=max_train_steps, desc="Training...", position=1, leave=False)
 
@@ -56,18 +64,25 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
           state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
 
-          train_metrics.append(train_metric)
-
           train_step_progress_bar.update(1)
 
-          if log_wandb:
-              wandb.log(
-                  {
-                      "train_loss": train_metric["loss"],
-                  }
-              )
+          unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
-      train_metric = jax_utils.unreplicate(train_metric)    # NOTE: @imflash217 thinks this would be an error because we should rather be doing this for every batch rather than just for every epoch
+          step_i += 1
+
+          if log_wandb:
+            walltime = time.monotonic() - t0
+            wandb.log(
+                {
+                    "walltime": walltime,
+                    "train/loss": train_metric["loss"],
+                    "train/step": step_i,
+                    "train/epoch": epoch,
+                    "train/secs_per_epoch": walltime / (epoch + 1),
+                    "train/steps_per_sec": step_i / walltime,
+                    **{f"train/{k}": v for k, v in unreplicated_train_metric.items()},
+                }
+            )
 
       if dataset_needs_saving:
           dataset_needs_saving = False
@@ -79,4 +94,4 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
       train_step_progress_bar.close()
 
-      epochs.write(f"Epoch... ({epoch + 1}/{num_train_epochs} | Loss: {train_metric['loss']})")
+      epochs.write(f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})")
