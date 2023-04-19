@@ -62,7 +62,6 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
             wandb.log(
                 {
                     "walltime": walltime,
-                    "train/loss": train_metric["loss"],
                     "train/step": step_i,
                     "train/epoch": epoch,
                     "train/secs_per_epoch": walltime / (epoch + 1),
