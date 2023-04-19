@@ -36,7 +36,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
   # batch setup
   total_train_batch_size = train_batch_size * jax.local_device_count()
-  train_dataloader = setup_dataloader(tokenizer, train_dataset, total_train_batch_size)
+  train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
 
   # Precompiled training step setup
   p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)

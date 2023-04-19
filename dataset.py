@@ -28,7 +28,7 @@ def _dataset_transforms(tokenizer, image_transforms, example):
 
         # append tokenized text
         # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
-        example["input_ids"] = tokenizer(caption, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True).input_ids
+        example["input_ids"] = tokenizer(caption, max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids
  
     return example
 
