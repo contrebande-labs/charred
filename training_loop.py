@@ -34,19 +34,6 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
   # Precompiled training step setup
   p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
   
-  # setup WandB for logging & tracking
-  if log_wandb:
-    wandb.define_metric("*", step_metric="train/step")
-    wandb.define_metric("train/step", step_metric="walltime")
-    wandb_args = {
-        "max_train_steps": max_train_steps, 
-        "num_train_epochs": num_train_epochs,
-        "train_batch_size": train_batch_size,
-        "total_train_batch_size": total_train_batch_size,
-        "num_devices": jax.device_count(),
-    }
-    wandb.config.update(wandb_args)
-
   # Epoch setup
   epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
   dataset_needs_saving = True
