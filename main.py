@@ -21,7 +21,8 @@ def main():
 
     # init random number generator
     seed = args.seed
-    rng, rng_params = jax.random.split(jax.random.PRNGKey(seed), jax.local_device_count())
+    seed_rng = jax.random.PRNGKey(seed)
+    rng, rng_params = jax.random.split(seed_rng)
 
     repo_id = create_repository(args.output_dir, args.push_to_hub, args.hub_model_id, args.hub_token)
 
