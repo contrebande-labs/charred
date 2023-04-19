@@ -23,8 +23,6 @@ def main():
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
     if log_wandb:
-        wandb.define_metric("*", step_metric="train/step")
-        wandb.define_metric("train/step", step_metric="walltime")
         wandb.init(
             entity="charred",
             project="charred",
@@ -34,6 +32,8 @@ def main():
         wandb.config.update({
             "num_devices": jax.device_count(),
         })
+        wandb.define_metric("*", step_metric="train/step")
+        wandb.define_metric("train/step", step_metric="walltime")
 
     # init random number generator
     seed = args.seed
