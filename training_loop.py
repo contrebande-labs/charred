@@ -94,7 +94,7 @@ def training_loop(
 
         if dataset_needs_saving:
             dataset_needs_saving = False
-            train_dataset.save_to_disk(dataset_output_dir)
+            #train_dataset.save_to_disk(dataset_output_dir) #temporarily disabled because that method doesn't work on streaming datasets
 
         # Create the pipeline using using the trained modules and save it after every epoch
         save_to_repository(
