@@ -126,8 +126,4 @@ def parse_args():
 
     args = parser.parse_args()
 
-    # Sanity checks
-    if args.dataset_name is None and args.train_data_dir is None:
-        raise ValueError("Need either a dataset name or a training folder.")
-
     return args
