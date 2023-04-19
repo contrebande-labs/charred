@@ -97,18 +97,18 @@ def training_loop(
             #train_dataset.save_to_disk(dataset_output_dir) #temporarily disabled because that method doesn't work on streaming datasets
 
         # Create the pipeline using using the trained modules and save it after every epoch
-        save_to_repository(
-            output_dir,
-            push_to_hub,
-            tokenizer,
-            text_encoder,
-            text_encoder_params,
-            vae,
-            vae_params,
-            unet,
-            repo_id,
-            state,
-        )
+        #save_to_repository(
+        #    output_dir,
+        #    push_to_hub,
+        #    tokenizer,
+        #    text_encoder,
+        #    text_encoder_params,
+        #    vae,
+        #    vae_params,
+        #    unet,
+        #    repo_id,
+        #    state,
+        #)
 
         train_step_progress_bar.close()
 
