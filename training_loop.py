@@ -15,69 +15,102 @@ from dataset import setup_dataset
 from repository import save_to_repository
 from training_step import train_step
 
-def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, state,
+
+def training_loop(
+    tokenizer,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
+    unet,
+    state,
     cache_dir,
     resolution,
-    rng, max_train_steps, num_train_epochs, train_batch_size,
-    output_dir, dataset_output_dir, push_to_hub, repo_id, log_wandb):
-  
-  # rng setup
-  train_rngs = jax.random.split(rng, jax.local_device_count())
-  
-  # dataset setup
-  train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
+    rng,
+    max_train_steps,
+    num_train_epochs,
+    train_batch_size,
+    output_dir,
+    dataset_output_dir,
+    push_to_hub,
+    repo_id,
+    log_wandb,
+):
 
-  # batch setup
-  total_train_batch_size = train_batch_size * jax.local_device_count()
-  train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
+    # rng setup
+    train_rngs = jax.random.split(rng, jax.local_device_count())
 
-  # Precompiled training step setup
-  p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
-  
-  # Epoch setup
-  epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
-  dataset_needs_saving = True
-  step_i = 0
-  t0 = time.monotonic()
-  for epoch in epochs:
+    # dataset setup
+    train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
 
-      unreplicated_train_metric = None
- 
-      train_step_progress_bar = tqdm(total=max_train_steps, desc="Training...", position=1, leave=False)
+    # batch setup
+    total_train_batch_size = train_batch_size * jax.local_device_count()
+    train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
 
-      for batch in train_dataloader:
+    # Precompiled training step setup
+    p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
 
-          batch = shard(batch)
+    # Epoch setup
+    epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
+    dataset_needs_saving = True
+    step_i = 0
+    t0 = time.monotonic()
+    for epoch in epochs:
 
-          state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
+        unreplicated_train_metric = None
 
-          train_step_progress_bar.update(1)
+        train_step_progress_bar = tqdm(
+            total=max_train_steps, desc="Training...", position=1, leave=False
+        )
 
-          unreplicated_train_metric = jax_utils.unreplicate(train_metric)
+        for batch in train_dataloader:
 
-          step_i += 1
+            batch = shard(batch)
 
-          if log_wandb:
-            walltime = time.monotonic() - t0
-            wandb.log(
-                {
-                    "walltime": walltime,
-                    "train/step": step_i,
-                    "train/epoch": epoch,
-                    "train/secs_per_epoch": walltime / (epoch + 1),
-                    "train/steps_per_sec": step_i / walltime,
-                    **{f"train/{k}": v for k, v in unreplicated_train_metric.items()},
-                }
-            )
+            state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
 
-      if dataset_needs_saving:
-          dataset_needs_saving = False
-          train_dataset.save_to_disk(dataset_output_dir)
+            train_step_progress_bar.update(1)
 
-      # Create the pipeline using using the trained modules and save it after every epoch
-      save_to_repository(output_dir, push_to_hub, 
-        tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, repo_id, state)
+            unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
-      train_step_progress_bar.close()
+            step_i += 1
 
-      epochs.write(f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})")
+            if log_wandb:
+                walltime = time.monotonic() - t0
+                wandb.log(
+                    {
+                        "walltime": walltime,
+                        "train/step": step_i,
+                        "train/epoch": epoch,
+                        "train/secs_per_epoch": walltime / (epoch + 1),
+                        "train/steps_per_sec": step_i / walltime,
+                        **{
+                            f"train/{k}": v
+                            for k, v in unreplicated_train_metric.items()
+                        },
+                    }
+                )
+
+        if dataset_needs_saving:
+            dataset_needs_saving = False
+            train_dataset.save_to_disk(dataset_output_dir)
+
+        # Create the pipeline using using the trained modules and save it after every epoch
+        save_to_repository(
+            output_dir,
+            push_to_hub,
+            tokenizer,
+            text_encoder,
+            text_encoder_params,
+            vae,
+            vae_params,
+            unet,
+            repo_id,
+            state,
+        )
+
+        train_step_progress_bar.close()
+
+        epochs.write(
+            f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})"
+        )
