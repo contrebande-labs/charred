@@ -16,6 +16,12 @@ def parse_args():
         help="Path to pretrained model or model identifier from huggingface.co/models.",
     )
     parser.add_argument(
+        "--tokenizer_max_length",
+        type=int,
+        default=1024,
+        help="Maximum length of tokenized string. Longer strings will be truncated. Shorter strings will be padded.",
+    )
+    parser.add_argument(
         "--output_dir",
         type=str,
         default="/data/output",

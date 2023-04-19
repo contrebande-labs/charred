@@ -18,6 +18,7 @@ from training_step import train_step
 
 def training_loop(
     tokenizer,
+    tokenizer_max_length,
     text_encoder,
     text_encoder_params,
     vae,
@@ -41,7 +42,7 @@ def training_loop(
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     # dataset setup
-    train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
+    train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length)
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()

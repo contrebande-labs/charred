@@ -79,6 +79,7 @@ def main():
     # Train!
     training_loop(
         tokenizer,
+        args.tokenizer_max_length,
         text_encoder,
         replicated_text_encoder_params,
         vae,

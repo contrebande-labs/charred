@@ -5,50 +5,58 @@ from torchvision import transforms
 from PIL import Image
 import requests
 
+def _prefilter_dataset(example):
 
-def _dataset_transforms(tokenizer, image_transforms, example):
-
-    caption = example["caption"]
-    image_url = example["url"]
+    caption = example["TEXT"]
+    image_url = example["URL"]
     watermark_probability = example["pwatermark"]
 
-    filter_pass = (
+    return (
         caption is not None
         and isinstance(caption, str)
         and image_url is not None
         and isinstance(image_url, str)
+        and watermark_probability is not None
         and watermark_probability < 0.6
     )
 
-    example["pass"] = filter_pass
 
-    if filter_pass:
+def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example):
 
+    caption = example["TEXT"]
+    image_url = example["URL"]
+
+    # request image data bytes from http url
+    try:
         image_bytes = requests.get(image_url, stream=True).raw
+    except:
+        return example
 
-        # TODO: if checksum fails, skip this entry and filter out later
-        # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
+    # TODO: if checksum fails, skip this entry and filter out later
+    # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
-        # append image data
-        # TODO: apply and cache image embbedings here instead of in the training loop (and don't keep the pixel data)
-        example["pixel_values"] = image_transforms(
-            Image.open(image_bytes).convert("RGB")
-        )
+    # append image data
+    # TODO: apply and cache image embbedings here instead of in the training loop (and don't keep the pixel data)
+    example["pixel_values"] = image_transforms(
+        Image.open(image_bytes).convert("RGB")
+    )
 
-        # append tokenized text
-        # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
-        example["input_ids"] = tokenizer(
-            caption,
-            max_length=tokenizer.model_max_length,
-            padding="max_length",
-            truncation=True,
-            return_tensors="pt",
-        ).input_ids
+    # append tokenized text
+    # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
+    example["input_ids"] = tokenizer(
+        text=caption,
+        max_length=tokenizer_max_length,
+        truncation=True,
+        padding="max_length",
+        return_tensors="pt",
+    )["input_ids"]
+
+    example["pass"] = True
 
     return example
 
 
-def dataset_transforms(tokenizer, resolution):
+def dataset_transforms(tokenizer, tokenizer_max_length, resolution):
 
     # TODO: replace with https://jax.readthedocs.io/en/latest/jax.image.html
     image_transforms = transforms.Compose(
@@ -62,10 +70,10 @@ def dataset_transforms(tokenizer, resolution):
         ]
     )
 
-    return lambda example: _dataset_transforms(tokenizer, image_transforms, example)
+    return lambda example: _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example)
 
 
-def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
+def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # loading the dataset
@@ -76,14 +84,14 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
             split="train",
             streaming=True,
         )
+        .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
         .take(n=max_train_steps)
         .map(
-            dataset_transforms(tokenizer, resolution),
-            remove_columns=[],
-            batched=False,  # TODO: maybe batch this?
+            function=dataset_transforms(tokenizer, tokenizer_max_length, resolution)
         )
         .filter(lambda example: example["pass"])
+        .remove_columns(["pass"])
     )
 
     return dataset
