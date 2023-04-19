@@ -111,7 +111,7 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_m
         .map(
             function=dataset_transforms(tokenizer, tokenizer_max_length, resolution)
         )
-        .filter(lambda example: example["pass"])
+        .filter(lambda example: example["pass"]) #filter out samples that didn't pass the tests in the transform function
         .remove_columns(["pass"])
         .take(n=max_train_steps)
     )
