@@ -32,14 +32,29 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
     except:
         return example
 
+    if image_bytes is None:
+        return example
+
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
     # append image data
     # TODO: apply and cache image embbedings here instead of in the training loop (and don't keep the pixel data)
-    example["pixel_values"] = image_transforms(
-        Image.open(image_bytes).convert("RGB")
-    )
+    try:
+        pil_image = Image.open(image_bytes)
+    except:
+        print('Image.open fails on image url: %s' % image_url)
+        return example
+    try:
+        rgb_pil_image = pil_image.convert("RGB")
+    except:
+        print('Image.convert fails on image url: %s' % image_url)
+        return example
+    try:
+        print('Image transforms fail on image url: %s' % image_url)
+        example["pixel_values"] = image_transforms(rgb_pil_image)
+    except:
+        return example
 
     # append tokenized text
     # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
