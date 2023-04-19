@@ -25,7 +25,7 @@ def _train_step(text_encoder, text_encoder_params, vae, vae_params, unet, state,
 
     sample_rng, new_rng = jax.random.split(rng, 2)
 
-    # TODO: can we precompile the loss funtion higher up, maybe in the main function or main training loop init?
+    # TODO: can we precompile the loss function higher up, maybe in the main function or main training loop init?
     loss_lambda = loss_fn(vae, vae_params, batch, sample_rng, noise_scheduler, noise_scheduler_state, text_encoder, text_encoder_params, unet)
     grad_fn = jax.value_and_grad(loss_lambda)
 
