@@ -112,6 +112,6 @@ def training_loop(
 
         train_step_progress_bar.close()
 
-        epochs.write(
-            f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})"
-        )
+        #epochs.write(
+        #    f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})"
+        #)
