@@ -23,6 +23,8 @@ def _prefilter_dataset(example):
 
 def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example):
 
+    example["pass"] = False
+
     caption = example["TEXT"]
     image_url = example["URL"]
 
