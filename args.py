@@ -7,29 +7,13 @@ def parse_args():
         "--pretrained_diffusion_model_name_or_path",
         type=str,
         default="flax/stable-diffusion-2-1",
-        required=True,
         help="Path to pretrained model or model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
-        "--pretrained_diffusion_model_revision",
-        type=str,
-        default=None,
-        required=False,
-        help="Revision of pretrained model identifier from huggingface.co/models.",
     )
     parser.add_argument(
         "--pretrained_text_encoder_model_name_or_path",
         type=str,
         default="google/byt5-base",
-        required=True,
         help="Path to pretrained model or model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
-        "--pretrained_text_encoder_model_revision",
-        type=str,
-        default=None,
-        required=False,
-        help="Revision of pretrained model identifier from huggingface.co/models.",
     )
     parser.add_argument(
         "--output_dir",
