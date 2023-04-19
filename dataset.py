@@ -79,7 +79,7 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
         .shuffle(seed=27, buffer_size=10_000)
         .take(n=max_train_steps)
         .map(
-            transforms=dataset_transforms(tokenizer, resolution),
+            dataset_transforms(tokenizer, resolution),
             remove_columns=[],
             batched=False,  # TODO: maybe batch this?
         )
