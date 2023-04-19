@@ -83,7 +83,7 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer):
             remove_columns=[],
             batched=False,  # TODO: maybe batch this?
         )
-        .filter(filter=lambda example: example["pass"])
+        .filter(lambda example: example["pass"])
     )
 
     return dataset
