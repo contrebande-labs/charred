@@ -28,6 +28,9 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
       }
       wandb.config.update(wandb_args)
   
+  # rng setup
+  train_rngs = jax.random.split(rng, jax.local_device_count())
+  
   # dataset setup
   train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
 
@@ -51,7 +54,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
           batch = shard(batch)
 
-          state, rng, train_metric = p_train_step(state, batch, rng)
+          state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
 
           train_metrics.append(train_metric)
 
