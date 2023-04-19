@@ -10,6 +10,7 @@ def _prefilter_dataset(example):
     caption = example["TEXT"]
     image_url = example["URL"]
     watermark_probability = example["pwatermark"]
+    unsafe_probability = example["punsafe"]
 
     return (
         caption is not None
@@ -18,6 +19,8 @@ def _prefilter_dataset(example):
         and isinstance(image_url, str)
         and watermark_probability is not None
         and watermark_probability < 0.6
+        and unsafe_probability is not None
+        and unsafe_probability < 0.95
     )
 
 
