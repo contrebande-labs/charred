@@ -12,9 +12,8 @@ def setup_model(
     seed,
     mixed_precision,
     pretrained_text_encoder_model_name_or_path,
-    pretrained_text_encoder_model_revision,
     pretrained_diffusion_model_name_or_path,
-    pretrained_diffusion_model_revision,
+
 ):
 
     set_seed(seed)
@@ -31,18 +30,15 @@ def setup_model(
 
     text_encoder = FlaxT5EncoderModel.from_pretrained(
         pretrained_text_encoder_model_name_or_path,
-        revision=pretrained_text_encoder_model_revision,
         dtype=weight_dtype,
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         pretrained_diffusion_model_name_or_path,
-        revision=pretrained_diffusion_model_revision,
         subfolder="vae",
         dtype=weight_dtype,
     )
     unet = FlaxUNet2DConditionModel.from_pretrained(
         pretrained_diffusion_model_name_or_path,
-        revision=pretrained_diffusion_model_revision,
         subfolder="unet",
         dtype=weight_dtype,
     )

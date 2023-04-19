@@ -52,9 +52,7 @@ def main():
         seed,
         args.mixed_precision,
         args.pretrained_text_encoder_model_name_or_path,
-        args.pretrained_text_encoder_model_revision,
         args.pretrained_diffusion_model_name_or_path,
-        args.pretrained_diffusion_model_revision,
     )
 
     # Optimization & scheduling setup
