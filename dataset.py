@@ -33,10 +33,9 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
 
     # request image data bytes from http url
     try:
-        image_bytes = requests.get(image_url, stream=True).raw
+        image_bytes = requests.get(image_url, stream=True, timeout=5).raw
     except:
         return example
-
     if image_bytes is None:
         return example
 
@@ -56,9 +55,9 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
         print('Image.convert fails on image url: %s' % image_url)
         return example
     try:
-        print('Image transforms fail on image url: %s' % image_url)
         example["pixel_values"] = image_transforms(rgb_pil_image)
     except:
+        print('Image transforms fail on image url: %s' % image_url)
         return example
 
     # append tokenized text
