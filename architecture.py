@@ -37,7 +37,7 @@ def setup_model(
         subfolder="vae",
         dtype=weight_dtype,
     )
-    unet = FlaxUNet2DConditionModel.from_pretrained(
+    unet, = FlaxUNet2DConditionModel.from_pretrained(
         pretrained_diffusion_model_name_or_path,
         subfolder="unet",
         dtype=weight_dtype,

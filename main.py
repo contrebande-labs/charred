@@ -66,11 +66,10 @@ def main():
     )
 
     # State setup
-    unet_init_params = unfreeze(unet.init_weights(rng=rng_params))
     replicated_state = jax_utils.replicate(
         train_state.TrainState.create(
             apply_fn=unet,
-            params=unet_init_params,
+            params=unfreeze(unet.init_weights(rng=rng_params)),
             tx=optimizer,
         )
     )
