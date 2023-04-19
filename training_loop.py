@@ -42,7 +42,9 @@ def training_loop(
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     # dataset setup
-    train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length)
+    train_dataset = setup_dataset(
+        max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length
+    )
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()
@@ -94,10 +96,10 @@ def training_loop(
 
         if dataset_needs_saving:
             dataset_needs_saving = False
-            #train_dataset.save_to_disk(dataset_output_dir) #temporarily disabled because that method doesn't work on streaming datasets
+            # train_dataset.save_to_disk(dataset_output_dir) #temporarily disabled because that method doesn't work on streaming datasets
 
         # Create the pipeline using using the trained modules and save it after every epoch
-        #save_to_repository(
+        # save_to_repository(
         #    output_dir,
         #    push_to_hub,
         #    tokenizer,
@@ -108,10 +110,10 @@ def training_loop(
         #    unet,
         #    repo_id,
         #    state,
-        #)
+        # )
 
         train_step_progress_bar.close()
 
-        #epochs.write(
+        # epochs.write(
         #    f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})"
-        #)
+        # )

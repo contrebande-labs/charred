@@ -5,6 +5,7 @@ from torchvision import transforms
 from PIL import Image
 import requests
 
+
 def _prefilter_dataset(example):
 
     caption = example["TEXT"]
@@ -26,7 +27,7 @@ def _prefilter_dataset(example):
 
 def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example):
 
-    if hasattr(example, 'pass'):
+    if hasattr(example, "pass"):
         return example
 
     example["pass"] = False
@@ -50,17 +51,17 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
     try:
         pil_image = Image.open(image_bytes)
     except:
-        print('Image.open fails on image url: %s' % image_url)
+        print("Image.open fails on image url: %s" % image_url)
         return example
     try:
         rgb_pil_image = pil_image.convert("RGB")
     except:
-        print('Image.convert fails on image url: %s' % image_url)
+        print("Image.convert fails on image url: %s" % image_url)
         return example
     try:
         example["pixel_values"] = image_transforms(rgb_pil_image)
     except:
-        print('Image transforms fail on image url: %s' % image_url)
+        print("Image transforms fail on image url: %s" % image_url)
         return example
 
     # append tokenized text
@@ -92,10 +93,14 @@ def dataset_transforms(tokenizer, tokenizer_max_length, resolution):
         ]
     )
 
-    return lambda example: _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example)
+    return lambda example: _dataset_transforms(
+        tokenizer, tokenizer_max_length, image_transforms, example
+    )
 
 
-def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length):
+def setup_dataset(
+    max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length
+):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # loading the dataset
@@ -108,10 +113,10 @@ def setup_dataset(max_train_steps, cache_dir, resolution, tokenizer, tokenizer_m
         )
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
-        .map(
-            function=dataset_transforms(tokenizer, tokenizer_max_length, resolution)
-        )
-        .filter(lambda example: example["pass"]) #filter out samples that didn't pass the tests in the transform function
+        .map(function=dataset_transforms(tokenizer, tokenizer_max_length, resolution))
+        .filter(
+            lambda example: example["pass"]
+        )  # filter out samples that didn't pass the tests in the transform function
         .remove_columns(["pass"])
         .take(n=max_train_steps)
     )

@@ -13,7 +13,6 @@ def setup_model(
     mixed_precision,
     pretrained_text_encoder_model_name_or_path,
     pretrained_diffusion_model_name_or_path,
-
 ):
 
     set_seed(seed)
