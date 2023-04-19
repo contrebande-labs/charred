@@ -9,8 +9,7 @@ from diffusers import (
 
 def setup_model(seed, mixed_precision, pretrained_text_encoder_model_name_or_path, pretrained_text_encoder_model_revision, pretrained_diffusion_model_name_or_path, pretrained_diffusion_model_revision):
 
-  if seed is not None:
-      set_seed(seed)
+  set_seed(seed)
 
   if mixed_precision == "fp16":
       weight_dtype = jnp.float16
@@ -28,8 +27,8 @@ def setup_model(seed, mixed_precision, pretrained_text_encoder_model_name_or_pat
   vae, vae_params = FlaxAutoencoderKL.from_pretrained(
       pretrained_diffusion_model_name_or_path, revision=pretrained_diffusion_model_revision, subfolder="vae", dtype=weight_dtype
   )
-  unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+  unet = FlaxUNet2DConditionModel.from_pretrained(
       pretrained_diffusion_model_name_or_path, revision=pretrained_diffusion_model_revision, subfolder="unet", dtype=weight_dtype
   )
 
-  return tokenizer, text_encoder, vae, vae_params, unet, unet_params
+  return tokenizer, text_encoder, vae, vae_params, unet

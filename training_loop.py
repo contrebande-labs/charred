@@ -15,7 +15,7 @@ from training_step import train_step
 def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet, state,
     cache_dir,
     resolution,
-    seed, max_train_steps, num_train_epochs, train_batch_size,
+    rng, max_train_steps, num_train_epochs, train_batch_size,
     output_dir, dataset_output_dir, push_to_hub, repo_id, log_wandb):
   
   # setup WandB for logging & tracking
@@ -23,17 +23,13 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
       wandb.init(project="charred")
       wandb_args = {
         "max_train_steps": max_train_steps, 
-        "num_train_epochs": num_train_epochs, 
+        "num_train_epochs": num_train_epochs,
         "train_batch_size": train_batch_size
       }
       wandb.config.update(wandb_args)
   
   # dataset setup
   train_dataset = setup_dataset(max_train_steps, cache_dir, resolution, tokenizer)
-
-  # Initialize our training
-  rng = jax.random.PRNGKey(seed)
-  train_rng = jax.random.split(rng, jax.local_device_count())
 
   # batch setup
   total_train_batch_size = train_batch_size * jax.local_device_count()
@@ -55,7 +51,7 @@ def training_loop(tokenizer, text_encoder, text_encoder_params, vae, vae_params,
 
           batch = shard(batch)
 
-          state, train_rng, train_metric = p_train_step(state, batch, train_rng)
+          state, rng, train_metric = p_train_step(state, batch, rng)
 
           train_metrics.append(train_metric)
 
