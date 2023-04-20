@@ -48,11 +48,14 @@ def training_loop(
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
-    step_i = 0
     t0 = time.monotonic()
     for epoch in epochs:
 
         unreplicated_train_metric = None
+
+        steps = tqdm(
+            total=max_train_steps, desc="Training...", position=1, leave=False
+        )
 
         for batch in train_dataloader:
 
@@ -62,24 +65,27 @@ def training_loop(
 
             unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
-            step_i += 1
+            steps.update(1)
 
             if log_wandb:
                 walltime = time.monotonic() - t0
                 wandb.log(
                     data={
                         "walltime": walltime,
-                        "train/step": step_i,
+                        "train/step": steps,
                         "train/epoch": epoch,
                         "train/secs_per_epoch": walltime / (epoch + 1),
-                        "train/steps_per_sec": step_i / walltime,
+                        "train/steps_per_sec": steps / walltime,
                         **{
                             f"train/{k}": v
                             for k, v in unreplicated_train_metric.items()
                         },
                     },
-                    commit=True,
+                    commit=False,
                 )
+
+        if log_wandb:
+            wandb.log(data={}, commit=True)
 
         # Create the pipeline using using the trained modules and save it after every epoch
         if repo_id is not None:
@@ -98,3 +104,6 @@ def training_loop(
         epochs.update(1)
 
     epochs.close()
+
+    if log_wandb:
+        wandb.finish()
