@@ -4,14 +4,14 @@ import torch
 from torchvision import transforms
 from PIL import Image
 import requests
-from multiprocessing import cpu_count
-import math
 
 from flax import jax_utils
 
 from architecture import setup_model
 
-def _get_one_image_pixel_values(image_transforms, url):
+def _get_one_image_pixel_values(image_transforms, sample):
+    print(sample)
+    url = sample["URL"]
     try:
         image_bytes = requests.get(url, stream=True, timeout=5).raw
     except:
@@ -76,7 +76,7 @@ def _dataset_transforms(
 
     # get image data
     stacked_pixel_values = (
-        torch.stack([_get_one_image_pixel_values(image_transforms, sample["URL"]) for sample in samples])
+        torch.stack([_get_one_image_pixel_values(image_transforms, sample) for sample in samples])
         .to(memory_format=torch.contiguous_format)
         .float()
     )
@@ -164,7 +164,6 @@ def setup_dataset(
             cache_dir=os.path.join(cache_dir, "laion-high-resolution"),
             split="train",
             streaming=True,
-            num_proc=math.floor(cpu_count() / 2),
         )
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
