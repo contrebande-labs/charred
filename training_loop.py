@@ -46,14 +46,14 @@ def training_loop(
     p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
 
     # Epoch setup
-    epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
+    epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
     t0 = time.monotonic()
     for epoch in epochs:
 
         unreplicated_train_metric = None
 
         steps = tqdm(
-            total=max_train_steps, desc="Training...", position=1, leave=False
+            total=max_train_steps, desc="Training steps...", position=1, leave=False
         )
 
         for batch in train_dataloader:
@@ -101,8 +101,6 @@ def training_loop(
             )
  
         epochs.update(1)
+        steps.close()
 
     epochs.close()
-
-    if log_wandb:
-        wandb.finish()
