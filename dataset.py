@@ -1,10 +1,10 @@
 import os
-import math
 from datasets import load_dataset
 from torchvision import transforms
 from PIL import Image
 import requests
-from multiprocessing import cpu_count
+
+from architecture import setup_model
 
 
 def _prefilter_dataset(example):
@@ -100,7 +100,7 @@ def dataset_transforms(tokenizer, tokenizer_max_length, resolution):
 
 
 def setup_dataset(
-    max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length
+    max_samples, cache_dir, resolution, tokenizer, tokenizer_max_length
 ):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
@@ -116,13 +116,32 @@ def setup_dataset(
         .shuffle(seed=27, buffer_size=10_000)
         .map(
             function=dataset_transforms(tokenizer, tokenizer_max_length, resolution),
-            num_proc=math.floor(cpu_count() / 2)
         )
         .filter(
             lambda example: example["pass"]
         )  # filter out samples that didn't pass the tests in the transform function
         .remove_columns(["pass"])
-        .take(n=max_train_steps)
+        .take(n=max_samples)
     )
 
     return dataset
+
+
+if __name__ == "__main__":
+
+    # Pretrained freezed model setup
+    tokenizer, text_encoder, vae, vae_params, _ = setup_model(
+        7,
+        None,
+        "google/byt5-base",
+        "flax/stable-diffusion-2-1",
+    )
+
+    dataset = setup_dataset(
+        10, "/data/dataset/cache", 1024, tokenizer, 1024
+    )
+
+    for sample in dataset:
+        print(sample["id"])
+
+

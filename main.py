@@ -35,9 +35,9 @@ def main():
         wandb.define_metric("train/step", step_metric="walltime")
 
     if args.push_to_hub:
-        repo_id = create_repository(
-            args.output_dir, args.hub_model_id
-        )
+        repo_id = create_repository(args.output_dir, args.hub_model_id)
+    else:
+        repo_id = None
 
     # init random number generator
     seed = args.seed
@@ -76,15 +76,12 @@ def main():
     # Train!
     training_loop(
         tokenizer,
-        args.tokenizer_max_length,
         text_encoder,
         replicated_text_encoder_params,
         vae,
         replicated_vae_params,
         unet,
         replicated_state,
-        args.cache_dir,
-        args.resolution,
         rng,
         args.max_train_steps,
         args.num_train_epochs,
@@ -94,6 +91,7 @@ def main():
         log_wandb,
     )
 
+    wandb.finish()
 
 if __name__ == "__main__":
     main()

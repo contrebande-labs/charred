@@ -1,7 +1,5 @@
 import os
 
-from pathlib import Path
-
 from huggingface_hub import create_repo
 
 import jax
@@ -40,8 +38,8 @@ def save_to_repository(
     vae,
     vae_params,
     unet,
-    repo_id,
     state,
+    repo_id,
 ):
 
     scheduler = FlaxPNDMScheduler(

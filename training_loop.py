@@ -3,30 +3,26 @@ import time
 # misc. utils
 from tqdm.auto import tqdm
 import wandb
+from datasets import load_dataset
 
 # jax/flax
 import jax
-import jax.numpy as jnp
 from flax.training.common_utils import shard
 from flax import jax_utils
 
 from batch import setup_dataloader
-from dataset import setup_dataset
 from repository import save_to_repository
 from training_step import train_step
 
 
 def training_loop(
     tokenizer,
-    tokenizer_max_length,
     text_encoder,
     text_encoder_params,
     vae,
     vae_params,
     unet,
     state,
-    cache_dir,
-    resolution,
     rng,
     max_train_steps,
     num_train_epochs,
@@ -40,8 +36,10 @@ def training_loop(
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     # dataset setup
-    train_dataset = setup_dataset(
-        max_train_steps, cache_dir, resolution, tokenizer, tokenizer_max_length
+    train_dataset = load_dataset(
+        path="/data/dataset/output/charred",
+        split="train",
+        streaming=True,
     )
 
     # batch setup
@@ -53,7 +51,6 @@ def training_loop(
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch ... ", position=0)
-    dataset_needs_saving = True
     step_i = 0
     t0 = time.monotonic()
     for epoch in epochs:
@@ -79,7 +76,7 @@ def training_loop(
             if log_wandb:
                 walltime = time.monotonic() - t0
                 wandb.log(
-                    {
+                    data={
                         "walltime": walltime,
                         "train/step": step_i,
                         "train/epoch": epoch,
@@ -89,29 +86,23 @@ def training_loop(
                             f"train/{k}": v
                             for k, v in unreplicated_train_metric.items()
                         },
-                    }
+                    },
                 )
 
-        if dataset_needs_saving:
-            dataset_needs_saving = False
-            # train_dataset.save_to_disk(dataset_output_dir) #temporarily disabled because that method doesn't work on streaming datasets
+        wandb.log(commit=True)
 
         # Create the pipeline using using the trained modules and save it after every epoch
         if repo_id is not None:
             save_to_repository(
-            output_dir,
-            tokenizer,
-            text_encoder,
-            text_encoder_params,
-            vae,
-            vae_params,
-            unet,
-            repo_id,
-            state,
+                output_dir,
+                tokenizer,
+                text_encoder,
+                text_encoder_params,
+                vae,
+                vae_params,
+                unet,
+                state,
+                repo_id,
             )
 
         train_step_progress_bar.close()
-
-        # epochs.write(
-        #    f"Epoch... ({epoch}/{num_train_epochs} | Loss: {unreplicated_train_metric['loss']})"
-        # )
