@@ -10,9 +10,7 @@ from flax import jax_utils
 from architecture import setup_model
 
 
-def _get_one_image_pixel_values(image_transforms, sample):
-    print(sample)
-    url = sample["URL"]
+def _get_one_image_pixel_values(image_transforms, url):
     try:
         image_bytes = requests.get(url, stream=True, timeout=5).raw
     except:
@@ -78,8 +76,8 @@ def _dataset_transforms(
     stacked_pixel_values = (
         torch.stack(
             [
-                _get_one_image_pixel_values(image_transforms, sample)
-                for sample in samples
+                _get_one_image_pixel_values(image_transforms, url)
+                for url in samples["URL"]
             ]
         )
         .to(memory_format=torch.contiguous_format)
@@ -95,7 +93,7 @@ def _dataset_transforms(
     )
 
     input_ids = tokenizer(
-        text=samples,
+        text=samples["TEXT"],
         max_length=tokenizer_max_length,
         truncation=True,
         padding="max_length",
@@ -161,7 +159,6 @@ def setup_dataset(
     vae_params,
 ):
 
-    # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
     # loading the dataset
     dataset = (
         load_dataset(
