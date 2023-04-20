@@ -96,9 +96,8 @@ def parse_args():
     )
     parser.add_argument(
         "--push_to_hub",
-        type=bool,
         default=True,
-        action="store_true",
+        choices=[True, False],
         help="Whether or not to push the model to the Hub.",
     )
     parser.add_argument(
