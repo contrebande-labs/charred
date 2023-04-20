@@ -57,7 +57,7 @@ def _download_image(
             pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
             pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
             pil_rgb_image.save(cached_image_image_file_path)
-        except:
+        except Exception:
             print("error processing url: %s" % image_url)
             traceback.print_exc()
             return sample
