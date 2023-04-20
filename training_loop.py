@@ -78,9 +78,8 @@ def training_loop(
                             for k, v in unreplicated_train_metric.items()
                         },
                     },
+                    commit=True,
                 )
-
-        wandb.log(data={}, commit=True)
 
         # Create the pipeline using using the trained modules and save it after every epoch
         if repo_id is not None:
