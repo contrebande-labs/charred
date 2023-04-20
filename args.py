@@ -98,7 +98,6 @@ def parse_args():
         "--push_to_hub",
         type=bool,
         default=True,
-        choices=[True, False],
         action="store_true",
         help="Whether or not to push the model to the Hub.",
     )
