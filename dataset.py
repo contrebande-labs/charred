@@ -104,15 +104,17 @@ def _dataset_transforms(
         method=vae.encode,
     )
 
-    input_ids = tokenizer(
-        text=samples["TEXT"],
-        max_length=tokenizer_max_length,
-        truncation=True,
-        padding="max_length",
-        return_tensors="pt",
-    ).input_ids
-
-    stacked_input_ids = torch.stack(input_ids).numpy()
+    stacked_input_ids = torch.stack(
+        [
+            tokenizer(
+                text=samples["TEXT"],
+                max_length=tokenizer_max_length,
+                truncation=True,
+                padding="max_length",
+                return_tensors="pt",
+            ).input_ids
+        ]
+    ).numpy()
 
     samples["encoder_hidden_states"] = text_encoder(
         stacked_input_ids,
