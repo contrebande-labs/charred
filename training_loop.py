@@ -103,3 +103,7 @@ def training_loop(
             )
 
         train_step_progress_bar.close()
+ 
+        epochs.update(1)
+
+    epochs.close()
