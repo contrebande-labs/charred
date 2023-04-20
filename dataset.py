@@ -114,7 +114,7 @@ def _dataset_transforms(
     #     train=False,
     # )[0]
 
-    samples["byt5_input_ids"] = tokenizer(
+    samples["input_ids"] = tokenizer(
         text=samples["TEXT"],
         max_length=tokenizer_max_length,
         truncation=True,
