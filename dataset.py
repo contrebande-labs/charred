@@ -1,11 +1,10 @@
 import os
 from datasets import load_dataset
-import torch
 from torchvision import transforms
 from PIL import Image
 import requests
 
-from flax import jax_utils
+from transformers import ByT5Tokenizer
 
 from architecture import setup_model
 
@@ -80,10 +79,6 @@ def download_image(
 def _dataset_transforms(
     tokenizer,
     tokenizer_max_length,
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
     samples,
 ):
     # TODO: if checksum fails, skip this entry and filter out later
@@ -134,19 +129,11 @@ def _dataset_transforms(
 def dataset_transforms(
     tokenizer,
     tokenizer_max_length,
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
 ):
 
     return lambda samples: _dataset_transforms(
         tokenizer,
         tokenizer_max_length,
-        text_encoder,
-        text_encoder_params,
-        vae,
-        vae_params,
         samples,
     )
 
@@ -157,10 +144,6 @@ def setup_dataset(
     resolution,
     tokenizer,
     tokenizer_max_length,
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
 ):
 
     # loading the dataset
@@ -187,10 +170,6 @@ def setup_dataset(
             function=dataset_transforms(
                 tokenizer,
                 tokenizer_max_length,
-                text_encoder,
-                text_encoder_params,
-                vae,
-                vae_params,
             ),
             batched=True,
             batch_size=16,
@@ -208,15 +187,7 @@ def setup_dataset(
 
 if __name__ == "__main__":
 
-    # Pretrained freezed model setup
-    tokenizer, text_encoder, vae, vae_params, _ = setup_model(
-        7,
-        None,
-        "google/byt5-base",
-        "flax/stable-diffusion-2-1",
-    )
-
-    text_encoder_params = jax_utils.replicate(text_encoder.params)
+    tokenizer = ByT5Tokenizer()
 
     max_samples = 10
 
@@ -226,13 +197,9 @@ if __name__ == "__main__":
         1024,
         tokenizer,
         1024,
-        text_encoder,
-        text_encoder_params,
-        vae,
-        vae_params,
     )
 
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
     for sample in dataset:
-        print(sample["URL"])
+        print(len(sample["pixel_values"]))
