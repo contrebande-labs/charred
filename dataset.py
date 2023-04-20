@@ -45,7 +45,6 @@ def _download_image(
         # get image data from cache
         try:
             pil_rgb_image = Image.open(cached_image_image_file_path)
-            print("taking image from cache")
         except:
             return sample
     else:
@@ -67,6 +66,8 @@ def _download_image(
             pil_rgb_image.save(cached_image_image_file_path)
         except Exception:
             return sample
+        # save image to disk but do not catch exception. this has to fail because other wise the mapper will run forever
+        pil_rgb_image.save(cached_image_image_file_path)
 
     try:
         sample["pixel_values"] = image_transforms(pil_rgb_image)
