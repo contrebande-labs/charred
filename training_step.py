@@ -7,7 +7,7 @@ from diffusers import (
 from loss import loss_fn
 
 
-def train_step(text_encoder, text_encoder_params, vae, vae_params, unet):
+def train_step(text_encoder, vae, unet):
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -17,7 +17,7 @@ def train_step(text_encoder, text_encoder_params, vae, vae_params, unet):
     )
     noise_scheduler_state = noise_scheduler.create_state()
 
-    train_step_lambda = lambda state, batch, train_rng: _train_step(
+    train_step_lambda = lambda state, text_encoder_params, vae_params, batch, train_rng: _train_step(
         text_encoder,
         text_encoder_params,
         vae,

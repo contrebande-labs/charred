@@ -43,7 +43,7 @@ def training_loop(
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
 
     # Precompiled training step setup
-    p_train_step = train_step(text_encoder, text_encoder_params, vae, vae_params, unet)
+    p_train_step = train_step(text_encoder, vae, unet)
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
@@ -60,7 +60,7 @@ def training_loop(
 
             batch = shard(batch)
 
-            state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
+            state, train_rngs, train_metric = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
 
             unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
