@@ -104,21 +104,29 @@ def _dataset_transforms(
         method=vae.encode,
     )
 
-    stacked_input_ids = torch.stack(
-        tokenizer(
-            text=samples["TEXT"],
-            max_length=tokenizer_max_length,
-            truncation=True,
-            padding="max_length",
-            return_tensors="pt",
-        ).input_ids
-    ).numpy()
+    # stacked_input_ids = torch.stack(
+    #     tokenizer(
+    #         text=samples["TEXT"],
+    #         max_length=tokenizer_max_length,
+    #         truncation=True,
+    #         padding="max_length",
+    #         return_tensors="pt",
+    #     ).input_ids
+    # ).numpy()
 
-    samples["byt5_text_embedding"] = text_encoder(
-        stacked_input_ids,
-        params=text_encoder_params,
-        train=False,
-    )[0]
+    # samples["byt5_text_embedding"] = text_encoder(
+    #     stacked_input_ids,
+    #     params=text_encoder_params,
+    #     train=False,
+    # )[0]
+
+    samples["byt5_input_ids"] = tokenizer(
+        text=samples["TEXT"],
+        max_length=tokenizer_max_length,
+        truncation=True,
+        padding="max_length",
+        return_tensors="pt",
+    ).input_ids
 
     return samples
 
