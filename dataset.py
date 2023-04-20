@@ -49,15 +49,20 @@ def _download_image(
     else:
         # get image data from url
         try:
-            image_bytes = requests.get(sample["URL"], stream=True, timeout=5).raw
+            image_bytes = requests.get(image_url, stream=True, timeout=5).raw
             if image_bytes is None:
                 return sample
             pil_image = Image.open(image_bytes)
             pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
             pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
-            pil_rgb_image.save(cached_image_image_file_path)
+            try:
+                pil_rgb_image.save(cached_image_image_file_path)
+            except Exception as e:
+                print("error processing image file: %s" % cached_image_image_file_path)
+                print(e)
+                return sample
         except Exception as e:
-            print("error saving file: %s" % cached_image_image_file_path)
+            print("error processing url: %s" % image_url)
             print(e)
             return sample
 
