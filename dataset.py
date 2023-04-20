@@ -97,7 +97,7 @@ def _dataset_transforms(
     ).numpy()
 
     # compute image embeddings
-    samples["vae_outputs"] = vae.apply(
+    samples["vae_image_embedding"] = vae.apply(
         {"params": vae_params},
         stacked_pixel_values,
         deterministic=True,
@@ -114,7 +114,7 @@ def _dataset_transforms(
         ).input_ids
     ).numpy()
 
-    samples["encoder_hidden_states"] = text_encoder(
+    samples["byt5_text_embedding"] = text_encoder(
         stacked_input_ids,
         params=text_encoder_params,
         train=False,
@@ -187,7 +187,11 @@ def setup_dataset(
             batched=True,
             batch_size=16,
         )
-        .remove_columns(["pixel_values"])
+        .remove_columns(
+            [
+                "pixel_values",
+            ]
+        )
         .take(n=max_samples)
     )
 
