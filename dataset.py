@@ -105,15 +105,13 @@ def _dataset_transforms(
     )
 
     stacked_input_ids = torch.stack(
-        [
-            tokenizer(
-                text=samples["TEXT"],
-                max_length=tokenizer_max_length,
-                truncation=True,
-                padding="max_length",
-                return_tensors="pt",
-            ).input_ids
-        ]
+        tokenizer(
+            text=samples["TEXT"],
+            max_length=tokenizer_max_length,
+            truncation=True,
+            padding="max_length",
+            return_tensors="pt",
+        ).input_ids
     ).numpy()
 
     samples["encoder_hidden_states"] = text_encoder(
