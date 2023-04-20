@@ -99,8 +99,7 @@ def training_loop(
                 state,
                 repo_id,
             )
- 
+
         epochs.update(1)
-        steps.close()
 
     epochs.close()

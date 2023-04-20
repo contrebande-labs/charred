@@ -91,7 +91,8 @@ def main():
         log_wandb,
     )
 
-    wandb.finish()
+    if log_wandb:
+        wandb.finish()
 
 
 if __name__ == "__main__":
