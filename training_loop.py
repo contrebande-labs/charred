@@ -3,7 +3,6 @@ import time
 # misc. utils
 from tqdm.auto import tqdm
 import wandb
-from datasets import load_dataset
 
 # jax/flax
 import jax
