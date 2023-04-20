@@ -90,19 +90,19 @@ def _dataset_transforms(
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
     # get image data
-    stacked_pixel_values = (
-        torch.stack(samples["pixel_values"])
-        .to(memory_format=torch.contiguous_format)
-        .float()
-    ).numpy()
+    # stacked_pixel_values = (
+    #     torch.stack(samples["pixel_values"])
+    #     .to(memory_format=torch.contiguous_format)
+    #     .float()
+    # ).numpy()
 
-    # compute image embeddings
-    samples["vae_image_embedding"] = vae.apply(
-        {"params": vae_params},
-        stacked_pixel_values,
-        deterministic=True,
-        method=vae.encode,
-    )
+    # # compute image embeddings
+    # samples["vae_image_embedding"] = vae.apply(
+    #     {"params": vae_params},
+    #     stacked_pixel_values,
+    #     deterministic=True,
+    #     method=vae.encode,
+    # )
 
     # stacked_input_ids = torch.stack(
     #     tokenizer(
