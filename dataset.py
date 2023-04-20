@@ -9,6 +9,7 @@ from flax import jax_utils
 
 from architecture import setup_model
 
+
 def _get_one_image_pixel_values(image_transforms, sample):
     print(sample)
     url = sample["URL"]
@@ -36,7 +37,6 @@ def _get_one_image_pixel_values(image_transforms, sample):
         print("Image transforms fail on image url: %s" % url)
         return None
     return pixel_values
-
 
 
 def _prefilter_dataset(example):
@@ -76,7 +76,12 @@ def _dataset_transforms(
 
     # get image data
     stacked_pixel_values = (
-        torch.stack([_get_one_image_pixel_values(image_transforms, sample) for sample in samples])
+        torch.stack(
+            [
+                _get_one_image_pixel_values(image_transforms, sample)
+                for sample in samples
+            ]
+        )
         .to(memory_format=torch.contiguous_format)
         .float()
     )
