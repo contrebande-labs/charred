@@ -26,7 +26,6 @@ def setup_dataloader(train_dataset, train_batch_size):
     return torch.utils.data.DataLoader(
         # we don't shuffle here because the dataset is already shuffled
         train_dataset,
-        shuffle=True,
         collate_fn=collate,
         batch_size=train_batch_size,
         drop_last=True,
