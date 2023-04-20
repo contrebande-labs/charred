@@ -5,16 +5,14 @@ import jax
 def loss_fn(
     vae,
     vae_params,
-    batch,
-    sample_rng,
     noise_scheduler,
     noise_scheduler_state,
     text_encoder,
     text_encoder_params,
     unet,
 ):
-    return lambda state_params: _loss_fn(
-        state_params,
+    return lambda state, batch, sample_rng: _loss_fn(
+        state,
         vae,
         vae_params,
         batch,
@@ -28,7 +26,7 @@ def loss_fn(
 
 
 def _loss_fn(
-    state_params,
+    state,
     vae,
     vae_params,
     batch,
@@ -79,7 +77,7 @@ def _loss_fn(
 
     # Predict the noise residual and compute loss
     model_pred = unet.apply(
-        {"params": state_params},
+        {"params": state},
         noisy_latents,
         timesteps,
         encoder_hidden_states,

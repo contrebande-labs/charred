@@ -53,8 +53,6 @@ def _train_step(
     loss_lambda = loss_fn(
         vae,
         vae_params,
-        batch,
-        sample_rng,
         noise_scheduler,
         noise_scheduler_state,
         text_encoder,
@@ -63,7 +61,7 @@ def _train_step(
     )
     grad_fn = jax.value_and_grad(loss_lambda)
 
-    loss, grad = grad_fn(state.params)
+    loss, grad = grad_fn(state.params, batch, rng)
     grad_mean = jax.lax.pmean(grad, "batch")
 
     new_state = state.apply_gradients(grads=grad_mean)
