@@ -45,6 +45,7 @@ def _download_image(
         # get image data from cache
         try:
             pil_rgb_image = Image.open(cached_image_image_file_path)
+            print("taking image from cache")
         except:
             return sample
     else:
@@ -54,12 +55,17 @@ def _download_image(
             if image_bytes is None:
                 return sample
             pil_image = Image.open(image_bytes)
-            pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
-            pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
+            if pil_image.mode == "RGB":
+                pil_rgb_image = pil_image
+            else:
+                pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
+                if pil_image.mode == "RGBA":
+                    pil_rgb_image.paste(pil_image, mask=pil_image.split()[-1])
+                else:
+                    pil_rgb_image.paste(pil_image)
+                return sample
             pil_rgb_image.save(cached_image_image_file_path)
         except Exception:
-            print("error processing url: %s" % image_url)
-            traceback.print_exc()
             return sample
 
     try:
