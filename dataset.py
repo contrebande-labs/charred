@@ -1,17 +1,17 @@
 from datasets import load_dataset
+import os
 from torchvision import transforms
 from PIL import Image
 import requests
+from hashlib import sha3_512
 
 from transformers import ByT5Tokenizer
-
-from architecture import setup_model
 
 
 def _prefilter_dataset(example):
 
-    caption = example["TEXT"]
     image_url = example["URL"]
+    caption = example["TEXT"]
     watermark_probability = example["pwatermark"]
     unsafe_probability = example["punsafe"]
 
@@ -23,7 +23,7 @@ def _prefilter_dataset(example):
         and watermark_probability is not None
         and watermark_probability < 0.6
         and unsafe_probability is not None
-        and unsafe_probability < 0.95
+        and unsafe_probability < 1.0
     )
 
 
@@ -36,15 +36,30 @@ def _download_image(
 
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
+    image_url = sample["URL"]
+    url_hash = sha3_512(image_url.encode('UTF-8')).hexdigest()
+    cached_image_image_file_path = os.path.join("/data/image-cache", '%s.jpeg' % url_hash)
 
-    # get image data
-    try:
-        image_bytes = requests.get(sample["URL"], stream=True, timeout=5).raw
-        if image_bytes is None:
+    if os.path.isfile(cached_image_image_file_path):
+        # get image data from cache
+        try:
+            pil_rgb_image = Image.open(cached_image_image_file_path)
+        except:
             return sample
-        pil_image = Image.open(image_bytes)
-        pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
-        pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
+    else:
+        # get image data from url
+        try:
+            image_bytes = requests.get(sample["URL"], stream=True, timeout=5).raw
+            if image_bytes is None:
+                return sample
+            pil_image = Image.open(image_bytes)
+            pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
+            pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
+            pil_rgb_image.save(cached_image_image_file_path)
+        except:
+            return sample
+
+    try:
         sample["pixel_values"] = image_transforms(pil_rgb_image)
     except:
         return sample
@@ -83,6 +98,7 @@ def _dataset_transforms(
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
+    # TODO: cache image and text embeddings here
     # get image data
     # stacked_pixel_values = (
     #     torch.stack(samples["pixel_values"])
