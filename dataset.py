@@ -4,10 +4,39 @@ import torch
 from torchvision import transforms
 from PIL import Image
 import requests
+from multiprocessing import cpu_count
+import math
 
 from flax import jax_utils
 
 from architecture import setup_model
+
+def _get_one_image_pixel_values(image_transforms, url):
+    try:
+        image_bytes = requests.get(url, stream=True, timeout=5).raw
+    except:
+        print("Image url request fails: %s" % url)
+        return None
+    if image_bytes is None:
+        print("Image url respons body is empty: %s" % url)
+        return None
+    try:
+        pil_image = Image.open(image_bytes)
+    except:
+        print("Image.open fails on image url: %s" % url)
+        return None
+    try:
+        rgb_pil_image = pil_image.convert("RGB")
+    except:
+        print("Image.convert fails on image url: %s" % url)
+        return None
+    try:
+        pixel_values = image_transforms(rgb_pil_image)
+    except:
+        print("Image transforms fail on image url: %s" % url)
+        return None
+    return pixel_values
+
 
 
 def _prefilter_dataset(example):
@@ -37,54 +66,23 @@ def _dataset_transforms(
     vae,
     vae_params,
     image_transforms,
-    example,
+    samples,
 ):
 
-    if hasattr(example, "pass"):
-        return example
-
-    example["pass"] = False
-
-    caption = example["TEXT"]
-    image_url = example["URL"]
-
-    # request image data bytes from http url
-    try:
-        image_bytes = requests.get(image_url, stream=True, timeout=5).raw
-    except:
-        return example
-    if image_bytes is None:
-        return example
+    samples["pass"] = False
 
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
-    # append image data
-    # TODO: apply and cache image embbedings here instead of in the training loop (and don't keep the pixel data)
-    try:
-        pil_image = Image.open(image_bytes)
-    except:
-        print("Image.open fails on image url: %s" % image_url)
-        return example
-    try:
-        rgb_pil_image = pil_image.convert("RGB")
-    except:
-        print("Image.convert fails on image url: %s" % image_url)
-        return example
-    try:
-        pixel_values = image_transforms(rgb_pil_image)
-    except:
-        print("Image transforms fail on image url: %s" % image_url)
-        return example
-
-    # append tokenized text
-    # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
-
-    stacked_pixel_values = (torch.stack(pixel_values)
+    # get image data
+    stacked_pixel_values = (
+        torch.stack([_get_one_image_pixel_values(image_transforms, sample["URL"]) for sample in samples])
         .to(memory_format=torch.contiguous_format)
-        .float())
+        .float()
+    )
 
-    example["vae_outputs"] = vae.apply(
+    # compute image embeddings
+    samples["vae_outputs"] = vae.apply(
         {"params": vae_params},
         stacked_pixel_values,
         deterministic=True,
@@ -92,24 +90,24 @@ def _dataset_transforms(
     )
 
     input_ids = tokenizer(
-        text=caption,
+        text=samples,
         max_length=tokenizer_max_length,
         truncation=True,
         padding="max_length",
         return_tensors="pt",
-    )["input_ids"]
+    ).input_ids
 
     stacked_input_ids = torch.stack(input_ids)
 
-    example["encoder_hidden_states"] = text_encoder(
+    samples["encoder_hidden_states"] = text_encoder(
         stacked_input_ids,
         params=text_encoder_params,
         train=False,
     )[0]
 
-    example["pass"] = True
+    samples["pass"] = True
 
-    return example
+    return samples
 
 
 def dataset_transforms(
@@ -134,7 +132,7 @@ def dataset_transforms(
         ]
     )
 
-    return lambda example: _dataset_transforms(
+    return lambda samples: _dataset_transforms(
         tokenizer,
         tokenizer_max_length,
         text_encoder,
@@ -142,7 +140,7 @@ def dataset_transforms(
         vae,
         vae_params,
         image_transforms,
-        example,
+        samples,
     )
 
 
@@ -166,6 +164,7 @@ def setup_dataset(
             cache_dir=os.path.join(cache_dir, "laion-high-resolution"),
             split="train",
             streaming=True,
+            num_proc=math.floor(cpu_count() / 2),
         )
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
@@ -179,6 +178,8 @@ def setup_dataset(
                 vae_params,
                 resolution,
             ),
+            batched=True,
+            batch_size=16,
         )
         .filter(
             lambda example: example["pass"]
