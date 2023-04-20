@@ -38,9 +38,10 @@ def main():
         wandb.define_metric("*", step_metric="train/step")
         wandb.define_metric("train/step", step_metric="walltime")
 
-    repo_id = create_repository(
-        args.output_dir, args.push_to_hub, args.hub_model_id, args.hub_token
-    )
+    if args.push_to_hub:
+        repo_id = create_repository(
+            args.output_dir, args.push_to_hub, args.hub_model_id, args.hub_token
+        )
 
     # init random number generator
     seed = args.seed
@@ -94,7 +95,6 @@ def main():
         args.train_batch_size,
         args.output_dir,
         args.dataset_output_dir,
-        args.push_to_hub,
         repo_id,
         log_wandb,
     )

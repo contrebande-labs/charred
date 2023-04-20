@@ -36,7 +36,6 @@ def get_params_to_save(params):
 
 def save_to_repository(
     output_dir,
-    push_to_hub,
     tokenizer,
     text_encoder,
     text_encoder_params,
@@ -75,10 +74,9 @@ def save_to_repository(
         },
     )
 
-    if push_to_hub:
-        upload_folder(
-            repo_id=repo_id,
-            folder_path=output_dir,
-            commit_message="End of training",
-            ignore_patterns=["step_*", "epoch_*"],
-        )
+    upload_folder(
+        repo_id=repo_id,
+        folder_path=output_dir,
+        commit_message="End of training",
+        ignore_patterns=["step_*", "epoch_*"],
+    )
