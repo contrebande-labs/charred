@@ -38,8 +38,10 @@ def _download_image(
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
     image_url = sample["URL"]
-    url_hash = sha3_512(image_url.encode('UTF-8')).hexdigest()
-    cached_image_image_file_path = os.path.join("/data/image-cache", '%s.jpeg' % url_hash)
+    url_hash = sha3_512(image_url.encode("UTF-8")).hexdigest()
+    cached_image_image_file_path = os.path.join(
+        "/data/image-cache", "%s.jpeg" % url_hash
+    )
 
     if os.path.isfile(cached_image_image_file_path):
         # get image data from cache
@@ -89,7 +91,7 @@ def download_image(
             transforms.Resize(
                 resolution, interpolation=transforms.InterpolationMode.LANCZOS
             ),
-            transforms.CenterCrop(resolution), #TODO: do we need this?
+            transforms.CenterCrop(resolution),  # TODO: do we need this?
             transforms.ToTensor(),
         ]
     )

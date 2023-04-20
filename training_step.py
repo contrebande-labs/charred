@@ -17,17 +17,19 @@ def train_step(text_encoder, vae, unet):
     )
     noise_scheduler_state = noise_scheduler.create_state()
 
-    train_step_lambda = lambda state, text_encoder_params, vae_params, batch, train_rng: _train_step(
-        text_encoder,
-        text_encoder_params,
-        vae,
-        vae_params,
-        unet,
-        state,
-        noise_scheduler,
-        noise_scheduler_state,
-        batch,
-        train_rng,
+    train_step_lambda = (
+        lambda state, text_encoder_params, vae_params, batch, train_rng: _train_step(
+            text_encoder,
+            text_encoder_params,
+            vae,
+            vae_params,
+            unet,
+            state,
+            noise_scheduler,
+            noise_scheduler_state,
+            batch,
+            train_rng,
+        )
     )
 
     # Create parallel version of the train step
@@ -62,7 +64,7 @@ def _train_step(
     sample_rng, new_rng = jax.random.split(rng, 2)
 
     loss, grad = grad_fn(state.params, batch, sample_rng)
- 
+
     grad_mean = jax.lax.pmean(grad, "batch")
 
     new_state = state.apply_gradients(grads=grad_mean)

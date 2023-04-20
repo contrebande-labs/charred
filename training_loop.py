@@ -60,7 +60,9 @@ def training_loop(
 
             batch = shard(batch)
 
-            state, train_rngs, train_metric = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            state, train_rngs, train_metric = p_train_step(
+                state, text_encoder_params, vae_params, batch, train_rngs
+            )
 
             unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
