@@ -1,4 +1,3 @@
-import os
 from datasets import load_dataset
 from torchvision import transforms
 from PIL import Image
@@ -65,7 +64,7 @@ def download_image(
             transforms.Resize(
                 resolution, interpolation=transforms.InterpolationMode.LANCZOS
             ),
-            transforms.RandomCrop(resolution),
+            transforms.CenterCrop(resolution), #TODO: do we need this?
             transforms.ToTensor(),
         ]
     )
