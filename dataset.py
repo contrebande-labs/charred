@@ -56,8 +56,9 @@ def _download_image(
             pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
             pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
             pil_rgb_image.save(cached_image_image_file_path)
-        except:
-            print("error saving file")
+        except Exception as e:
+            print("error saving file: %s" % cached_image_image_file_path)
+            print(e)
             return sample
 
     try:
