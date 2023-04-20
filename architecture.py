@@ -71,7 +71,6 @@ def setup_model(
             ],
             "use_linear_projection": True,
         },
-        subfolder="unet",
         dtype=weight_dtype,
     )
 
