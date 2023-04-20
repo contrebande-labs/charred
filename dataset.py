@@ -10,33 +10,6 @@ from flax import jax_utils
 from architecture import setup_model
 
 
-def _get_one_image_pixel_values(image_transforms, url):
-    try:
-        image_bytes = requests.get(url, stream=True, timeout=5).raw
-    except:
-        print("Image url request fails: %s" % url)
-        return None
-    if image_bytes is None:
-        print("Image url respons body is empty: %s" % url)
-        return None
-    try:
-        pil_image = Image.open(image_bytes)
-    except:
-        print("Image.open fails on image url: %s" % url)
-        return None
-    try:
-        rgb_pil_image = pil_image.convert("RGB")
-    except:
-        print("Image.convert fails on image url: %s" % url)
-        return None
-    try:
-        pixel_values = image_transforms(rgb_pil_image)
-    except:
-        print("Image transforms fail on image url: %s" % url)
-        return None
-    return pixel_values
-
-
 def _prefilter_dataset(example):
 
     caption = example["TEXT"]
@@ -56,6 +29,53 @@ def _prefilter_dataset(example):
     )
 
 
+def _download_image(
+    image_transforms,
+    sample,
+):
+
+    sample["pass"] = False
+
+    # TODO: if checksum fails, skip this entry and filter out later
+    # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
+
+    # get image data
+    try:
+        image_bytes = requests.get(sample["URL"], stream=True, timeout=5).raw
+        if image_bytes is None:
+            return sample
+        pil_image = Image.open(image_bytes)
+        rgb_pil_image = pil_image.convert("RGB")
+        sample["pixel_values"] = image_transforms(rgb_pil_image)
+    except:
+        return sample
+
+    sample["pass"] = True
+
+    return sample
+
+
+def download_image(
+    resolution,
+):
+
+    # TODO: replace with https://jax.readthedocs.io/en/latest/jax.image.html
+    image_transforms = transforms.Compose(
+        [
+            transforms.Resize(
+                resolution, interpolation=transforms.InterpolationMode.LANCZOS
+            ),
+            transforms.RandomCrop(resolution),
+            transforms.ToTensor(),
+        ]
+    )
+
+    return lambda sample: _download_image(
+        image_transforms,
+        sample,
+    )
+
+
 def _dataset_transforms(
     tokenizer,
     tokenizer_max_length,
@@ -63,26 +83,15 @@ def _dataset_transforms(
     text_encoder_params,
     vae,
     vae_params,
-    image_transforms,
     samples,
 ):
-
-    samples["pass"] = False
-
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
 
     # get image data
     stacked_pixel_values = (
-        torch.stack(
-            [
-                _get_one_image_pixel_values(image_transforms, url)
-                for url in samples["URL"]
-            ]
-        )
-        .to(memory_format=torch.contiguous_format)
-        .float()
-    )
+        torch.stack(samples["pixel_values"]).to(memory_format=torch.contiguous_format).float()
+    ).numpy()
 
     # compute image embeddings
     samples["vae_outputs"] = vae.apply(
@@ -100,15 +109,13 @@ def _dataset_transforms(
         return_tensors="pt",
     ).input_ids
 
-    stacked_input_ids = torch.stack(input_ids)
+    stacked_input_ids = torch.stack(input_ids).numpy()
 
     samples["encoder_hidden_states"] = text_encoder(
         stacked_input_ids,
         params=text_encoder_params,
         train=False,
     )[0]
-
-    samples["pass"] = True
 
     return samples
 
@@ -120,20 +127,7 @@ def dataset_transforms(
     text_encoder_params,
     vae,
     vae_params,
-    resolution,
 ):
-
-    # TODO: replace with https://jax.readthedocs.io/en/latest/jax.image.html
-    image_transforms = transforms.Compose(
-        [
-            transforms.Resize(
-                resolution, interpolation=transforms.InterpolationMode.LANCZOS
-            ),
-            transforms.RandomCrop(resolution),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]),
-        ]
-    )
 
     return lambda samples: _dataset_transforms(
         tokenizer,
@@ -142,7 +136,6 @@ def dataset_transforms(
         text_encoder_params,
         vae,
         vae_params,
-        image_transforms,
         samples,
     )
 
@@ -170,6 +163,16 @@ def setup_dataset(
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
         .map(
+            function=download_image(
+                resolution,
+            ),
+            batched=False,
+        )
+        .filter(
+            lambda example: example["pass"]
+        )  # filter out samples that didn't pass the tests in the transform function
+        .remove_columns(["pass"])
+        .map(
             function=dataset_transforms(
                 tokenizer,
                 tokenizer_max_length,
@@ -177,15 +180,11 @@ def setup_dataset(
                 text_encoder_params,
                 vae,
                 vae_params,
-                resolution,
             ),
             batched=True,
             batch_size=16,
         )
-        .filter(
-            lambda example: example["pass"]
-        )  # filter out samples that didn't pass the tests in the transform function
-        .remove_columns(["pass"])
+        .remove_columns(["pixel_values"])
         .take(n=max_samples)
     )
 
@@ -206,7 +205,7 @@ if __name__ == "__main__":
 
     dataset = setup_dataset(
         10,
-        "/data/dataset/cache",
+        "./dataset-cache",
         1024,
         tokenizer,
         1024,
@@ -216,5 +215,6 @@ if __name__ == "__main__":
         vae_params,
     )
 
+    #TODO: do batches with DataLoader here to use all the CPUs
     for sample in dataset:
         print(sample["URL"])
