@@ -47,8 +47,6 @@ def _train_step(
     rng,
 ):
 
-    sample_rng, new_rng = jax.random.split(rng, 2)
-
     # TODO: can we precompile the loss function higher up, maybe in the main function or main training loop init?
     loss_lambda = loss_fn(
         vae,
@@ -61,7 +59,10 @@ def _train_step(
     )
     grad_fn = jax.value_and_grad(loss_lambda)
 
-    loss, grad = grad_fn(state.params, batch, rng)
+    sample_rng, new_rng = jax.random.split(rng, 2)
+
+    loss, grad = grad_fn(state.params, batch, sample_rng)
+ 
     grad_mean = jax.lax.pmean(grad, "batch")
 
     new_state = state.apply_gradients(grads=grad_mean)
