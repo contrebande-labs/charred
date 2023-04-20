@@ -4,6 +4,8 @@ from torchvision import transforms
 from PIL import Image
 import requests
 
+from flax import jax_utils
+
 from architecture import setup_model
 
 
@@ -26,7 +28,16 @@ def _prefilter_dataset(example):
     )
 
 
-def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, example):
+def _dataset_transforms(
+    tokenizer,
+    tokenizer_max_length,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
+    image_transforms,
+    example,
+):
 
     if hasattr(example, "pass"):
         return example
@@ -60,14 +71,14 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
         print("Image.convert fails on image url: %s" % image_url)
         return example
     try:
-        example["pixel_values"] = image_transforms(rgb_pil_image)
+        pixel_values = image_transforms(rgb_pil_image)
     except:
         print("Image transforms fail on image url: %s" % image_url)
         return example
 
     # append tokenized text
     # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
-    example["input_ids"] = tokenizer(
+    input_ids = tokenizer(
         text=caption,
         max_length=tokenizer_max_length,
         truncation=True,
@@ -75,12 +86,33 @@ def _dataset_transforms(tokenizer, tokenizer_max_length, image_transforms, examp
         return_tensors="pt",
     )["input_ids"]
 
+    example["vae_outputs"] = vae.apply(
+        {"params": vae_params},
+        pixel_values,
+        deterministic=True,
+        method=vae.encode,
+    )
+
+    example["encoder_hidden_states"] = text_encoder(
+        input_ids,
+        params=text_encoder_params,
+        train=False,
+    )[0]
+
     example["pass"] = True
 
     return example
 
 
-def dataset_transforms(tokenizer, tokenizer_max_length, resolution):
+def dataset_transforms(
+    tokenizer,
+    tokenizer_max_length,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
+    resolution,
+):
 
     # TODO: replace with https://jax.readthedocs.io/en/latest/jax.image.html
     image_transforms = transforms.Compose(
@@ -95,12 +127,27 @@ def dataset_transforms(tokenizer, tokenizer_max_length, resolution):
     )
 
     return lambda example: _dataset_transforms(
-        tokenizer, tokenizer_max_length, image_transforms, example
+        tokenizer,
+        tokenizer_max_length,
+        text_encoder,
+        text_encoder_params,
+        vae,
+        vae_params,
+        image_transforms,
+        example,
     )
 
 
 def setup_dataset(
-    max_samples, cache_dir, resolution, tokenizer, tokenizer_max_length
+    max_samples,
+    cache_dir,
+    resolution,
+    tokenizer,
+    tokenizer_max_length,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
 ):
 
     # TODO: make sure we use the datatsets library with JAX : https://huggingface.co/docs/datasets/use_with_jax
@@ -115,7 +162,15 @@ def setup_dataset(
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
         .map(
-            function=dataset_transforms(tokenizer, tokenizer_max_length, resolution),
+            function=dataset_transforms(
+                tokenizer,
+                tokenizer_max_length,
+                text_encoder,
+                text_encoder_params,
+                vae,
+                vae_params,
+                resolution,
+            ),
         )
         .filter(
             lambda example: example["pass"]
@@ -137,11 +192,19 @@ if __name__ == "__main__":
         "flax/stable-diffusion-2-1",
     )
 
+    text_encoder_params = jax_utils.replicate(text_encoder.params)
+
     dataset = setup_dataset(
-        10, "/data/dataset/cache", 1024, tokenizer, 1024
+        10,
+        "/data/dataset/cache",
+        1024,
+        tokenizer,
+        1024,
+        text_encoder,
+        text_encoder_params,
+        vae,
+        vae_params,
     )
 
     for sample in dataset:
-        print(sample["id"])
-
-
+        print(sample["URL"])
