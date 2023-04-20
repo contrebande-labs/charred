@@ -11,6 +11,7 @@ from flax.training.common_utils import shard
 from flax import jax_utils
 
 from batch import setup_dataloader
+from dataset import setup_dataset
 from repository import save_to_repository
 from training_step import train_step
 
@@ -36,11 +37,7 @@ def training_loop(
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     # dataset setup
-    train_dataset = load_dataset(
-        path="/data/dataset/output/charred",
-        split="train",
-        streaming=True,
-    )
+    train_dataset = setup_dataset(max_train_steps, tokenizer)
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()

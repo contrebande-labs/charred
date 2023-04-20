@@ -140,17 +140,13 @@ def dataset_transforms(
 
 def setup_dataset(
     max_samples,
-    cache_dir,
-    resolution,
     tokenizer,
-    tokenizer_max_length,
 ):
 
     # loading the dataset
     dataset = (
         load_dataset(
             path="laion/laion-high-resolution",
-            cache_dir=os.path.join(cache_dir, "laion-high-resolution"),
             split="train",
             streaming=True,
         )
@@ -158,7 +154,7 @@ def setup_dataset(
         .shuffle(seed=27, buffer_size=10_000)
         .map(
             function=download_image(
-                resolution,
+                1024,
             ),
             batched=False,
         )
@@ -169,15 +165,10 @@ def setup_dataset(
         .map(
             function=dataset_transforms(
                 tokenizer,
-                tokenizer_max_length,
+                1024,
             ),
             batched=True,
             batch_size=16,
-        )
-        .remove_columns(
-            [
-                "pixel_values",
-            ]
         )
         .take(n=max_samples)
     )
@@ -193,10 +184,7 @@ if __name__ == "__main__":
 
     dataset = setup_dataset(
         max_samples,
-        "./dataset-cache",
-        1024,
         tokenizer,
-        1024,
     )
 
     # TODO: do batches with DataLoader here to use all the CPUs
