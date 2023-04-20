@@ -4,6 +4,7 @@ from torchvision import transforms
 from PIL import Image
 import requests
 from hashlib import sha3_512
+import traceback
 
 from transformers import ByT5Tokenizer
 
@@ -55,15 +56,10 @@ def _download_image(
             pil_image = Image.open(image_bytes)
             pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
             pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
-            try:
-                pil_rgb_image.save(cached_image_image_file_path)
-            except Exception as e:
-                print("error processing image file: %s" % cached_image_image_file_path)
-                print(e)
-                return sample
-        except Exception as e:
+            pil_rgb_image.save(cached_image_image_file_path)
+        except:
             print("error processing url: %s" % image_url)
-            print(e)
+            traceback.print_exc()
             return sample
 
     try:
