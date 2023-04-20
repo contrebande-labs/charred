@@ -15,17 +15,15 @@ from diffusers import (
 from transformers import CLIPImageProcessor
 
 
-def create_repository(output_dir, push_to_hub, hub_model_id, hub_token):
+def create_repository(output_dir, hub_model_id):
 
     if output_dir is not None:
         os.makedirs(output_dir, exist_ok=True)
 
-    if push_to_hub:
-        repo_id = create_repo(
-            repo_id=hub_model_id or Path(output_dir).name,
-            exist_ok=True,
-            token=hub_token,
-        ).repo_id
+    repo_id = create_repo(
+        repo_id=hub_model_id,
+        exist_ok=True,
+    ).repo_id
 
     return repo_id
 

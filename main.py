@@ -5,10 +5,6 @@ from flax.training import train_state
 from flax.core.frozen_dict import unfreeze
 import wandb
 
-from diffusers import (
-    FlaxUNet2DConditionModel,
-)
-
 # internal code
 from args import parse_args
 from architecture import setup_model
@@ -40,7 +36,7 @@ def main():
 
     if args.push_to_hub:
         repo_id = create_repository(
-            args.output_dir, args.push_to_hub, args.hub_model_id, args.hub_token
+            args.output_dir, args.hub_model_id
         )
 
     # init random number generator

@@ -28,7 +28,7 @@ def parse_args():
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
-        "--dataset_output_dir",
+        "--dataset_dir",
         type=str,
         default="/data/dataset/output/charred",
         help="The output directory where the model predictions and checkpoints will be written.",
@@ -99,12 +99,6 @@ def parse_args():
         type=bool,
         default=False,
         help="Whether or not to push the model to the Hub.",
-    )
-    parser.add_argument(
-        "--hub_token",
-        type=str,
-        default=None,
-        help="The token to use to push to the Model Hub.",
     )
     parser.add_argument(
         "--hub_model_id",

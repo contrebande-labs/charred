@@ -32,7 +32,6 @@ def training_loop(
     num_train_epochs,
     train_batch_size,
     output_dir,
-    dataset_output_dir,
     repo_id,
     log_wandb,
 ):
