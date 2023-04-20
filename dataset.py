@@ -1,9 +1,10 @@
 import os
-
+import math
 from datasets import load_dataset
 from torchvision import transforms
 from PIL import Image
 import requests
+from multiprocessing import cpu_count
 
 
 def _prefilter_dataset(example):
@@ -113,7 +114,10 @@ def setup_dataset(
         )
         .filter(_prefilter_dataset)
         .shuffle(seed=27, buffer_size=10_000)
-        .map(function=dataset_transforms(tokenizer, tokenizer_max_length, resolution))
+        .map(
+            function=dataset_transforms(tokenizer, tokenizer_max_length, resolution),
+            num_proc=math.floor(cpu_count() / 2)
+        )
         .filter(
             lambda example: example["pass"]
         )  # filter out samples that didn't pass the tests in the transform function

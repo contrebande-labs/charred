@@ -96,6 +96,9 @@ def parse_args():
     )
     parser.add_argument(
         "--push_to_hub",
+        type=bool,
+        default=True,
+        choices=[True, False],
         action="store_true",
         help="Whether or not to push the model to the Hub.",
     )
@@ -108,7 +111,7 @@ def parse_args():
     parser.add_argument(
         "--hub_model_id",
         type=str,
-        default="contrebande/charred",
+        default="characted-aware-diffusion/charred",
         help="The name of the repository to keep in sync with the local `output_dir`.",
     )
     parser.add_argument(
