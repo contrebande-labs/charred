@@ -45,8 +45,9 @@ def _download_image(
         if image_bytes is None:
             return sample
         pil_image = Image.open(image_bytes)
-        rgb_pil_image = pil_image.convert("RGB")
-        sample["pixel_values"] = image_transforms(rgb_pil_image)
+        pil_rgb_image = Image.new("RGB", pil_image.size, (255, 255, 255))
+        pil_rgb_image.paste(pil_image, mask=pil_image.split()[3])
+        sample["pixel_values"] = image_transforms(pil_rgb_image)
     except:
         return sample
 
@@ -90,7 +91,9 @@ def _dataset_transforms(
 
     # get image data
     stacked_pixel_values = (
-        torch.stack(samples["pixel_values"]).to(memory_format=torch.contiguous_format).float()
+        torch.stack(samples["pixel_values"])
+        .to(memory_format=torch.contiguous_format)
+        .float()
     ).numpy()
 
     # compute image embeddings
@@ -203,8 +206,10 @@ if __name__ == "__main__":
 
     text_encoder_params = jax_utils.replicate(text_encoder.params)
 
+    max_samples = 10
+
     dataset = setup_dataset(
-        10,
+        max_samples,
         "./dataset-cache",
         1024,
         tokenizer,
@@ -215,6 +220,7 @@ if __name__ == "__main__":
         vae_params,
     )
 
-    #TODO: do batches with DataLoader here to use all the CPUs
+    # TODO: do batches with DataLoader here to use all the CPUs
+    # TODO: use TQDM
     for sample in dataset:
         print(sample["URL"])
