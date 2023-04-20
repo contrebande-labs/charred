@@ -90,7 +90,6 @@ def main():
         args.num_train_epochs,
         args.train_batch_size,
         args.output_dir,
-        args.dataset_output_dir,
         repo_id,
         log_wandb,
     )
