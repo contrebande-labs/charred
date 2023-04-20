@@ -1,5 +1,6 @@
 import os
 from datasets import load_dataset
+import torch
 from torchvision import transforms
 from PIL import Image
 import requests
@@ -78,6 +79,18 @@ def _dataset_transforms(
 
     # append tokenized text
     # TODO: apply and cache text embbedings here instead of in the training loop (and don't keep the tokenized text)
+
+    stacked_pixel_values = (torch.stack(pixel_values)
+        .to(memory_format=torch.contiguous_format)
+        .float())
+
+    example["vae_outputs"] = vae.apply(
+        {"params": vae_params},
+        stacked_pixel_values,
+        deterministic=True,
+        method=vae.encode,
+    )
+
     input_ids = tokenizer(
         text=caption,
         max_length=tokenizer_max_length,
@@ -86,15 +99,10 @@ def _dataset_transforms(
         return_tensors="pt",
     )["input_ids"]
 
-    example["vae_outputs"] = vae.apply(
-        {"params": vae_params},
-        pixel_values,
-        deterministic=True,
-        method=vae.encode,
-    )
+    stacked_input_ids = torch.stack(input_ids)
 
     example["encoder_hidden_states"] = text_encoder(
-        input_ids,
+        stacked_input_ids,
         params=text_encoder_params,
         train=False,
     )[0]
