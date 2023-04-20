@@ -54,17 +54,11 @@ def training_loop(
 
         unreplicated_train_metric = None
 
-        train_step_progress_bar = tqdm(
-            total=max_train_steps, desc="Training...", position=1, leave=False
-        )
-
         for batch in train_dataloader:
 
             batch = shard(batch)
 
             state, train_rngs, train_metric = p_train_step(state, batch, train_rngs)
-
-            train_step_progress_bar.update(1)
 
             unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
@@ -101,8 +95,6 @@ def training_loop(
                 state,
                 repo_id,
             )
-
-        train_step_progress_bar.close()
  
         epochs.update(1)
 
