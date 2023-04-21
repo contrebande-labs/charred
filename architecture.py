@@ -35,35 +35,33 @@ def setup_model(
         dtype=weight_dtype,
     )
 
-    unet_config = {
-        "attention_head_dim": [5, 10, 20, 20],
-        "block_out_channels": [320, 640, 1280, 1280],
-        "cross_attention_dim": 1536,
-        "down_block_types": [
-            "CrossAttnDownBlock2D",
-            "CrossAttnDownBlock2D",
-            "CrossAttnDownBlock2D",
-            "DownBlock2D",
-        ],
-        "dropout": 0.0,
-        "flip_sin_to_cos": True,
-        "freq_shift": 0,
-        "in_channels": 4,
-        "layers_per_block": 2,
-        "only_cross_attention": False,
-        "out_channels": 4,
-        "sample_size": 64,
-        "up_block_types": [
-            "UpBlock2D",
-            "CrossAttnUpBlock2D",
-            "CrossAttnUpBlock2D",
-            "CrossAttnUpBlock2D",
-        ],
-        "use_linear_projection": True,
-    }
-    print(isinstance(unet_config, dict))
     unet = FlaxUNet2DConditionModel.from_config(
-        unet_config,
+        config={
+            "attention_head_dim": [5, 10, 20, 20],
+            "block_out_channels": [320, 640, 1280, 1280],
+            "cross_attention_dim": 1536,
+            "down_block_types": [
+                "CrossAttnDownBlock2D",
+                "CrossAttnDownBlock2D",
+                "CrossAttnDownBlock2D",
+                "DownBlock2D",
+            ],
+            "dropout": 0.0,
+            "flip_sin_to_cos": True,
+            "freq_shift": 0,
+            "in_channels": 4,
+            "layers_per_block": 2,
+            "only_cross_attention": False,
+            "out_channels": 4,
+            "sample_size": 64,
+            "up_block_types": [
+                "UpBlock2D",
+                "CrossAttnUpBlock2D",
+                "CrossAttnUpBlock2D",
+                "CrossAttnUpBlock2D",
+            ],
+            "use_linear_projection": True,
+        },
         dtype=weight_dtype,
     )
 
