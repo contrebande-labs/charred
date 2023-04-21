@@ -3,6 +3,7 @@ import os
 from torchvision import transforms
 from PIL import Image
 import requests
+from tqdm import tqdm
 
 from transformers import ByT5Tokenizer
 
@@ -208,7 +209,7 @@ if __name__ == "__main__":
 
     tokenizer = ByT5Tokenizer()
 
-    max_samples = 10
+    max_samples = 1_000_000
 
     dataset = setup_dataset(
         max_samples,
@@ -217,5 +218,6 @@ if __name__ == "__main__":
 
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
-    for sample in dataset:
-        print(hex(sample["hash"]))
+    progress = tqdm(total=max_samples)
+    for sample in dataset: progress.update(1)
+    progress.close()
