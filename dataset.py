@@ -3,8 +3,6 @@ import os
 from torchvision import transforms
 from PIL import Image
 import requests
-from hashlib import sha3_512
-import traceback
 
 from transformers import ByT5Tokenizer
 
@@ -38,12 +36,14 @@ def _download_image(
     # TODO: if checksum fails, skip this entry and filter out later
     # checksum = hashlib.md5(image_bytes).hexdigest() == example["hash"]
     image_url = sample["URL"]
-    url_hash = sha3_512(image_url.encode("UTF-8")).hexdigest()
+    hash = hex(sample["hash"])
     cached_image_image_file_path = os.path.join(
-        "/data/image-cache", "%s.jpeg" % url_hash
+        "/data/image-cache", "%s.jpg" % hash
     )
 
     if os.path.isfile(cached_image_image_file_path):
+        if os.stat(cached_image_image_file_path).st_size == 0:
+            return sample
         # get image data from cache
         try:
             pil_rgb_image = Image.open(cached_image_image_file_path)
@@ -67,6 +67,7 @@ def _download_image(
                 return sample
             pil_rgb_image.save(cached_image_image_file_path)
         except Exception:
+            with open(cached_image_image_file_path, mode='a'): pass
             return sample
         # save image to disk but do not catch exception. this has to fail because other wise the mapper will run forever
         pil_rgb_image.save(cached_image_image_file_path)
