@@ -7,9 +7,7 @@ from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel
 
 def setup_model(
     seed,
-    mixed_precision,
-    pretrained_text_encoder_model_name_or_path,
-    pretrained_diffusion_model_name_or_path,
+    mixed_precision
 ):
 
     set_seed(seed)
@@ -25,12 +23,12 @@ def setup_model(
     tokenizer = ByT5Tokenizer()
 
     language_model = FlaxT5ForConditionalGeneration.from_pretrained(
-        pretrained_text_encoder_model_name_or_path,
+        "/data/byt5-base",
         dtype=weight_dtype,
     )
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        pretrained_diffusion_model_name_or_path,
+        "/data/stable-diffusion-2-1-vae",
         subfolder="vae",
         dtype=weight_dtype,
     )
@@ -66,3 +64,21 @@ def setup_model(
     )
 
     return tokenizer, language_model.encode, language_model.params, vae, vae_params, unet
+
+
+if __name__ == "__main__":
+
+    language_model = FlaxT5ForConditionalGeneration.from_pretrained(
+        "google/byt5-base",
+        dtype=jnp.float32,
+    )
+
+    language_model.save_pretrained("/data/byt5-base")
+
+    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
+        "flax/stable-diffusion-2-1",
+        subfolder="vae",
+        dtype=jnp.float32,
+    )
+
+    vae.save_pretrained("/data/stable-diffusion-2-1-vae")

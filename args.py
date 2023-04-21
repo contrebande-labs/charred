@@ -4,18 +4,6 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
     parser.add_argument(
-        "--pretrained_diffusion_model_name_or_path",
-        type=str,
-        default="flax/stable-diffusion-2-1",
-        help="Path to pretrained model or model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
-        "--pretrained_text_encoder_model_name_or_path",
-        type=str,
-        default="google/byt5-base",
-        help="Path to pretrained model or model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
         "--tokenizer_max_length",
         type=int,
         default=1024,

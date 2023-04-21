@@ -48,8 +48,6 @@ def main():
     tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet = setup_model(
         seed,
         args.mixed_precision,
-        args.pretrained_text_encoder_model_name_or_path,
-        args.pretrained_diffusion_model_name_or_path,
     )
 
     # Optimization & scheduling setup
