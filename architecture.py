@@ -29,7 +29,6 @@ def setup_model(
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         "/data/stable-diffusion-2-1-vae",
-        subfolder="vae",
         dtype=weight_dtype,
     )
 
