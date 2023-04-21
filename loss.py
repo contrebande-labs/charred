@@ -3,17 +3,17 @@ import jax
 
 
 def get_loss_lambda(
+    text_encoder,
     vae,
-    vae_params,
+    unet,
     noise_scheduler,
     noise_scheduler_state,
-    text_encoder,
-    text_encoder_params,
-    unet,
 ):
 
     def __loss_lambda(
         state,
+        text_encoder_params,
+        vae_params,
         batch,
         sample_rng,
     ):
@@ -67,8 +67,4 @@ def get_loss_lambda(
         # Compute loss from noisy target
         return ((noise - model_pred) ** 2).mean()
 
-    return lambda state, batch, sample_rng: __loss_lambda(
-        state,
-        batch,
-        sample_rng,
-    )
+    return __loss_lambda
