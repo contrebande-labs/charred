@@ -65,7 +65,6 @@ def _download_image(
                     pil_rgb_image.paste(pil_image, mask=pil_image.split()[-1])
                 else:
                     pil_rgb_image.paste(pil_image)
-                return sample
             pil_rgb_image.save(cached_image_image_file_path)
         except Exception:
             with open(cached_image_image_file_path, mode='a'): pass
