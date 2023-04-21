@@ -12,7 +12,7 @@ from flax import jax_utils
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_repository
-from training_step import train_step
+from training_step import get_train_step_lambda
 
 
 def training_loop(
@@ -43,7 +43,10 @@ def training_loop(
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
 
     # Precompiled training step setup
-    p_train_step = train_step(text_encoder, vae, unet)
+    train_step_lambda = get_train_step_lambda(text_encoder, vae, unet)
+
+    # Create parallel version of the train step
+    pmap_train_step_lambda = jax.pmap(train_step_lambda, "batch", donate_argnums=(0,))
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
@@ -60,7 +63,7 @@ def training_loop(
 
             batch = shard(batch)
 
-            state, train_rngs, train_metric = p_train_step(
+            state, train_rngs, train_metric = pmap_train_step_lambda(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
 

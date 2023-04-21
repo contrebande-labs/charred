@@ -4,10 +4,10 @@ from diffusers import (
     FlaxDDPMScheduler,
 )
 
-from loss import loss_fn
+from loss import get_loss_lambda
 
 
-def train_step(text_encoder, vae, unet):
+def get_train_step_lambda(text_encoder, vae, unet):
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -15,60 +15,46 @@ def train_step(text_encoder, vae, unet):
         beta_schedule="scaled_linear",
         num_train_timesteps=1000,
     )
+
     noise_scheduler_state = noise_scheduler.create_state()
 
-    train_step_lambda = (
-        lambda state, text_encoder_params, vae_params, batch, train_rng: _train_step(
-            text_encoder,
-            text_encoder_params,
+    def __train_step_lambda(
+        state,
+        vae_params,
+        text_encoder_params,
+        batch,
+        rng,
+    ):
+
+        sample_rng, new_rng = jax.random.split(rng, 2)
+
+        # TODO: can we precompile the loss function higher up, maybe in the main function or main training loop init?
+        loss_lambda = get_loss_lambda(
             vae,
             vae_params,
-            unet,
-            state,
             noise_scheduler,
             noise_scheduler_state,
-            batch,
-            train_rng,
+            text_encoder,
+            text_encoder_params,
+            unet,
         )
-    )
 
-    # Create parallel version of the train step
-    return jax.pmap(train_step_lambda, "batch", donate_argnums=(0,))
+        grad_loss = jax.value_and_grad(loss_lambda)
 
+        loss, grad = grad_loss(state.params, batch, sample_rng)
 
-def _train_step(
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
-    unet,
-    state,
-    noise_scheduler,
-    noise_scheduler_state,
-    batch,
-    rng,
-):
+        grad_mean = jax.lax.pmean(grad, "batch")
 
-    # TODO: can we precompile the loss function higher up, maybe in the main function or main training loop init?
-    loss_lambda = loss_fn(
-        vae,
-        vae_params,
-        noise_scheduler,
-        noise_scheduler_state,
-        text_encoder,
+        new_state = state.apply_gradients(grads=grad_mean)
+
+        metrics = jax.lax.pmean({"loss": loss}, axis_name="batch")
+
+        return new_state, new_rng, metrics
+
+    return lambda state, text_encoder_params, vae_params, batch, train_rng: __train_step_lambda(
+        state,
         text_encoder_params,
-        unet,
+        vae_params,
+        batch,
+        train_rng,
     )
-    grad_fn = jax.value_and_grad(loss_lambda)
-
-    sample_rng, new_rng = jax.random.split(rng, 2)
-
-    loss, grad = grad_fn(state.params, batch, sample_rng)
-
-    grad_mean = jax.lax.pmean(grad, "batch")
-
-    new_state = state.apply_gradients(grads=grad_mean)
-
-    metrics = jax.lax.pmean({"loss": loss}, axis_name="batch")
-
-    return new_state, new_rng, metrics
