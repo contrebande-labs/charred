@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 
-from transformers import ByT5Tokenizer, FlaxT5Model, set_seed
+from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration, set_seed
 
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel
 
@@ -24,7 +24,7 @@ def setup_model(
     # Load models and create wrapper for stable diffusion
     tokenizer = ByT5Tokenizer()
 
-    language_model = FlaxT5Model.from_pretrained(
+    language_model = FlaxT5ForConditionalGeneration.from_pretrained(
         pretrained_text_encoder_model_name_or_path,
         dtype=weight_dtype,
     )
@@ -63,4 +63,4 @@ def setup_model(
         dtype=weight_dtype,
     )
 
-    return tokenizer, language_model.encode, vae, vae_params, unet
+    return tokenizer, language_model.encode, language_model.params, vae, vae_params, unet
