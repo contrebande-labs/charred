@@ -81,4 +81,4 @@ if __name__ == "__main__":
         dtype=jnp.float32,
     )
 
-    vae.save_pretrained("/data/stable-diffusion-2-1-vae")
+    vae.save_pretrained("/data/stable-diffusion-2-1-vae", params=vae_params)
