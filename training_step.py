@@ -7,7 +7,7 @@ from diffusers import (
 from loss import get_loss_lambda
 
 
-def get_train_step_lambda(text_encoder, vae, unet):
+def get_training_step_lambda(text_encoder, vae, unet):
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -27,9 +27,9 @@ def get_train_step_lambda(text_encoder, vae, unet):
         noise_scheduler_state,
     )
 
-    grad_loss = jax.value_and_grad(loss_lambda)
+    jax_value_and_grad_loss = jax.value_and_grad(loss_lambda)
 
-    def __train_step_lambda(
+    def __training_step_lambda(
         state,
         text_encoder_params,
         vae_params,
@@ -39,7 +39,9 @@ def get_train_step_lambda(text_encoder, vae, unet):
 
         sample_rng, new_rng = jax.random.split(rng, 2)
 
-        loss, grad = grad_loss(state.params, text_encoder_params, vae_params, batch, sample_rng)
+        loss, grad = jax_value_and_grad_loss(
+            state.params, text_encoder_params, vae_params, batch, sample_rng
+        )
 
         grad_mean = jax.lax.pmean(grad, "batch")
 
@@ -49,4 +51,4 @@ def get_train_step_lambda(text_encoder, vae, unet):
 
         return new_state, new_rng, metrics
 
-    return __train_step_lambda
+    return __training_step_lambda
