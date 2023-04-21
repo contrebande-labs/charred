@@ -217,4 +217,4 @@ if __name__ == "__main__":
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
     for sample in dataset:
-        print(sample["URL"])
+        print(hex(sample["hash"]))
