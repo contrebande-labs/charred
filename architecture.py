@@ -28,38 +28,42 @@ def setup_model(
         pretrained_text_encoder_model_name_or_path,
         dtype=weight_dtype,
     )
+
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         pretrained_diffusion_model_name_or_path,
         subfolder="vae",
         dtype=weight_dtype,
     )
+
+    unet_config = {
+        "attention_head_dim": [5, 10, 20, 20],
+        "block_out_channels": [320, 640, 1280, 1280],
+        "cross_attention_dim": 1536,
+        "down_block_types": [
+            "CrossAttnDownBlock2D",
+            "CrossAttnDownBlock2D",
+            "CrossAttnDownBlock2D",
+            "DownBlock2D",
+        ],
+        "dropout": 0.0,
+        "flip_sin_to_cos": True,
+        "freq_shift": 0,
+        "in_channels": 4,
+        "layers_per_block": 2,
+        "only_cross_attention": False,
+        "out_channels": 4,
+        "sample_size": 64,
+        "up_block_types": [
+            "UpBlock2D",
+            "CrossAttnUpBlock2D",
+            "CrossAttnUpBlock2D",
+            "CrossAttnUpBlock2D",
+        ],
+        "use_linear_projection": True,
+    }
+    print(isinstance(unet_config, dict))
     unet = FlaxUNet2DConditionModel.from_config(
-        config={
-            "attention_head_dim": [5, 10, 20, 20],
-            "block_out_channels": [320, 640, 1280, 1280],
-            "cross_attention_dim": 1536,
-            "down_block_types": [
-                "CrossAttnDownBlock2D",
-                "CrossAttnDownBlock2D",
-                "CrossAttnDownBlock2D",
-                "DownBlock2D",
-            ],
-            "dropout": 0.0,
-            "flip_sin_to_cos": True,
-            "freq_shift": 0,
-            "in_channels": 4,
-            "layers_per_block": 2,
-            "only_cross_attention": False,
-            "out_channels": 4,
-            "sample_size": 64,
-            "up_block_types": [
-                "UpBlock2D",
-                "CrossAttnUpBlock2D",
-                "CrossAttnUpBlock2D",
-                "CrossAttnUpBlock2D",
-            ],
-            "use_linear_projection": True,
-        },
+        unet_config,
         dtype=weight_dtype,
     )
 
