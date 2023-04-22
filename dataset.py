@@ -4,7 +4,7 @@ from PIL import Image
 import requests
 from tqdm import tqdm
 
-import torch
+from transformers import ByT5Tokenizer
 from torchvision import transforms
 import torch.nn.functional as F
 
@@ -101,11 +101,7 @@ def _compute_intermediate_values(sample):
             )(pil_rgb_image)
 
             # Caption "tokenizing" to vector or size 4096
-            # Model has 3 special tokens which take up the input ids 0,1,2 of ByT5.
-            # => Need to shift utf-8 character encodings by 3 before passing ids to model.
-            raw_input_ids = torch.tensor([list(sample["TEXT"].encode("utf-8"))]) + 3
-            padded_input_ids = F.pad(input=raw_input_ids, pad=(0, 4096), mode='constant', value=0)
-            sample["input_ids"] = padded_input_ids.narrow(0, 0, 4096)
+            sample["input_ids"] = ByT5Tokenizer()(text=sample["TEXT"], max_length=4096, padding="max_length", truncation=True, return_tensors="pt").input_ids
 
             sample["pass"] = True
 
