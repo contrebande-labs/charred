@@ -107,7 +107,7 @@ def _compute_intermediate_values(sample):
                 padding="max_length",
                 truncation=True,
                 return_tensors="pt",
-            ).input_ids
+            ).input_ids[0]
 
             sample["pass"] = True
 
