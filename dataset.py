@@ -172,12 +172,12 @@ def setup_dataset(samples):
 
     # loading the dataset
     dataset = (
-        Dataset.from_parquet(
+        load_dataset(
             "parquet",
             data_files={"train": "/data/laion-high-resolution-filtered-shuffled.parquet"},
             split="train",
             cache_dir="/data/cache",
-            stream=True,
+            streaming=True,
         )
         .map(
             _compute_intermediate_values,
@@ -196,10 +196,10 @@ if __name__ == "__main__":
 
     max_samples = 1_000_000
 
-    dataset = preprocess_dataset
+    dataset = setup_dataset(max_samples)
 
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
-    # progress = tqdm(total=max_samples)
-    # for sample in dataset: progress.update(1)
-    # progress.close()
+    progress = tqdm(total=max_samples)
+    for sample in dataset: progress.update(1)
+    progress.close()
