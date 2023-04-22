@@ -101,7 +101,13 @@ def _compute_intermediate_values(sample):
             )(pil_rgb_image)
 
             # Caption "tokenizing" to vector or size 4096
-            sample["input_ids"] = ByT5Tokenizer()(text=sample["TEXT"], max_length=4096, padding="max_length", truncation=True, return_tensors="pt").input_ids
+            sample["input_ids"] = ByT5Tokenizer()(
+                text=sample["TEXT"],
+                max_length=4096,
+                padding="max_length",
+                truncation=True,
+                return_tensors="pt",
+            ).input_ids
 
             sample["pass"] = True
 
@@ -200,7 +206,8 @@ if __name__ == "__main__":
 
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
-    progress = tqdm(total=max_samples)
+    #progress = tqdm(total=max_samples)
     for sample in dataset:
-        progress.update(1)
-    progress.close()
+        #progress.update(1)
+        print(len(sample["input_ids"]))
+    #progress.close()
