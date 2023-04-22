@@ -194,7 +194,7 @@ def setup_dataset(samples):
 
 if __name__ == "__main__":
 
-    max_samples = 1_000_000
+    max_samples = 64
 
     dataset = setup_dataset(max_samples)
 
