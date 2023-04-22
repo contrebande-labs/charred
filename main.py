@@ -45,7 +45,7 @@ def main():
     rng, rng_params = jax.random.split(seed_rng)
 
     # Pretrained freezed model setup
-    tokenizer, text_encoder, text_encoder_params, vae, vae_params, unet = setup_model(
+    text_encoder, text_encoder_params, vae, vae_params, unet = setup_model(
         seed,
         args.mixed_precision,
     )
@@ -73,7 +73,6 @@ def main():
 
     # Train!
     training_loop(
-        tokenizer,
         text_encoder,
         replicated_text_encoder_params,
         vae,

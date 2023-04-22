@@ -2,6 +2,8 @@ import os
 
 from huggingface_hub import create_repo
 
+from transformers import ByT5Tokenizer
+
 import jax
 
 # hugging face
@@ -53,7 +55,7 @@ def save_to_repository(
         text_encoder=text_encoder,
         vae=vae,
         unet=unet,
-        tokenizer=tokenizer,
+        tokenizer=ByT5Tokenizer(),
         scheduler=scheduler,
         safety_checker=None,
         feature_extractor=CLIPImageProcessor.from_pretrained(

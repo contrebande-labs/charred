@@ -16,7 +16,6 @@ from training_step import get_training_step_lambda
 
 
 def training_loop(
-    tokenizer,
     text_encoder,
     text_encoder_params,
     vae,
@@ -36,7 +35,7 @@ def training_loop(
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     # dataset setup
-    train_dataset = setup_dataset(max_train_steps, tokenizer)
+    train_dataset = setup_dataset(max_train_steps)
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()
@@ -95,7 +94,6 @@ def training_loop(
         if repo_id is not None:
             save_to_repository(
                 output_dir,
-                tokenizer,
                 text_encoder,
                 text_encoder_params,
                 vae,
