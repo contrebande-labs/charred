@@ -205,5 +205,6 @@ if __name__ == "__main__":
     # TODO: do batches with DataLoader here to use all the CPUs
     # TODO: use TQDM
     progress = tqdm(total=max_samples)
-    for sample in dataset: progress.update(1)
+    for sample in dataset:
+        progress.update(1)
     progress.close()
