@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 import torch
 from torchvision import transforms
+import torch.nn.functional as F
 
 def _prefilter(sample):
 
@@ -99,9 +100,12 @@ def _compute_intermediate_values(sample):
                 ]
             )(pil_rgb_image)
 
+            # Caption "tokenizing"
             # Model has 3 special tokens which take up the input ids 0,1,2 of ByT5.
             # => Need to shift utf-8 character encodings by 3 before passing ids to model.
-            sample["input_ids"] = torch.tensor([list(sample["TEXT"].encode("utf-8"))]) + 3
+            raw_input_ids = torch.tensor([list(sample["TEXT"].encode("utf-8"))]) + 3
+            padded_input_ids = F.pad(input=raw_input_ids, pad=(0, 1024), mode='constant', value=0)
+            sample["input_ids"] = torch.narrow(padded_input_ids, 0, 0, 1024)
 
             sample["pass"] = True
 
