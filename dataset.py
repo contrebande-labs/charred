@@ -100,7 +100,7 @@ def _compute_intermediate_values(sample):
                 ]
             )(pil_rgb_image)
 
-            # Caption "tokenizing"
+            # Caption "tokenizing" to vector or size 4096
             # Model has 3 special tokens which take up the input ids 0,1,2 of ByT5.
             # => Need to shift utf-8 character encodings by 3 before passing ids to model.
             raw_input_ids = torch.tensor([list(sample["TEXT"].encode("utf-8"))]) + 3
