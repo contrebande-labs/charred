@@ -105,8 +105,7 @@ def _compute_intermediate_values(sample):
             # => Need to shift utf-8 character encodings by 3 before passing ids to model.
             raw_input_ids = torch.tensor([list(sample["TEXT"].encode("utf-8"))]) + 3
             padded_input_ids = F.pad(input=raw_input_ids, pad=(0, 4096), mode='constant', value=0)
-            sample["input_ids"] = padded_input_ids
-            #sample["input_ids"] = torch.narrow(padded_input_ids, 0, 0, 4096)
+            sample["input_ids"] = padded_input_ids.narrow(0, 0, 4096)
 
             sample["pass"] = True
 

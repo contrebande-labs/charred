@@ -34,7 +34,6 @@ def get_params_to_save(params):
 
 def save_to_repository(
     output_dir,
-    tokenizer,
     text_encoder,
     text_encoder_params,
     vae,
