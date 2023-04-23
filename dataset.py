@@ -196,8 +196,6 @@ def get_compute_embeddings_lambda():
 
 def preprocess_dataset():
 
-    disable_caching()
-
     # loading the dataset
     dataset = (
         # Dataset.from_parquet(
@@ -208,9 +206,8 @@ def preprocess_dataset():
         load_dataset(
             "parquet",
             data_files={"train": "/data/laion-high-resolution-filtered-shuffled.parquet"},
-            split="train[:1800000]",
+            split="train",
             cache_dir="/data/cache",
-            #streaming=True,
         )
         # .filter(
         #     _prefilter,
@@ -229,14 +226,14 @@ def preprocess_dataset():
             batched=False,
             num_proc=96,
         )
-        .map(
-            get_compute_embeddings_lambda(),
-            batched=True,
-            batch_size=16,
-            num_proc=32,
-        )
+        # .map(
+        #     get_compute_embeddings_lambda(),
+        #     batched=True,
+        #     batch_size=16,
+        #     num_proc=32,
+        # )
         .to_parquet(
-            "/data/laion-high-resolution-filtered-shuffled-processed.zstd.parquet",
+            "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet",
             batch_size=96,
             compression="ZSTD"
         )
