@@ -206,8 +206,8 @@ def preprocess_dataset():
         load_dataset(
             #"laion/laion-high-resolution"
             "parquet",
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
-            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
+            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
+            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
             split="train",
             cache_dir="/data/cache",
         )
@@ -223,19 +223,18 @@ def preprocess_dataset():
         #     _compute_pixel_values,
         #     num_proc=96,
         # )
-        .filter(
-            _filter_out_unprocessed,
-            batched=False,
-            num_proc=8,
-        )
-        # .map(
-        #     get_compute_embeddings_lambda(),
-        #     batched=True,
-        #     batch_size=16,
+        # .filter(
+        #     _filter_out_unprocessed,
         #     num_proc=8,
         # )
+        .map(
+            get_compute_embeddings_lambda(),
+            batched=True,
+            batch_size=16,
+            num_proc=8,
+        )
         .to_parquet(
-            "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet",
+            "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
             batch_size=96,
             compression="ZSTD"
         )
@@ -251,7 +250,7 @@ def setup_dataset(samples):
     dataset = (
         load_dataset(
             "parquet",
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
+            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
             split="train",
             cache_dir="/data/cache",
             streaming=True,
