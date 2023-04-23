@@ -231,7 +231,7 @@ def preprocess_dataset():
             get_compute_embeddings_lambda(),
             batched=True,
             batch_size=16,
-            num_proc=4,
+            #num_proc=4,
         )
         .to_parquet(
             "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
