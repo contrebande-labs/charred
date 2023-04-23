@@ -1,4 +1,4 @@
-from datasets import load_dataset, disable_caching
+from datasets import load_dataset
 import os
 from PIL import Image
 import requests
@@ -207,8 +207,9 @@ def preprocess_dataset():
             #"laion/laion-high-resolution"
             "parquet",
             #data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
-            split="train[:10000]",
+            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
+            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet"},
+            split="train",
             cache_dir="/data/cache",
         )
         # .filter(
@@ -227,17 +228,17 @@ def preprocess_dataset():
         #     _filter_out_unprocessed,
         #     num_proc=8,
         # )
-        .map(
-            get_compute_embeddings_lambda(),
-            batched=True,
-            batch_size=16,
-            #num_proc=4,
-        )
-        .to_parquet(
-            "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
-            batch_size=96,
-            compression="ZSTD"
-        )
+        # .map(
+        #     get_compute_embeddings_lambda(),
+        #     batched=True,
+        #     batch_size=16,
+        #     #num_proc=4,
+        # )
+        # .to_parquet(
+        #     "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
+        #     batch_size=96,
+        #     compression="ZSTD"
+        # )
         #.take(samples)
     )
 
@@ -250,13 +251,14 @@ def setup_dataset(samples):
     dataset = (
         load_dataset(
             "parquet",
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
+            data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
             split="train",
             cache_dir="/data/cache",
             streaming=True,
         )
         .map(
             _compute_intermediate_values,
+            batched=False,
             batched=False,
         )
         .filter(
