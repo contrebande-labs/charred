@@ -206,6 +206,7 @@ def preprocess_dataset():
             cache_dir="/data/cache",
             #streaming=True,
         )
+        .take(1_800_000)
         # .filter(
         #     _prefilter,
         #     #num_proc=96,
@@ -230,8 +231,9 @@ def preprocess_dataset():
         )
         .remove_columns(["pass", "pixel_values"])
         .to_parquet(
-            "/data/laion-high-resolution-filtered-shuffled-processed.parquet",
-            batch_size=96
+            "/data/laion-high-resolution-filtered-shuffled-processed.zstd.parquet",
+            batch_size=96,
+            compression="ZSTD"
         )
         #.take(samples)
     )
