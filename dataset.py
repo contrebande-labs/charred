@@ -10,6 +10,7 @@ import torch
 
 from diffusers import FlaxAutoencoderKL
 
+
 def _prefilter(sample):
 
     image_url = sample["URL"]
@@ -30,6 +31,7 @@ def _prefilter(sample):
         and hash is not None
     )
 
+
 def _download_image(sample):
 
     is_ok = False
@@ -40,9 +42,10 @@ def _download_image(sample):
         "/data/image-cache", "%s.jpg" % hex(sample["hash"])
     )
 
-    if os.path.isfile(cached_image_image_file_path): pass
+    if os.path.isfile(cached_image_image_file_path):
+        pass
     else:
-        
+
         try:
 
             # get image data from url
@@ -51,13 +54,13 @@ def _download_image(sample):
             if image_bytes is not None:
 
                 pil_image = Image.open(image_bytes)
-    
+
                 if pil_image.mode == "RGB":
-    
+
                     pil_rgb_image = pil_image
-    
+
                 else:
-    
+
                     # Deal with non RGB images
                     if pil_image.mode == "RGBA":
                         pil_rgba_image = pil_rgb_image
@@ -74,63 +77,93 @@ def _download_image(sample):
                 pil_rgb_image.save(cached_image_image_file_path)
 
         except:
-            with open(cached_image_image_file_path, mode='a'): pass
- 
+            with open(cached_image_image_file_path, mode="a"):
+                pass
+
         # save image to disk but do not catch exception. this has to fail because otherwise the mapper will run forever
-        if is_ok: pil_rgb_image.save(cached_image_image_file_path)
+        if is_ok:
+            pil_rgb_image.save(cached_image_image_file_path)
 
     return is_ok
 
+
 def _filter_out_unprocessed(sample):
 
-    cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
+    cached_image_image_file_path = os.path.join(
+        "/data/image-cache", "%s.jpg" % hex(sample["hash"])
+    )
 
-    if os.path.isfile(cached_image_image_file_path) and os.stat(cached_image_image_file_path).st_size > 0:
+    if (
+        os.path.isfile(cached_image_image_file_path)
+        and os.stat(cached_image_image_file_path).st_size > 0
+    ):
 
         try:
- 
+
             Image.open(cached_image_image_file_path)
- 
+
             return True
 
-        except: pass
-    
+        except:
+            pass
+
     return False
 
-def _get_pixel_values(image_hash):
-        cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(image_hash))
- 
-        #get image data from cache
-        pil_rgb_image = Image.open(cached_image_image_file_path)
 
-        return transforms.Compose(
+def _get_pixel_values(image_hash):
+    cached_image_image_file_path = os.path.join(
+        "/data/image-cache", "%s.jpg" % hex(image_hash)
+    )
+
+    # get image data from cache
+    pil_rgb_image = Image.open(cached_image_image_file_path)
+
+    return (
+        transforms.Compose(
             [
-                transforms.Resize(512, interpolation=transforms.InterpolationMode.LANCZOS),
+                transforms.Resize(
+                    512, interpolation=transforms.InterpolationMode.LANCZOS
+                ),
                 transforms.CenterCrop(512),
                 transforms.ToTensor(),
             ]
-        )(pil_rgb_image).to(memory_format=torch.contiguous_format).float()
+        )(pil_rgb_image)
+        .to(memory_format=torch.contiguous_format)
+        .float()
+    )
+
 
 def _compute_intermediate_values(sample):
 
     sample["pass"] = False
 
-    cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
+    cached_image_image_file_path = os.path.join(
+        "/data/image-cache", "%s.jpg" % hex(sample["hash"])
+    )
 
-    if os.path.isfile(cached_image_image_file_path) and os.stat(cached_image_image_file_path).st_size > 0:
+    if (
+        os.path.isfile(cached_image_image_file_path)
+        and os.stat(cached_image_image_file_path).st_size > 0
+    ):
 
         try:
 
-            #get image data from cache
+            # get image data from cache
             pil_rgb_image = Image.open(cached_image_image_file_path)
 
-            sample["pixel_values"] = transforms.Compose(
-                [
-                    transforms.Resize(512, interpolation=transforms.InterpolationMode.LANCZOS),
-                    transforms.CenterCrop(512),
-                    transforms.ToTensor(),
-                ]
-            )(pil_rgb_image).to(memory_format=torch.contiguous_format).float()
+            sample["pixel_values"] = (
+                transforms.Compose(
+                    [
+                        transforms.Resize(
+                            512, interpolation=transforms.InterpolationMode.LANCZOS
+                        ),
+                        transforms.CenterCrop(512),
+                        transforms.ToTensor(),
+                    ]
+                )(pil_rgb_image)
+                .to(memory_format=torch.contiguous_format)
+                .float()
+            )
 
             sample["input_ids"] = ByT5Tokenizer(
                 text=sample["TEXT"],
@@ -142,9 +175,11 @@ def _compute_intermediate_values(sample):
 
             sample["pass"] = True
 
-        except: pass
+        except:
+            pass
 
     return sample
+
 
 def get_compute_embeddings_lambda():
 
@@ -191,8 +226,9 @@ def get_compute_embeddings_lambda():
         ).latent_dist.mode()
 
         return samples
- 
+
     return lambda samples: __compute_embeddings(samples)
+
 
 def preprocess_dataset():
 
@@ -204,11 +240,13 @@ def preprocess_dataset():
         #     cache_dir="/data/cache",
         # )
         load_dataset(
-            #"laion/laion-high-resolution"
+            # "laion/laion-high-resolution"
             "parquet",
-            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
-            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet"},
+            # data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
+            # data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
+            data_files={
+                "train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet"
+            },
             split="train",
             cache_dir="/data/cache",
         )
@@ -239,7 +277,7 @@ def preprocess_dataset():
         #     batch_size=96,
         #     compression="ZSTD"
         # )
-        #.take(samples)
+        # .take(samples)
     )
 
     return dataset
@@ -251,7 +289,9 @@ def setup_dataset(samples):
     dataset = (
         load_dataset(
             "parquet",
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
+            data_files={
+                "train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"
+            },
             split="train",
             cache_dir="/data/cache",
             streaming=True,
@@ -271,7 +311,6 @@ def setup_dataset(samples):
         )
         .remove_columns(["pass"])
         .take(samples)
-
     )
 
     return dataset
@@ -279,7 +318,7 @@ def setup_dataset(samples):
 
 if __name__ == "__main__":
 
-    #max_samples = 64
+    # max_samples = 64
 
     dataset = preprocess_dataset()
 

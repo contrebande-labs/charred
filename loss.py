@@ -1,30 +1,37 @@
 import jax.numpy as jnp
 import jax
 
-def get_vae_latent_distribution_samples(image_vae_latent_distribution, sample_rng, scaling_factor, noise_scheduler, noise_scheduler_state) :
-        latent_samples = image_vae_latent_distribution.sample(sample_rng)
-        latents_transposed = jnp.transpose(latent_samples, (0, 3, 1, 2))  # (NHWC) -> (NCHW)
-        latents = latents_transposed * scaling_factor
 
-        # Sample noise that we'll add to the latents
-        noise_rng, timestep_rng = jax.random.split(sample_rng)
-        noise = jax.random.normal(noise_rng, latents.shape)
+def get_vae_latent_distribution_samples(
+    image_vae_latent_distribution,
+    sample_rng,
+    scaling_factor,
+    noise_scheduler,
+    noise_scheduler_state,
+):
+    latent_samples = image_vae_latent_distribution.sample(sample_rng)
+    latents_transposed = jnp.transpose(latent_samples, (0, 3, 1, 2))  # (NHWC) -> (NCHW)
+    latents = latents_transposed * scaling_factor
 
-        # Sample a random timestep for each image
-        timesteps = jax.random.randint(
-            timestep_rng,
-            (latents.shape[0],),
-            0,
-            noise_scheduler.config.num_train_timesteps,
-        )
+    # Sample noise that we'll add to the latents
+    noise_rng, timestep_rng = jax.random.split(sample_rng)
+    noise = jax.random.normal(noise_rng, latents.shape)
 
-        # Add noise to the latents according to the noise magnitude at each timestep
-        # (this is the forward diffusion process)
-        noisy_latents = noise_scheduler.add_noise(
-            noise_scheduler_state, latents, noise, timesteps
-        )
+    # Sample a random timestep for each image
+    timesteps = jax.random.randint(
+        timestep_rng,
+        (latents.shape[0],),
+        0,
+        noise_scheduler.config.num_train_timesteps,
+    )
 
-        return noisy_latents, timesteps, noise
+    # Add noise to the latents according to the noise magnitude at each timestep
+    # (this is the forward diffusion process)
+    noisy_latents = noise_scheduler.add_noise(
+        noise_scheduler_state, latents, noise, timesteps
+    )
+
+    return noisy_latents, timesteps, noise
 
 
 def get_loss_lambda(
@@ -34,7 +41,6 @@ def get_loss_lambda(
     noise_scheduler,
     noise_scheduler_state,
 ):
-
     def __loss_lambda(
         state,
         text_encoder_params,
@@ -42,7 +48,7 @@ def get_loss_lambda(
         batch,
         sample_rng,
     ):
-        
+
         # Get the text embedding
         text_encoder_hidden_states = text_encoder(
             batch["input_ids"],
@@ -58,12 +64,16 @@ def get_loss_lambda(
             method=vae.encode,
         )
         image_vae_latent_distribution = vae_outputs.latent_dist
-        image_sampling_noisy_latents, image_sampling_timesteps, image_sampling_noise = get_vae_latent_distribution_samples(
+        (
+            image_sampling_noisy_latents,
+            image_sampling_timesteps,
+            image_sampling_noise,
+        ) = get_vae_latent_distribution_samples(
             image_vae_latent_distribution,
             sample_rng,
             vae.config.scaling_factor,
             noise_scheduler,
-            noise_scheduler_state
+            noise_scheduler_state,
         )
 
         # Predict the noise residual and compute loss

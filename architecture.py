@@ -5,10 +5,7 @@ from transformers import FlaxT5ForConditionalGeneration, set_seed
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel
 
 
-def setup_model(
-    seed,
-    mixed_precision
-):
+def setup_model(seed, mixed_precision):
 
     set_seed(seed)
 
