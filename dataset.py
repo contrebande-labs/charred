@@ -234,9 +234,11 @@ def get_compute_embeddings_lambda():
 def get_image_noisy_sample_lambda():
 
     def __image_noisy_sample_lambda(samples):
+        latent_dist_means = samples["vae_latent_dist_mean"]
+        print(latent_dist_means.shape)
         return samples
 
-    return lambda samples: __image_noisy_sample_lambda(samples)
+    return lambda samples: __image_noisy_sample_lambda(samples["vae_latent_dist_mean"])
 
 def preprocess_dataset():
 
