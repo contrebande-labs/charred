@@ -202,11 +202,10 @@ def preprocess_dataset():
         load_dataset(
             "parquet",
             data_files={"train": "/data/laion-high-resolution-filtered-shuffled.parquet"},
-            split="train",
+            split="train[:1800000]",
             cache_dir="/data/cache",
             #streaming=True,
         )
-        .take(1_800_000)
         # .filter(
         #     _prefilter,
         #     #num_proc=96,
