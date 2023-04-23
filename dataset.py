@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset, disable_caching
 import os
 from PIL import Image
 import requests
@@ -81,33 +81,35 @@ def _download_image(sample):
 
     return is_ok
 
-def _compute_pixel_values(sample):
-
-    sample["pass"] = False
-    sample["pixel_values"] = torch.empty((3,512,512), dtype=torch.float32)
+def _filter_out_unprocessed(sample):
 
     cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
 
     if os.path.isfile(cached_image_image_file_path) and os.stat(cached_image_image_file_path).st_size > 0:
 
         try:
-
-            #get image data from cache
-            pil_rgb_image = Image.open(cached_image_image_file_path)
-
-            sample["pixel_values"] = transforms.Compose(
-                [
-                    transforms.Resize(512, interpolation=transforms.InterpolationMode.LANCZOS),
-                    transforms.CenterCrop(512),
-                    transforms.ToTensor(),
-                ]
-            )(pil_rgb_image).to(memory_format=torch.contiguous_format).float()
-
-            sample["pass"] = True
+ 
+            Image.open(cached_image_image_file_path)
+ 
+            return True
 
         except: pass
+    
+    return False
 
-    return sample
+def _get_pixel_values(image_hash):
+        cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(image_hash))
+ 
+        #get image data from cache
+        pil_rgb_image = Image.open(cached_image_image_file_path)
+
+        return transforms.Compose(
+            [
+                transforms.Resize(512, interpolation=transforms.InterpolationMode.LANCZOS),
+                transforms.CenterCrop(512),
+                transforms.ToTensor(),
+            ]
+        )(pil_rgb_image).to(memory_format=torch.contiguous_format).float()
 
 def _compute_intermediate_values(sample):
 
@@ -178,10 +180,13 @@ def get_compute_embeddings_lambda():
             train=False,
         )[0]
 
+        # load and transform image
+        pixel_values = [_get_pixel_values(image_hash) for image_hash in samples["hash"]]
+
         # compute image embedding
         samples["vae_latent_dist_mean"] = vae.apply(
             {"params": vae_params},
-            torch.stack(samples["pixel_values"]).numpy(),
+            torch.stack(pixel_values).numpy(),
             deterministic=True,
             method=vae.encode,
         ).latent_dist.mode()
@@ -193,6 +198,8 @@ def get_compute_embeddings_lambda():
 
 
 def preprocess_dataset():
+
+    disable_caching()
 
     # loading the dataset
     dataset = (
@@ -216,12 +223,13 @@ def preprocess_dataset():
         #     _download_image,
         #     #num_proc=96,
         # )
-        .map(
-            _compute_pixel_values,
-            num_proc=96,
-        )
+        # .map(
+        #     _compute_pixel_values,
+        #     num_proc=96,
+        # )
         .filter(
-            lambda sample: sample["pass"],
+            _filter_out_unprocessed,
+            batched=False,
             num_proc=96,
         )
         .map(
@@ -230,7 +238,6 @@ def preprocess_dataset():
             batch_size=16,
             num_proc=32,
         )
-        .remove_columns(["pass", "pixel_values"])
         .to_parquet(
             "/data/laion-high-resolution-filtered-shuffled-processed.zstd.parquet",
             batch_size=96,
