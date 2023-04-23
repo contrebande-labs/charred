@@ -204,8 +204,10 @@ def preprocess_dataset():
         #     cache_dir="/data/cache",
         # )
         load_dataset(
+            #"laion/laion-high-resolution"
             "parquet",
-            data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
+            data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
+            #data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
             split="train",
             cache_dir="/data/cache",
         )
