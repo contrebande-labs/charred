@@ -299,7 +299,6 @@ def setup_dataset(samples):
         .map(
             _compute_intermediate_values,
             batched=False,
-            batched=False,
         )
         .filter(
             lambda sample: sample["pass"],
