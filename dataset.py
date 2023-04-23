@@ -208,7 +208,7 @@ def preprocess_dataset():
             "parquet",
             #data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
             data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
-            split="train",
+            split="train[:10000]",
             cache_dir="/data/cache",
         )
         # .filter(
@@ -231,7 +231,7 @@ def preprocess_dataset():
             get_compute_embeddings_lambda(),
             batched=True,
             batch_size=16,
-            num_proc=8,
+            num_proc=4,
         )
         .to_parquet(
             "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
