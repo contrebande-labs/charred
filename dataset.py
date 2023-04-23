@@ -114,7 +114,6 @@ def _get_pixel_values(image_hash):
 def _compute_intermediate_values(sample):
 
     sample["pass"] = False
-    sample["pixel_values"] = torch.empty((3,512,512), dtype=torch.float32)
 
     cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
 
@@ -194,8 +193,6 @@ def get_compute_embeddings_lambda():
         return samples
  
     return lambda samples: __compute_embeddings(samples)
-
-
 
 def preprocess_dataset():
 
