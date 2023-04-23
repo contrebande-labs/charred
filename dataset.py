@@ -84,6 +84,7 @@ def _download_image(sample):
 def _compute_pixel_values(sample):
 
     sample["pass"] = False
+    sample["pixel_values"] = None
 
     cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
 
@@ -111,6 +112,7 @@ def _compute_pixel_values(sample):
 def _compute_intermediate_values(sample):
 
     sample["pass"] = False
+    sample["pixel_values"] = None
 
     cached_image_image_file_path = os.path.join("/data/image-cache", "%s.jpg" % hex(sample["hash"]))
 
