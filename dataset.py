@@ -2,12 +2,13 @@ from datasets import load_dataset
 import os
 from PIL import Image
 import requests
+import tqdm
 
-import jax.numpy as jnp
-from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration, set_seed
 from torchvision import transforms
 import torch
 
+from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration, set_seed
+import jax.numpy as jnp
 from diffusers import FlaxAutoencoderKL
 
 
@@ -230,6 +231,13 @@ def get_compute_embeddings_lambda():
     return lambda samples: __compute_embeddings(samples)
 
 
+def get_image_noisy_sample_lambda():
+
+    def __image_noisy_sample_lambda(samples):
+        return samples
+
+    return lambda samples: __image_noisy_sample_lambda(samples)
+
 def preprocess_dataset():
 
     # loading the dataset
@@ -249,6 +257,7 @@ def preprocess_dataset():
             },
             split="train",
             cache_dir="/data/cache",
+            streaming=True,
         )
         # .filter(
         #     _prefilter,
@@ -278,6 +287,12 @@ def preprocess_dataset():
         #     compression="ZSTD"
         # )
         # .take(samples)
+        # .map(
+        #     get_compute_embeddings_lambda(),
+        #     batched=True,
+        #     batch_size=16,
+        #     #num_proc=4,
+        # )
     )
 
     return dataset
@@ -317,13 +332,11 @@ def setup_dataset(samples):
 
 if __name__ == "__main__":
 
-    # max_samples = 64
+    max_samples = 10_000
 
     dataset = preprocess_dataset()
 
-    # TODO: do batches with DataLoader here to use all the CPUs
-    # TODO: use TQDM
-    # progress = tqdm(total=max_samples)
-    # for sample in dataset:
-    #     progress.update(1)
-    # progress.close()
+    progress = tqdm(total=max_samples)
+    for sample in dataset:
+        progress.update(1)
+    progress.close()
