@@ -133,12 +133,12 @@ def _compute_intermediate_values(sample):
             )(pil_rgb_image).to(memory_format=torch.contiguous_format).float()
 
             sample["input_ids"] = ByT5Tokenizer(
-            text=sample["TEXT"],
-            max_length=1024,
-            padding="max_length",
-            truncation=True,
-            return_tensors="jax",
-        ).input_ids
+                text=sample["TEXT"],
+                max_length=1024,
+                padding="max_length",
+                truncation=True,
+                return_tensors="jax",
+            ).input_ids
 
             sample["pass"] = True
 
