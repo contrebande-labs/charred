@@ -57,9 +57,6 @@ def save_to_repository(
         tokenizer=ByT5Tokenizer(),
         scheduler=scheduler,
         safety_checker=None,
-        feature_extractor=CLIPImageProcessor.from_pretrained(
-            "openai/clip-vit-base-patch32"
-        ),
     )
 
     pipeline.save_pretrained(
@@ -74,6 +71,6 @@ def save_to_repository(
     upload_folder(
         repo_id=repo_id,
         folder_path=output_dir,
-        commit_message="End of training",
+        commit_message="End of training epoch.",
         ignore_patterns=["step_*", "epoch_*"],
     )
