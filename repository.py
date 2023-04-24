@@ -9,7 +9,6 @@ import jax
 # hugging face
 from huggingface_hub import upload_folder
 from diffusers import (
-    FlaxPNDMScheduler,
     FlaxStableDiffusionPipeline,
 )
 from transformers import CLIPImageProcessor
@@ -34,41 +33,14 @@ def get_params_to_save(params):
 
 def save_to_repository(
     output_dir,
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
     unet,
-    state,
+    unet_params,
     repo_id,
 ):
 
-    scheduler = FlaxPNDMScheduler(
-        beta_start=0.00085,
-        beta_end=0.012,
-        beta_schedule="scaled_linear",
-        skip_prk_steps=True,
-    )
-
-    pipeline = FlaxStableDiffusionPipeline(
-        text_encoder=text_encoder,
-        vae=vae,
-        unet=unet,
-        tokenizer=ByT5Tokenizer(),
-        scheduler=scheduler,
-        feature_extractor=CLIPImageProcessor.from_pretrained(
-            "openai/clip-vit-base-patch32"
-        ),
-        safety_checker=None,
-    )
-
-    pipeline.save_pretrained(
-        output_dir,
-        params={
-            "text_encoder": get_params_to_save(text_encoder_params),
-            "vae": get_params_to_save(vae_params),
-            "unet": get_params_to_save(state.params),
-        },
+    unet.save_pretrained(
+        save_directory=output_dir,
+        params=unet_params,
     )
 
     upload_folder(

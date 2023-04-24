@@ -57,7 +57,7 @@ def training_loop(
         steps = tqdm(
             total=max_train_steps, desc="Training steps...", position=1, leave=False
         )
- 
+
         epoch_steps = 0
 
         for batch in train_dataloader:
@@ -98,12 +98,8 @@ def training_loop(
         if repo_id is not None:
             save_to_repository(
                 output_dir,
-                text_encoder,
-                text_encoder_params,
-                vae,
-                vae_params,
                 unet,
-                state,
+                state.params,
                 repo_id,
             )
 
