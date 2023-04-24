@@ -49,6 +49,7 @@ def training_loop(
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
     t0 = time.monotonic()
+    global_training_steps = 0
     for epoch in epochs:
 
         unreplicated_train_metric = None
@@ -56,6 +57,8 @@ def training_loop(
         steps = tqdm(
             total=max_train_steps, desc="Training steps...", position=1, leave=False
         )
+ 
+        epoch_steps = 0
 
         for batch in train_dataloader:
 
@@ -67,6 +70,8 @@ def training_loop(
 
             unreplicated_train_metric = jax_utils.unreplicate(train_metric)
 
+            epoch_steps += 1
+            global_training_steps += 1
             steps.update(1)
 
             if log_wandb:
@@ -74,10 +79,10 @@ def training_loop(
                 wandb.log(
                     data={
                         "walltime": walltime,
-                        "train/step": steps,
+                        "train/step": epoch_steps,
                         "train/epoch": epoch,
                         "train/secs_per_epoch": walltime / (epoch + 1),
-                        "train/steps_per_sec": steps / walltime,
+                        "train/steps_per_sec": global_training_steps / walltime,
                         **{
                             f"train/{k}": v
                             for k, v in unreplicated_train_metric.items()
