@@ -2,7 +2,7 @@ from datasets import load_dataset
 import os
 from PIL import Image
 import requests
-import tqdm
+from tqdm import tqdm
 
 from torchvision import transforms
 import torch
@@ -289,12 +289,12 @@ def preprocess_dataset():
         #     compression="ZSTD"
         # )
         # .take(samples)
-        # .map(
-        #     get_compute_embeddings_lambda(),
-        #     batched=True,
-        #     batch_size=16,
-        #     #num_proc=4,
-        # )
+        .map(
+            get_image_noisy_sample_lambda(),
+            batched=True,
+            batch_size=16,
+            #num_proc=4,
+        )
     )
 
     return dataset
@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     dataset = preprocess_dataset()
 
-    progress = tqdm(total=max_samples)
-    for sample in dataset:
-        progress.update(1)
-    progress.close()
+    #progress = tqdm(total=max_samples)
+    for sample in dataset: pass
+        #progress.update(1)
+    #progress.close()
