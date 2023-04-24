@@ -56,6 +56,9 @@ def save_to_repository(
         unet=unet,
         tokenizer=ByT5Tokenizer(),
         scheduler=scheduler,
+        feature_extractor=CLIPImageProcessor.from_pretrained(
+            "openai/clip-vit-base-patch32"
+        ),
         safety_checker=None,
     )
 
