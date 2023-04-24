@@ -36,15 +36,18 @@ def training_loop(
 
     # dataset setup
     train_dataset = setup_dataset(max_train_steps)
+    print("dataset loaded...")
 
     # batch setup
     total_train_batch_size = train_batch_size * jax.local_device_count()
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
+    print("dataloader setup...")
 
     # Create parallel version of the train step
     jax_pmap_train_step = jax.pmap(
         get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,)
     )
+    print("training step compiled...")
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)

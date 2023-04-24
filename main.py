@@ -17,6 +17,8 @@ def main():
 
     args = parse_args()
 
+    output_dir = args.output_dir
+
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
     if log_wandb:
@@ -35,7 +37,8 @@ def main():
         wandb.define_metric("train/step", step_metric="walltime")
 
     if args.push_to_hub:
-        repo_id = create_repository(args.output_dir, args.hub_model_id)
+        repo_id = create_repository(output_dir, args.hub_model_id)
+        print("connected to hugging face model git repo...")
     else:
         repo_id = None
 
@@ -43,12 +46,14 @@ def main():
     seed = args.seed
     seed_rng = jax.random.PRNGKey(seed)
     rng, rng_params = jax.random.split(seed_rng)
+    print("random generator setup...")
 
     # Pretrained freezed model setup
     text_encoder, text_encoder_params, vae, vae_params, unet = setup_model(
         seed,
         args.mixed_precision,
     )
+    print("freezed models setup...")
 
     # Optimization & scheduling setup
     optimizer = setup_optimizer(
@@ -59,19 +64,24 @@ def main():
         args.adam_weight_decay,
         args.max_grad_norm,
     )
+    print("optimizer setup...")
 
-    # State setup
-    replicated_state = jax_utils.replicate(
-        train_state.TrainState.create(
-            apply_fn=unet,
-            params=unfreeze(unet.init_weights(rng=rng_params)),
-            tx=optimizer,
-        )
+
+    # Training state setup
+    unet_training_state = train_state.TrainState.create(
+        apply_fn=unet,
+        params=unfreeze(unet.init_weights(rng=rng_params)),
+        tx=optimizer,
     )
+
+    # JAX device data replication
+    replicated_state = jax_utils.replicate(unet_training_state)
     replicated_text_encoder_params = jax_utils.replicate(text_encoder_params)
     replicated_vae_params = jax_utils.replicate(vae_params)
+    print("states & params replicated to TPUs...")
 
     # Train!
+    print("Training loop init...")
     training_loop(
         text_encoder,
         replicated_text_encoder_params,
@@ -83,13 +93,15 @@ def main():
         args.max_train_steps,
         args.num_train_epochs,
         args.train_batch_size,
-        args.output_dir,
+        output_dir,
         repo_id,
         log_wandb,
     )
+    print("Training loop done...")
 
     if log_wandb:
         wandb.finish()
+        print("WandB closed...")
 
 
 if __name__ == "__main__":
