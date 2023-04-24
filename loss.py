@@ -12,7 +12,9 @@ def get_vae_latent_distribution_samples(
     noise_scheduler_state,
 ):
     # (NHWC) -> (NCHW)
-    latents = jnp.transpose(image_latent_distribution_sampling, (0, 3, 1, 2)) * scaling_factor
+    latents = (
+        jnp.transpose(image_latent_distribution_sampling, (0, 3, 1, 2)) * scaling_factor
+    )
 
     # Sample noise that we'll add to the latents
     noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -37,8 +39,11 @@ def get_vae_latent_distribution_samples(
 
 def get_compute_loss_lambda(
     text_encoder,
+    text_encoder_params,
     vae,
+    vae_params,
     unet,
+    state,
 ):
 
     noise_scheduler = FlaxDDPMScheduler(
@@ -51,9 +56,6 @@ def get_compute_loss_lambda(
     noise_scheduler_state = noise_scheduler.create_state()
 
     def __compute_loss_lambda(
-        state,
-        text_encoder_params,
-        vae_params,
         batch,
         sample_rng,
     ):

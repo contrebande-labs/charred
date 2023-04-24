@@ -114,9 +114,7 @@ def get_compute_intermediate_values_lambda():
 
     image_transforms = transforms.Compose(
         [
-            transforms.Resize(
-                512, interpolation=transforms.InterpolationMode.LANCZOS
-            ),
+            transforms.Resize(512, interpolation=transforms.InterpolationMode.LANCZOS),
             transforms.CenterCrop(512),
             transforms.ToTensor(),
         ]
@@ -132,7 +130,7 @@ def get_compute_intermediate_values_lambda():
         # get image data from cache
         pil_rgb_image = Image.open(cached_image_image_file_path)
 
-        transformed_image = image_transforms(pil_rgb_image);
+        transformed_image = image_transforms(pil_rgb_image)
 
         return transformed_image
 
@@ -153,6 +151,7 @@ def get_compute_intermediate_values_lambda():
         return samples
 
     return __compute_intermediate_values_lambda
+
 
 def setup_dataset(n):
 
@@ -182,10 +181,11 @@ def setup_dataset(n):
 
     return dataset
 
+
 if __name__ == "__main__":
 
     dataset = setup_dataset(64)
- 
+
     dataloader = setup_dataloader(dataset, 16)
     for batch in dataloader:
         print(batch["pixel_values"].shape)
