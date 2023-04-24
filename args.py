@@ -91,7 +91,7 @@ def parse_args():
     parser.add_argument(
         "--hub_model_id",
         type=str,
-        default="characted-aware-diffusion/charred",
+        default="character-aware-diffusion/charred",
         help="The name of the repository to keep in sync with the local `output_dir`.",
     )
     parser.add_argument(
