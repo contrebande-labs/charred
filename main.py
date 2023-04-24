@@ -73,6 +73,7 @@ def main():
         params=unfreeze(unet.init_weights(rng=rng_params)),
         tx=optimizer,
     )
+    print("training state initialized...")
 
     # JAX device data replication
     replicated_state = jax_utils.replicate(unet_training_state)
