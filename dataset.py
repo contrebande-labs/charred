@@ -259,7 +259,6 @@ def preprocess_dataset():
             },
             split="train",
             cache_dir="/data/cache",
-            streaming=True,
         )
         # .filter(
         #     _prefilter,
