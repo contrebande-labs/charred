@@ -12,23 +12,21 @@ def get_training_step_lambda(text_encoder, vae, unet):
         rng,
     ):
 
+        sample_rng, new_rng = jax.random.split(rng, 2)
+
         compute_loss_lambda = get_compute_loss_lambda(
             text_encoder,
             text_encoder_params,
             vae,
             vae_params,
             unet,
-            state,
+            batch,
+            sample_rng,
         )
 
         jax_grad_value_loss = jax.value_and_grad(compute_loss_lambda)
 
-        sample_rng, new_rng = jax.random.split(rng, 2)
-
-        loss, grad = jax_grad_value_loss(
-            batch,
-            sample_rng,
-        )
+        loss, grad = jax_grad_value_loss(state.params)
 
         grad_mean = jax.lax.pmean(grad, "batch")
 

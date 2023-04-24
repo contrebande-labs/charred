@@ -43,7 +43,8 @@ def get_compute_loss_lambda(
     vae,
     vae_params,
     unet,
-    state,
+    batch,
+    sample_rng,
 ):
 
     noise_scheduler = FlaxDDPMScheduler(
@@ -56,8 +57,7 @@ def get_compute_loss_lambda(
     noise_scheduler_state = noise_scheduler.create_state()
 
     def __compute_loss_lambda(
-        batch,
-        sample_rng,
+        state_params,
     ):
 
         # Get the text embedding
@@ -90,7 +90,7 @@ def get_compute_loss_lambda(
 
         # Predict the noise residual and compute loss
         model_pred = unet.apply(
-            {"params": state},
+            {"params": state_params},
             image_sampling_noisy_latents,
             image_sampling_timesteps,
             text_encoder_hidden_states,
