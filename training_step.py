@@ -14,7 +14,7 @@ def get_training_step_lambda(text_encoder, vae, unet):
 
         sample_rng, new_rng = jax.random.split(rng, 2)
 
-        loss, grad = jax.value_and_grad(
+        jax_grad_value_loss = jax.value_and_grad(
             get_compute_loss_lambda(
                 text_encoder,
                 text_encoder_params,
@@ -23,7 +23,9 @@ def get_training_step_lambda(text_encoder, vae, unet):
                 unet,
                 state,
             )
-        )(
+        )
+
+        loss, grad = jax_grad_value_loss(
             batch,
             sample_rng,
         )
