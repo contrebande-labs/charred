@@ -1,17 +1,18 @@
 import jax.numpy as jnp
 import jax
 
+from diffusers import FlaxDDPMScheduler
+
 
 def get_vae_latent_distribution_samples(
-    image_vae_latent_distribution,
+    image_latent_distribution_sampling,
     sample_rng,
     scaling_factor,
     noise_scheduler,
     noise_scheduler_state,
 ):
-    latent_samples = image_vae_latent_distribution.sample(sample_rng)
-    latents_transposed = jnp.transpose(latent_samples, (0, 3, 1, 2))  # (NHWC) -> (NCHW)
-    latents = latents_transposed * scaling_factor
+    # (NHWC) -> (NCHW)
+    latents = jnp.transpose(image_latent_distribution_sampling, (0, 3, 1, 2)) * scaling_factor
 
     # Sample noise that we'll add to the latents
     noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -34,14 +35,22 @@ def get_vae_latent_distribution_samples(
     return noisy_latents, timesteps, noise
 
 
-def get_loss_lambda(
+def get_compute_loss_lambda(
     text_encoder,
     vae,
     unet,
-    noise_scheduler,
-    noise_scheduler_state,
 ):
-    def __loss_lambda(
+
+    noise_scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085,
+        beta_end=0.012,
+        beta_schedule="scaled_linear",
+        num_train_timesteps=1000,
+    )
+
+    noise_scheduler_state = noise_scheduler.create_state()
+
+    def __compute_loss_lambda(
         state,
         text_encoder_params,
         vae_params,
@@ -63,13 +72,14 @@ def get_loss_lambda(
             deterministic=True,
             method=vae.encode,
         )
-        image_vae_latent_distribution = vae_outputs.latent_dist
+        # vae_outputs.latent_dist.mode() # <--- can this be cached ?
+        image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
         (
             image_sampling_noisy_latents,
             image_sampling_timesteps,
             image_sampling_noise,
         ) = get_vae_latent_distribution_samples(
-            image_vae_latent_distribution,
+            image_latent_distribution_sampling,
             sample_rng,
             vae.config.scaling_factor,
             noise_scheduler,
@@ -88,4 +98,4 @@ def get_loss_lambda(
         # Compute loss from noisy target
         return ((image_sampling_noise - model_pred) ** 2).mean()
 
-    return __loss_lambda
+    return __compute_loss_lambda

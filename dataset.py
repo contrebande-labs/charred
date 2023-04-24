@@ -2,14 +2,10 @@ from datasets import load_dataset
 import os
 from PIL import Image
 import requests
-from tqdm import tqdm
 
 from torchvision import transforms
-import torch
 
-from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration, set_seed
-import jax.numpy as jnp
-from diffusers import FlaxAutoencoderKL
+from transformers import ByT5Tokenizer
 
 
 def _prefilter(sample):
@@ -111,234 +107,73 @@ def _filter_out_unprocessed(sample):
     return False
 
 
-def _get_pixel_values(image_hash):
-    cached_image_image_file_path = os.path.join(
-        "/data/image-cache", "%s.jpg" % hex(image_hash)
-    )
-
-    # get image data from cache
-    pil_rgb_image = Image.open(cached_image_image_file_path)
-
-    return (
-        transforms.Compose(
-            [
-                transforms.Resize(
-                    512, interpolation=transforms.InterpolationMode.LANCZOS
-                ),
-                transforms.CenterCrop(512),
-                transforms.ToTensor(),
-            ]
-        )(pil_rgb_image)
-        .to(memory_format=torch.contiguous_format)
-        .float()
-    )
-
-
-def _compute_intermediate_values(sample):
-
-    sample["pass"] = False
-
-    cached_image_image_file_path = os.path.join(
-        "/data/image-cache", "%s.jpg" % hex(sample["hash"])
-    )
-
-    if (
-        os.path.isfile(cached_image_image_file_path)
-        and os.stat(cached_image_image_file_path).st_size > 0
-    ):
-
-        try:
-
-            # get image data from cache
-            pil_rgb_image = Image.open(cached_image_image_file_path)
-
-            sample["pixel_values"] = (
-                transforms.Compose(
-                    [
-                        transforms.Resize(
-                            512, interpolation=transforms.InterpolationMode.LANCZOS
-                        ),
-                        transforms.CenterCrop(512),
-                        transforms.ToTensor(),
-                    ]
-                )(pil_rgb_image)
-                .to(memory_format=torch.contiguous_format)
-                .float()
-            )
-
-            sample["input_ids"] = ByT5Tokenizer(
-                text=sample["TEXT"],
-                max_length=1024,
-                padding="max_length",
-                truncation=True,
-                return_tensors="jax",
-            ).input_ids
-
-            sample["pass"] = True
-
-        except:
-            pass
-
-    return sample
-
-
-def get_compute_embeddings_lambda():
-
-    set_seed(0)
-
-    language_model = FlaxT5ForConditionalGeneration.from_pretrained(
-        "/data/byt5-base",
-        dtype=jnp.float32,
-    )
-
-    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        "/data/stable-diffusion-2-1-vae",
-        dtype=jnp.float32,
-    )
+def get_compute_intermediate_values_lambda():
 
     tokenizer = ByT5Tokenizer()
 
-    def __compute_embeddings(samples):
+    image_transforms = transforms.Compose(
+        [
+            transforms.Resize(
+                512, interpolation=transforms.InterpolationMode.LANCZOS
+            ),
+            transforms.CenterCrop(512),
+            transforms.ToTensor(),
+        ]
+    )
 
-        # Caption "tokenizing" to vector or size 4096
-        input_ids = tokenizer(
+    def __get_pixel_values(image_hash):
+
+        # compute file name
+        cached_image_image_file_path = os.path.join(
+            "/data/image-cache", "%s.jpg" % hex(image_hash)
+        )
+
+        # get image data from cache
+        pil_rgb_image = Image.open(cached_image_image_file_path)
+
+        return image_transforms(pil_rgb_image)
+
+    def __compute_intermediate_values_lambda(samples):
+
+        samples["input_ids"] = tokenizer(
             text=samples["TEXT"],
             max_length=1024,
             padding="max_length",
             truncation=True,
-            return_tensors="jax",
+            return_tensors="pt",
         ).input_ids
 
-        # compute text embedding
-        samples["byt5_text_embedding"] = language_model.encode(
-            input_ids,
-            train=False,
-        )[0]
-
-        # load and transform image
-        pixel_values = [_get_pixel_values(image_hash) for image_hash in samples["hash"]]
-
-        # compute image embedding
-        samples["vae_latent_dist_mean"] = vae.apply(
-            {"params": vae_params},
-            torch.stack(pixel_values).numpy(),
-            deterministic=True,
-            method=vae.encode,
-        ).latent_dist.mode()
+        samples["pixel_values"] = [
+            __get_pixel_values(image_hash) for image_hash in samples["hash"]
+        ]
 
         return samples
 
-    return lambda samples: __compute_embeddings(samples)
+    return __compute_intermediate_values_lambda
 
-
-def get_image_noisy_sample_lambda():
-
-    def __image_noisy_sample_lambda(samples):
-        latent_dist_means = samples["vae_latent_dist_mean"]
-        print(latent_dist_means.shape)
-        return samples
-
-    return lambda samples: __image_noisy_sample_lambda(samples["vae_latent_dist_mean"])
-
-def preprocess_dataset():
-
-    # loading the dataset
-    dataset = (
-        # Dataset.from_parquet(
-        #     "/data/laion-high-resolution-filtered-shuffled.parquet",
-        #     split="train",
-        #     cache_dir="/data/cache",
-        # )
-        load_dataset(
-            # "laion/laion-high-resolution"
-            "parquet",
-            # data_files={"train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"},
-            # data_files={"train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet"},
-            data_files={
-                "train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet"
-            },
-            split="train",
-            cache_dir="/data/cache",
-            #streaming=True,
-        )
-        # .filter(
-        #     _prefilter,
-        #     #num_proc=96,
-        # )
-        # .filter(
-        #     _download_image,
-        #     #num_proc=96,
-        # )
-        # .map(
-        #     _compute_pixel_values,
-        #     num_proc=96,
-        # )
-        # .filter(
-        #     _filter_out_unprocessed,
-        #     num_proc=8,
-        # )
-        # .map(
-        #     get_compute_embeddings_lambda(),
-        #     batched=True,
-        #     batch_size=16,
-        #     #num_proc=4,
-        # )
-        # .to_parquet(
-        #     "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
-        #     batch_size=96,
-        #     compression="ZSTD"
-        # )
-        # .take(samples)
-        .map(
-            get_image_noisy_sample_lambda(),
-            batched=True,
-            batch_size=16,
-            #num_proc=4,
-        )
-    )
-
-    return dataset
-
-
-def setup_dataset(samples):
+def setup_dataset(n):
 
     # loading the dataset
     dataset = (
         load_dataset(
             "parquet",
             data_files={
-                "train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet"
+                # "train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet",
+                # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet",
+                # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
+                "train": "/data/laion-high-resolution-filtered-shuffled-validated-10k.zstd.parquet",
             },
-            split="train",
+            split="train[:%d]" % n,
             cache_dir="/data/cache",
-            streaming=True,
+            num_proc=4,
         )
         .map(
-            _compute_intermediate_values,
-            batched=False,
-        )
-        .filter(
-            lambda sample: sample["pass"],
-        )
-        .map(
-            get_compute_embeddings_lambda(),
+            get_compute_intermediate_values_lambda(),
             batched=True,
             batch_size=16,
+            num_proc=4,
         )
-        .remove_columns(["pass"])
-        .take(samples)
+        .select_columns(["input_ids", "pixel_values"])
     )
 
     return dataset
-
-
-if __name__ == "__main__":
-
-    max_samples = 10_000
-
-    dataset = preprocess_dataset()
-
-    #progress = tqdm(total=max_samples)
-    for sample in dataset: pass
-        #progress.update(1)
-    #progress.close()

@@ -1,30 +1,14 @@
 import jax
 
-from diffusers import (
-    FlaxDDPMScheduler,
-)
-
-from loss import get_loss_lambda
+from loss import get_compute_loss_lambda
 
 
 def get_training_step_lambda(text_encoder, vae, unet):
 
-    noise_scheduler = FlaxDDPMScheduler(
-        beta_start=0.00085,
-        beta_end=0.012,
-        beta_schedule="scaled_linear",
-        num_train_timesteps=1000,
-    )
-
-    noise_scheduler_state = noise_scheduler.create_state()
-
-    # TODO: can we precompile the loss function higher up, maybe in the main function or main training loop init?
-    loss_lambda = get_loss_lambda(
+    loss_lambda = get_compute_loss_lambda(
         text_encoder,
         vae,
         unet,
-        noise_scheduler,
-        noise_scheduler_state,
     )
 
     jax_value_and_grad_loss = jax.value_and_grad(loss_lambda)
