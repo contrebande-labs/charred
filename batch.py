@@ -14,7 +14,10 @@ def setup_dataloader(dataset, batch_size):
         )
 
         input_ids = (
-            torch.stack([sample["input_ids"] for sample in samples]).float().numpy()
+            torch.stack([sample["input_ids"] for sample in samples])
+            .to(memory_format=torch.contiguous_format)
+            .float()
+            .numpy()
         )
 
         return {
