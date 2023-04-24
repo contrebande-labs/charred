@@ -41,11 +41,10 @@ def training_loop(
     total_train_batch_size = train_batch_size * jax.local_device_count()
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
 
-    # Precompiled training step setup
-    train_step_lambda = get_training_step_lambda(text_encoder, vae, unet)
-
     # Create parallel version of the train step
-    jax_pmap_train_step = jax.pmap(train_step_lambda, "batch", donate_argnums=(0,))
+    jax_pmap_train_step = jax.pmap(
+        get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,)
+    )
 
     # Epoch setup
     epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
