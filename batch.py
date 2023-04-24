@@ -1,24 +1,23 @@
 import torch
 
 
-def collate(examples):
+def collate(samples):
 
     # TODO: replace torch.stack with https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.stack.html
 
     pixel_values = (
-        torch.stack([example["pixel_values"] for example in examples])
+        torch.stack([sample["pixel_values"] for sample in samples])
         .to(memory_format=torch.contiguous_format)
         .float()
+        .numpy()
     )
 
-    input_ids = torch.stack([example["input_ids"] for example in examples])
+    input_ids = torch.stack([sample["input_ids"] for sample in samples]).numpy()
 
-    batch = {
+    return {
         "pixel_values": pixel_values,
         "input_ids": input_ids,
     }
-
-    return {k: v.numpy() for k, v in batch.items()}
 
 
 def setup_dataloader(train_dataset, train_batch_size):

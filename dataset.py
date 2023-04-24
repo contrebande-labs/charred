@@ -1,3 +1,4 @@
+from batch import setup_dataloader
 from datasets import load_dataset
 import os
 from PIL import Image
@@ -131,7 +132,9 @@ def get_compute_intermediate_values_lambda():
         # get image data from cache
         pil_rgb_image = Image.open(cached_image_image_file_path)
 
-        return image_transforms(pil_rgb_image)
+        transformed_image = image_transforms(pil_rgb_image);
+
+        return transformed_image
 
     def __compute_intermediate_values_lambda(samples):
 
@@ -167,6 +170,7 @@ def setup_dataset(n):
             cache_dir="/data/cache",
             num_proc=4,
         )
+        .with_format("torch")
         .map(
             get_compute_intermediate_values_lambda(),
             batched=True,
@@ -177,3 +181,11 @@ def setup_dataset(n):
     )
 
     return dataset
+
+if __name__ == "__main__":
+
+    dataset = setup_dataset(64)
+ 
+    dataloader = setup_dataloader(dataset, 16)
+    for batch in dataloader:
+        print(batch["pixel_values"].shape)
