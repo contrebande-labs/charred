@@ -13,7 +13,9 @@ def setup_dataloader(dataset, batch_size):
             .numpy()
         )
 
-        input_ids = torch.stack([sample["input_ids"] for sample in samples]).numpy()
+        input_ids = (
+            torch.stack([sample["input_ids"] for sample in samples]).float().numpy()
+        )
 
         return {
             "pixel_values": pixel_values,
