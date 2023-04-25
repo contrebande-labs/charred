@@ -53,6 +53,8 @@ def training_loop(
     global_training_steps = 0
     for epoch in range(num_train_epochs):
 
+        walltime = 0
+
         unreplicated_train_metric = None
 
         epoch_steps = 0
@@ -76,9 +78,7 @@ def training_loop(
                     data={
                         "walltime": walltime,
                         "train/step": epoch_steps,
-                        "train/epoch": epoch,
                         "train/global_step": global_training_steps,
-                        "train/secs_per_epoch": walltime / (epoch + 1),
                         "train/steps_per_sec": global_training_steps / walltime,
                         **{
                             f"train/{k}": v
@@ -88,11 +88,28 @@ def training_loop(
                     commit=True,
                 )
 
-        # Create the pipeline using using the trained modules and save it after every epoch
-        if repo_id is not None and jax.process_index() == 0:
-            save_to_repository(
-                output_dir,
-                unet,
-                state.params,
-                repo_id,
-            )
+        if jax.process_index() == 0:
+
+            print("epoch #%d done..." % epoch)
+
+            if log_wandb:
+                wandb.log(
+                    data={
+                        "walltime": walltime,
+                        "train/epoch": epoch,
+                        "train/secs_per_epoch": walltime / (epoch + 1),
+                    },
+                    commit=True,
+                )
+                print("epoch metrics sent to wandb...")
+
+            if repo_id is not None:
+
+                print("saving to repo...")
+                save_to_repository(
+                    output_dir,
+                    unet,
+                    state.params,
+                    repo_id,
+                )
+                print("saved to repo...")
