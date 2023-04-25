@@ -1,4 +1,5 @@
 import time
+from threading import Thread
 
 # misc. utils
 import wandb
@@ -71,7 +72,7 @@ def training_loop(
             epoch_steps += 1
             global_training_steps += 1
 
-            if log_wandb and jax.process_index() == 0:
+            if log_wandb:
                 unreplicated_train_metric = jax_utils.unreplicate(train_metric)
                 walltime = time.monotonic() - t0
                 wandb.log(
@@ -88,28 +89,26 @@ def training_loop(
                     commit=True,
                 )
 
-        if jax.process_index() == 0:
 
-            print("epoch #%d done..." % epoch)
+        print("epoch #%d done..." % epoch)
 
-            if log_wandb:
-                wandb.log(
-                    data={
-                        "walltime": walltime,
-                        "train/epoch": epoch,
-                        "train/secs_per_epoch": walltime / (epoch + 1),
-                    },
-                    commit=True,
-                )
-                print("epoch metrics sent to wandb...")
+        if log_wandb:
+            wandb.log(
+                data={
+                    "walltime": walltime,
+                    "train/epoch": epoch,
+                    "train/secs_per_epoch": walltime / (epoch + 1),
+                },
+                commit=True,
+            )
+            print("epoch metrics sent to wandb...")
 
-            if repo_id is not None:
+        if (epoch % 10 == 0) and repo_id is not None:
 
-                print("saving to repo...")
-                save_to_repository(
-                    output_dir,
-                    unet,
-                    state.params,
-                    repo_id,
-                )
-                print("saved to repo...")
+            Thread(target=lambda: save_to_repository(
+                output_dir,
+                unet,
+                state.params,
+                repo_id,
+            )).start()
+
