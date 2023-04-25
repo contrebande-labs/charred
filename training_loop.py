@@ -1,7 +1,6 @@
 import time
 
 # misc. utils
-from tqdm.auto import tqdm
 import wandb
 
 # jax/flax
@@ -47,19 +46,14 @@ def training_loop(
     jax_pmap_train_step = jax.pmap(
         get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,)
     )
-    print("training step compiled...")
+    print("training step compiling...")
 
     # Epoch setup
-    epochs = tqdm(range(num_train_epochs), desc="Epoch... ", position=0)
     t0 = time.monotonic()
     global_training_steps = 0
-    for epoch in epochs:
+    for epoch in range(num_train_epochs):
 
         unreplicated_train_metric = None
-
-        steps = tqdm(
-            total=max_train_steps, desc="Training steps...", position=1, leave=False
-        )
 
         epoch_steps = 0
 
@@ -70,20 +64,20 @@ def training_loop(
             state, train_rngs, train_metric = jax_pmap_train_step(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
-
-            unreplicated_train_metric = jax_utils.unreplicate(train_metric)
+            if epoch_steps == 0: print("training step compiled (process #%d)..." % jax.process_index())
 
             epoch_steps += 1
             global_training_steps += 1
-            steps.update(1)
 
-            if log_wandb:
+            if log_wandb and jax.process_index() == 0:
+                unreplicated_train_metric = jax_utils.unreplicate(train_metric)
                 walltime = time.monotonic() - t0
                 wandb.log(
                     data={
                         "walltime": walltime,
                         "train/step": epoch_steps,
                         "train/epoch": epoch,
+                        "train/global_step": global_training_steps,
                         "train/secs_per_epoch": walltime / (epoch + 1),
                         "train/steps_per_sec": global_training_steps / walltime,
                         **{
@@ -91,21 +85,14 @@ def training_loop(
                             for k, v in unreplicated_train_metric.items()
                         },
                     },
-                    commit=False,
+                    commit=True,
                 )
 
-        if log_wandb:
-            wandb.log(data={}, commit=True)
-
         # Create the pipeline using using the trained modules and save it after every epoch
-        if repo_id is not None:
+        if repo_id is not None and jax.process_index() == 0:
             save_to_repository(
                 output_dir,
                 unet,
                 state.params,
                 repo_id,
             )
-
-        epochs.update(1)
-
-    epochs.close()
