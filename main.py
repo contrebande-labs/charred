@@ -66,7 +66,6 @@ def main():
     )
     print("optimizer setup...")
 
-
     # Training state setup
     unet_training_state = train_state.TrainState.create(
         apply_fn=unet,

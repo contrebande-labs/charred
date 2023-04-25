@@ -1,5 +1,4 @@
 import time
-from threading import Thread
 
 # misc. utils
 import wandb
@@ -67,7 +66,8 @@ def training_loop(
             state, train_rngs, train_metric = jax_pmap_train_step(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
-            if epoch_steps == 0: print("training step compiled (process #%d)..." % jax.process_index())
+            if global_training_steps == 0:
+                print("training step compiled (process #%d)..." % jax.process_index())
 
             epoch_steps += 1
             global_training_steps += 1
@@ -89,9 +89,6 @@ def training_loop(
                     commit=True,
                 )
 
-
-        print("epoch #%d done..." % epoch)
-
         if log_wandb:
             wandb.log(
                 data={
@@ -101,14 +98,12 @@ def training_loop(
                 },
                 commit=True,
             )
-            print("epoch metrics sent to wandb...")
 
         if (epoch % 10 == 0) and repo_id is not None:
 
-            Thread(target=lambda: save_to_repository(
+            save_to_repository(
                 output_dir,
                 unet,
                 state.params,
                 repo_id,
-            )).start()
-
+            )

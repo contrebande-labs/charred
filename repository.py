@@ -1,17 +1,11 @@
 import os
 
-from huggingface_hub import create_repo
-
-from transformers import ByT5Tokenizer
-
-import jax
+from threading import Thread
 
 # hugging face
-from huggingface_hub import upload_folder
-from diffusers import (
-    FlaxStableDiffusionPipeline,
-)
-from transformers import CLIPImageProcessor
+from huggingface_hub import create_repo, upload_folder
+
+import jax
 
 
 def create_repository(output_dir, hub_model_id):
@@ -43,9 +37,11 @@ def save_to_repository(
         params=unet_params,
     )
 
-    upload_folder(
-        repo_id=repo_id,
-        folder_path=output_dir,
-        commit_message="End of training epoch.",
-        ignore_patterns=["step_*", "epoch_*"],
-    )
+    Thread(
+        target=lambda: upload_folder(
+            repo_id=repo_id,
+            folder_path=output_dir,
+            commit_message="End of training epoch.",
+            ignore_patterns=["step_*", "epoch_*"],
+        )
+    ).start()
