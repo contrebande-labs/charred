@@ -92,7 +92,6 @@ def training_loop(
         if log_wandb:
             wandb.log(
                 data={
-                    "walltime": walltime,
                     "train/epoch": epoch,
                     "train/secs_per_epoch": walltime / (epoch + 1),
                 },
