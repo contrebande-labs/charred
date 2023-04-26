@@ -59,7 +59,6 @@ def save_to_repository(
     ).start()
 
 
-
 def upload_to_repository(
     output_dir,
     repo_id,
@@ -72,6 +71,9 @@ def upload_to_repository(
     )
 
 
-
 if __name__ == "__main__":
-    upload_to_repository("/data/output/000170", "character-aware-diffusion/charred", "Fixed output format to unreplicated JAX weights.")
+    upload_to_repository(
+        "/data/output/000170",
+        "character-aware-diffusion/charred",
+        "Fixed output format to unreplicated JAX weights.",
+    )

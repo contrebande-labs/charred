@@ -4,7 +4,7 @@ import jax
 from flax import jax_utils
 from flax.training.common_utils import shard
 
-import wandb
+from wandb import wandb_log_epoch, wandb_log_step
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_local_directory
@@ -68,30 +68,18 @@ def training_loop(
                 unreplicated_train_metric = jax_utils.unreplicate(train_metric)
                 global_walltime = time.monotonic() - t0
                 delta_time = time.monotonic() - batch_walltime
-                wandb.log(
-                    data={
-                        "walltime": global_walltime,
-                        "train/step": epoch_steps,
-                        "train/global_step": global_training_steps,
-                        "train/steps_per_sec": 1 / delta_time,
-                        "train/epoch": epoch,
-                        **{
-                            f"train/{k}": v
-                            for k, v in unreplicated_train_metric.items()
-                        },
-                    },
-                    commit=True,
+                wandb_log_step(
+                    global_walltime,
+                    epoch_steps,
+                    global_training_steps,
+                    delta_time,
+                    epoch,
+                    unreplicated_train_metric,
                 )
 
         if log_wandb:
             epoch_walltime = global_walltime - epoch_walltime
-            wandb.log(
-                data={
-                    "train/secs_per_epoch": epoch_walltime,
-                    "train/global_step": global_training_steps,
-                },
-                commit=True,
-            )
+            wandb_log_epoch(epoch_walltime, global_training_steps)
 
         if epoch % 10 == 0:
             save_to_local_directory(

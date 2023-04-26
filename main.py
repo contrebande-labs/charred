@@ -2,7 +2,6 @@ import os
 
 # jax/flax
 import jax
-import wandb
 from flax import jax_utils
 from flax.core.frozen_dict import unfreeze
 from flax.training import train_state
@@ -13,6 +12,7 @@ from architecture import setup_model
 from args import parse_args
 from optimizer import setup_optimizer
 from training_loop import training_loop
+from wandb import wandb_close, wandb_init
 
 
 def main():
@@ -25,21 +25,7 @@ def main():
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
     if log_wandb:
-        wandb.init(
-            entity="charred",
-            project="charred",
-            job_type="train",
-            config=args,
-        )
-        wandb.config.update(
-            {
-                "num_devices": jax.device_count(),
-            }
-        )
-        wandb.define_metric("*", step_metric="train/global_step")
-        wandb.define_metric("train/global_step", step_metric="walltime")
-        wandb.define_metric("train/epoch", step_metric="train/global_step")
-        wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
+        wandb_init(args)
 
     # init random number generator
     seed = args.seed
@@ -101,8 +87,7 @@ def main():
     print("Training loop done...")
 
     if log_wandb:
-        wandb.finish()
-        print("WandB closed...")
+        wandb_close()
 
 
 if __name__ == "__main__":
