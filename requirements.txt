@@ -1,0 +1,11 @@
+jax[cuda12_local]
+flax
+optax
+diffusers
+transformers
+datasets
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+wandb
+Pillow
