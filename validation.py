@@ -2,13 +2,46 @@ import jax
 from logging import Image, wandb_log_validation
 from flax.training.common_utils import shard
 
+from diffusers import (
+    FlaxAutoencoderKL,
+    FlaxControlNetModel,
+    FlaxDDPMScheduler,
+    FlaxStableDiffusionPipeline,
+    FlaxUNet2DConditionModel,
+)
+
+from transformers import AutoTokenizer, FlaxT5Model
+
 
 def log_validation(
     pipeline, pipeline_params, controlnet_params, tokenizer, args, rng, weight_dtype
 ):
 
-    pipeline_params = pipeline_params.copy()
-    pipeline_params["controlnet"] = controlnet_params
+    #pipeline_params = pipeline_params.copy()
+    #pipeline_params["controlnet"] = controlnet_params
+
+    vae = FlaxAutoencoderKL.from_pretrained("flax/stable-diffusion-2-1", subfolder="vae")
+    unet = FlaxUNet2DConditionModel.from_pretrained("character-aware-diffusion/charred")
+
+    scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085,
+        beta_end=0.012,
+        beta_schedule="scaled_linear",
+        num_train_timesteps=1000,
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained("google/byt5-base")
+    lm = FlaxT5Model.from_pretrained("google/byt5-base")
+
+    pipeline = FlaxStableDiffusionPipeline(
+            text_encoder=lm.encode,
+            vae=vae,
+            unet=unet,
+            tokenizer=tokenizer,
+            scheduler=scheduler,
+            safety_checker=None,
+            feature_extractor=None,
+        )
 
     num_samples = jax.device_count()
     prng_seed = jax.random.split(rng, jax.device_count())
