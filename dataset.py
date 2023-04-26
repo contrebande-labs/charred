@@ -10,7 +10,6 @@ from transformers import ByT5Tokenizer
 
 
 def _prefilter(sample):
-
     image_url = sample["URL"]
     caption = sample["TEXT"]
     watermark_probability = sample["pwatermark"]
@@ -31,7 +30,6 @@ def _prefilter(sample):
 
 
 def _download_image(sample):
-
     is_ok = False
 
     image_url = sample["URL"]
@@ -43,22 +41,17 @@ def _download_image(sample):
     if os.path.isfile(cached_image_image_file_path):
         pass
     else:
-
         try:
-
             # get image data from url
             image_bytes = requests.get(image_url, stream=True, timeout=5).raw
 
             if image_bytes is not None:
-
                 pil_image = Image.open(image_bytes)
 
                 if pil_image.mode == "RGB":
-
                     pil_rgb_image = pil_image
 
                 else:
-
                     # Deal with non RGB images
                     if pil_image.mode == "RGBA":
                         pil_rgba_image = pil_rgb_image
@@ -86,7 +79,6 @@ def _download_image(sample):
 
 
 def _filter_out_unprocessed(sample):
-
     cached_image_image_file_path = os.path.join(
         "/data/image-cache", "%s.jpg" % hex(sample["hash"])
     )
@@ -95,9 +87,7 @@ def _filter_out_unprocessed(sample):
         os.path.isfile(cached_image_image_file_path)
         and os.stat(cached_image_image_file_path).st_size > 0
     ):
-
         try:
-
             Image.open(cached_image_image_file_path)
 
             return True
@@ -109,7 +99,6 @@ def _filter_out_unprocessed(sample):
 
 
 def get_compute_intermediate_values_lambda():
-
     tokenizer = ByT5Tokenizer()
 
     image_transforms = transforms.Compose(
@@ -121,7 +110,6 @@ def get_compute_intermediate_values_lambda():
     )
 
     def __get_pixel_values(image_hash):
-
         # compute file name
         cached_image_image_file_path = os.path.join(
             "/data/image-cache", "%s.jpg" % hex(image_hash)
@@ -135,7 +123,6 @@ def get_compute_intermediate_values_lambda():
         return transformed_image
 
     def __compute_intermediate_values_lambda(samples):
-
         samples["input_ids"] = tokenizer(
             text=samples["TEXT"],
             max_length=1024,
@@ -154,7 +141,6 @@ def get_compute_intermediate_values_lambda():
 
 
 def setup_dataset(n):
-
     # loading the dataset
     dataset = (
         load_dataset(
@@ -183,7 +169,6 @@ def setup_dataset(n):
 
 
 if __name__ == "__main__":
-
     dataset = setup_dataset(64)
 
     dataloader = setup_dataloader(dataset, 16)

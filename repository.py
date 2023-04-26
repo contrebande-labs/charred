@@ -9,7 +9,6 @@ import jax
 
 
 def create_repository(output_dir, hub_model_id):
-
     if output_dir is not None:
         os.makedirs(output_dir, exist_ok=True)
 
@@ -30,7 +29,6 @@ def save_to_local_directory(
     unet,
     unet_params,
 ):
-
     print("saving trained weights...")
     unet.save_pretrained(
         save_directory=output_dir,
@@ -45,7 +43,6 @@ def save_to_repository(
     unet_params,
     repo_id,
 ):
-
     print("saving trained weights...")
     unet.save_pretrained(
         save_directory=output_dir,

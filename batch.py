@@ -3,7 +3,6 @@ import torch
 
 def setup_dataloader(dataset, batch_size):
     def _collate(samples):
-
         # TODO: replace torch.stack with https://jax.readthedocs.io/en/latest/_autosummary/jax.numpy.stack.html
 
         pixel_values = (

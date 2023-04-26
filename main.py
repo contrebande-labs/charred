@@ -2,21 +2,20 @@ import os
 
 # jax/flax
 import jax
-from flax import jax_utils
 import wandb
-from flax.training import train_state
+from flax import jax_utils
 from flax.core.frozen_dict import unfreeze
+from flax.training import train_state
 
+from architecture import setup_model
 
 # internal code
 from args import parse_args
-from architecture import setup_model
 from optimizer import setup_optimizer
 from training_loop import training_loop
 
 
 def main():
-
     args = parse_args()
 
     output_dir = args.output_dir
@@ -37,8 +36,10 @@ def main():
                 "num_devices": jax.device_count(),
             }
         )
-        wandb.define_metric("*", step_metric="train/step")
-        wandb.define_metric("train/step", step_metric="walltime")
+        wandb.define_metric("*", step_metric="train/global_step")
+        wandb.define_metric("train/global_step", step_metric="walltime")
+        wandb.define_metric("train/epoch", step_metric="train/global_step")
+        wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
 
     # init random number generator
     seed = args.seed

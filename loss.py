@@ -46,7 +46,6 @@ def get_compute_loss_lambda(
     batch,
     sample_rng,
 ):
-
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
         beta_end=0.012,
@@ -59,7 +58,6 @@ def get_compute_loss_lambda(
     def __compute_loss_lambda(
         state_params,
     ):
-
         # Get the text embedding
         text_encoder_hidden_states = text_encoder(
             batch["input_ids"],
