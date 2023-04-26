@@ -51,10 +51,29 @@ def save_to_repository(
     print("trained weights saved...")
 
     Thread(
-        target=lambda: upload_folder(
-            repo_id=repo_id,
-            folder_path=output_dir,
-            commit_message="End of training epoch.",
-            ignore_patterns=["step_*", "epoch_*"],
+        target=lambda: upload_to_repository(
+            repo_id,
+            output_dir,
+            "End of training epoch.",
         )
     ).start()
+
+
+def upload_to_repository(
+    output_dir,
+    repo_id,
+    commit_message,
+):
+    upload_folder(
+        repo_id=repo_id,
+        folder_path=output_dir,
+        commit_message=commit_message,
+    )
+
+
+if __name__ == "__main__":
+    upload_to_repository(
+        "/data/output/000170",
+        "character-aware-diffusion/charred",
+        "Fixed output format to unreplicated JAX weights.",
+    )
