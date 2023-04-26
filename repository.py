@@ -34,7 +34,7 @@ def save_to_local_directory(
     print("saving trained weights...")
     unet.save_pretrained(
         save_directory=output_dir,
-        params=unet_params,
+        params=get_params_to_save(unet_params),
     )
     print("trained weights saved...")
 

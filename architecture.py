@@ -1,3 +1,5 @@
+import os
+
 import jax.numpy as jnp
 
 from transformers import FlaxT5ForConditionalGeneration, set_seed
@@ -34,8 +36,16 @@ def setup_model(
     )
 
     if load_pretrained:
+
+        # find latest epoch output
+        pretrained_dir = [
+            dir
+            for dir in os.listdir(output_dir).sort(reverse=True)
+            if os.path.isdir(os.path.join(output_dir, dir))
+        ][0]
+
         unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-            output_dir,
+            pretrained_dir,
             dtype=weight_dtype,
         )
 
