@@ -61,8 +61,6 @@ def wandb_log_epoch(epoch_walltime, global_training_steps):
     )
 
 
-
-
 def wandb_log_validation(image_logs):
     formatted_images = []
     for log in image_logs:
@@ -70,7 +68,9 @@ def wandb_log_validation(image_logs):
         validation_prompt = log["validation_prompt"]
         validation_image = log["validation_image"]
 
-        formatted_images.append(wandb.Image(validation_image, caption="Controlnet conditioning"))
+        formatted_images.append(
+            wandb.Image(validation_image, caption="Controlnet conditioning")
+        )
         for image in images:
             image = wandb.Image(image, caption=validation_prompt)
             formatted_images.append(image)
