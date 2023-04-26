@@ -43,7 +43,7 @@ def main():
     # init random number generator
     seed = args.seed
     seed_rng = jax.random.PRNGKey(seed)
-    rng, rng_params = jax.random.split(seed_rng)
+    rng, training_from_scratch_rng_params = jax.random.split(seed_rng)
     print("random generator setup...")
 
     # Pretrained/freezed and training model setup
@@ -52,6 +52,7 @@ def main():
         args.mixed_precision,
         load_pretrained,
         output_dir,
+        training_from_scratch_rng_params,
     )
     print("models setup...")
 
@@ -67,11 +68,9 @@ def main():
     print("optimizer setup...")
 
     # Training state setup
-    if unet_params is None:
-        unet_params = unet.init_weights(rng=rng_params)
     unet_training_state = train_state.TrainState.create(
         apply_fn=unet,
-        params=unfreeze(),
+        params=unfreeze(unet_params),
         tx=optimizer,
     )
     print("training state initialized...")

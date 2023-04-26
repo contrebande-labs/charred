@@ -12,6 +12,7 @@ def setup_model(
     mixed_precision,
     load_pretrained,
     output_dir,
+    training_from_scratch_rng_params,
 ):
 
     set_seed(seed)
@@ -80,7 +81,7 @@ def setup_model(
             },
             dtype=weight_dtype,
         )
-        unet_params = None
+        unet_params = unet.init_weights(rng=training_from_scratch_rng_params)
         print("training unet from scratch...")
 
     return (
