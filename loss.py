@@ -18,7 +18,7 @@ def get_vae_latent_distribution_samples(
 
     # Sample noise that we'll add to the latents
     noise_rng, timestep_rng = jax.random.split(sample_rng)
-    noise = jax.random.normal(noise_rng, latents.shape)
+    noisy_image_target = jax.random.normal(noise_rng, latents.shape)
 
     # Sample a random timestep for each image
     timesteps = jax.random.randint(
@@ -31,10 +31,10 @@ def get_vae_latent_distribution_samples(
     # Add noise to the latents according to the noise magnitude at each timestep
     # (this is the forward diffusion process)
     noisy_latents = noise_scheduler.add_noise(
-        noise_scheduler_state, latents, noise, timesteps
+        noise_scheduler_state, latents, noisy_image_target, timesteps
     )
 
-    return noisy_latents, timesteps, noise
+    return noisy_latents, timesteps, noisy_image_target
 
 
 def get_compute_loss_lambda(
@@ -77,9 +77,9 @@ def get_compute_loss_lambda(
         # vae_outputs.latent_dist.mode() # <--- can this be cached ?
         image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
         (
-            image_sampling_noisy_latents,
+            image_sampling_noisy_input,
             image_sampling_timesteps,
-            image_sampling_noise,
+            image_sampling_noisy_target,
         ) = get_vae_latent_distribution_samples(
             image_latent_distribution_sampling,
             sample_rng,
@@ -91,13 +91,13 @@ def get_compute_loss_lambda(
         # Predict the noise residual and compute loss
         model_pred = unet.apply(
             {"params": state_params},
-            image_sampling_noisy_latents,
+            image_sampling_noisy_input,
             image_sampling_timesteps,
             text_encoder_hidden_states,
             train=True,
         ).sample
 
         # Compute loss from noisy target
-        return ((image_sampling_noise - model_pred) ** 2).mean()
+        return ((image_sampling_noisy_target - model_pred) ** 2).mean()
 
     return __compute_loss_lambda
