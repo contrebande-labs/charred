@@ -38,6 +38,8 @@ def setup_model(
             output_dir,
             dtype=weight_dtype,
         )
+
+        print("loaded unet from pre-trained...")
     else:
         unet = FlaxUNet2DConditionModel.from_config(
             config={
@@ -69,6 +71,7 @@ def setup_model(
             dtype=weight_dtype,
         )
         unet_params = None
+        print("training unet from scratch...")
 
     return (
         language_model.encode,
