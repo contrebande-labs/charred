@@ -11,16 +11,21 @@ from diffusers import (
 
 from transformers import ByT5Tokenizer, FlaxT5Model
 
-def validate(pipeline: FlaxStableDiffusionPipeline, num_devices: int, rng, validation_prompts:list[str], validation_images:list):
+
+def validate(
+    pipeline: FlaxStableDiffusionPipeline,
+    num_devices: int,
+    rng,
+    validation_prompts: list[str],
+    validation_images: list,
+):
 
     image_logs = []
 
     for i, validation_prompt in enumerate(validation_prompts):
 
         text_inputs = shard(
-            pipeline.prepare_text_inputs(
-                num_devices * [validation_prompt]
-            )
+            pipeline.prepare_text_inputs(num_devices * [validation_prompt])
         )
 
         output_images = pipeline.numpy_to_pil(
@@ -30,13 +35,16 @@ def validate(pipeline: FlaxStableDiffusionPipeline, num_devices: int, rng, valid
                 num_inference_steps=50,
                 jit=True,
             ).images.reshape(
-                (output_images.shape[0] * output_images.shape[1],) + output_images.shape[-3:]
+                (output_images.shape[0] * output_images.shape[1],)
+                + output_images.shape[-3:]
             )
         )
 
         image_logs.append(
             {
-                "validation_image": validation_images[i] if i <= len(validation_images) else None,
+                "validation_image": validation_images[i]
+                if i <= len(validation_images)
+                else None,
                 "images": output_images,
                 "validation_prompt": validation_prompt,
             }
@@ -44,10 +52,11 @@ def validate(pipeline: FlaxStableDiffusionPipeline, num_devices: int, rng, valid
 
     wandb_log_validation(image_logs)
 
+
 def get_inference_validate_lambda(pretrained_unet_path, seed):
 
     tokenizer = ByT5Tokenizer()
- 
+
     text_encoder = FlaxT5Model.from_pretrained("google/byt5-base")
 
     vae = FlaxAutoencoderKL.from_pretrained(
@@ -77,7 +86,10 @@ def get_inference_validate_lambda(pretrained_unet_path, seed):
 
     rng = jax.random.split(jax.random.PRNGKey(seed), num_devices)
 
-    return lambda validation_prompts, validation_images: validate(pipeline, num_devices, rng, validation_prompts, validation_images)
+    return lambda validation_prompts, validation_images: validate(
+        pipeline, num_devices, rng, validation_prompts, validation_images
+    )
+
 
 if __name__ == "__main__":
     get_inference_validate_lambda("character-aware-diffusion/charred", 87)
