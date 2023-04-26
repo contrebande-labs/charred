@@ -100,7 +100,7 @@ def training_loop(
         if epoch % 10 == 0:
 
             save_to_local_directory(
-                output_dir,
+                f"{ output_dir }/{ str(epoch).zfill(6) }",
                 unet,
                 state.params,
             )
