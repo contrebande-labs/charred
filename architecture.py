@@ -14,7 +14,6 @@ def setup_model(
     output_dir,
     training_from_scratch_rng_params,
 ):
-
     set_seed(seed)
 
     if mixed_precision == "fp16":
@@ -37,7 +36,6 @@ def setup_model(
     )
 
     if load_pretrained:
-
         # find latest epoch output
         pretrained_dir = [
             dir
@@ -95,7 +93,6 @@ def setup_model(
 
 
 if __name__ == "__main__":
-
     language_model = FlaxT5ForConditionalGeneration.from_pretrained(
         "google/byt5-base",
         dtype=jnp.float32,

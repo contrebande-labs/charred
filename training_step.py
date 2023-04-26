@@ -11,7 +11,6 @@ def get_training_step_lambda(text_encoder, vae, unet):
         batch,
         rng,
     ):
-
         sample_rng, new_rng = jax.random.split(rng, 2)
 
         compute_loss_lambda = get_compute_loss_lambda(

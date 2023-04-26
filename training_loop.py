@@ -1,12 +1,9 @@
 import time
 
-# misc. utils
-import wandb
-
-# jax/flax
 import jax
-from flax.training.common_utils import shard
+import wandb
 from flax import jax_utils
+from flax.training.common_utils import shard
 
 from batch import setup_dataloader
 from dataset import setup_dataset
@@ -28,7 +25,6 @@ def training_loop(
     output_dir,
     log_wandb,
 ):
-
     # rng setup
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
@@ -50,18 +46,15 @@ def training_loop(
     # Epoch setup
     t0 = time.monotonic()
     global_training_steps = 0
+    global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-
-        walltime = 0
-
+        epoch_walltime = time.monotonic()
+        epoch_steps = 0
         unreplicated_train_metric = None
 
-        epoch_steps = 0
-
         for batch in train_dataloader:
-
+            batch_walltime = time.monotonic()
             batch = shard(batch)
-
             state, train_rngs, train_metric = jax_pmap_train_step(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
@@ -73,13 +66,14 @@ def training_loop(
 
             if log_wandb:
                 unreplicated_train_metric = jax_utils.unreplicate(train_metric)
-                walltime = time.monotonic() - t0
+                global_walltime = time.monotonic() - t0
+                delta_time = time.monotonic() - batch_walltime
                 wandb.log(
                     data={
-                        "walltime": walltime,
+                        "walltime": global_walltime,
                         "train/step": epoch_steps,
                         "train/global_step": global_training_steps,
-                        "train/steps_per_sec": global_training_steps / walltime,
+                        "train/steps_per_sec": 1 / delta_time,
                         **{
                             f"train/{k}": v
                             for k, v in unreplicated_train_metric.items()
@@ -89,16 +83,17 @@ def training_loop(
                 )
 
         if log_wandb:
+            epoch_walltime = global_walltime - epoch_walltime
             wandb.log(
                 data={
                     "train/epoch": epoch,
-                    "train/secs_per_epoch": walltime / (epoch + 1),
+                    "train/secs_per_epoch": epoch_walltime,
+                    "train/global_step": global_training_steps,
                 },
                 commit=True,
             )
 
         if epoch % 10 == 0:
-
             save_to_local_directory(
                 f"{ output_dir }/{ str(epoch).zfill(6) }",
                 unet,
