@@ -4,7 +4,7 @@ import jax
 from flax import jax_utils
 from flax.training.common_utils import shard
 
-from logging import wandb_log_epoch, wandb_log_step
+from monitoring import wandb_log_epoch, wandb_log_step
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_local_directory

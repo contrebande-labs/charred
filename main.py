@@ -12,7 +12,7 @@ from architecture import setup_model
 from args import parse_args
 from optimizer import setup_optimizer
 from training_loop import training_loop
-from logging import wandb_close, wandb_init
+from monitoring import wandb_close, wandb_init
 
 
 def main():

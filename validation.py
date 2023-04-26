@@ -1,5 +1,5 @@
 import jax
-from logging import wandb_log_validation
+from monitoring import wandb_init, wandb_log_validation, wandb_close
 from flax.training.common_utils import shard
 
 from diffusers import (
@@ -43,7 +43,7 @@ def validate(
         image_logs.append(
             {
                 "validation_image": validation_images[i]
-                if i <= len(validation_images)
+                if validation_images is not None and i < len(validation_images)
                 else None,
                 "images": output_images,
                 "validation_prompt": validation_prompt,
@@ -92,4 +92,13 @@ def get_inference_validate_lambda(pretrained_unet_path, seed):
 
 
 if __name__ == "__main__":
-    get_inference_validate_lambda("character-aware-diffusion/charred", 87)
+
+    wandb_init(None)
+    inference_validate = get_inference_validate_lambda(
+        "character-aware-diffusion/charred", 87
+    )
+    inference_validate(
+        ["a running shoe"],
+        None,
+    )
+    wandb_close()
