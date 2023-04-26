@@ -1,5 +1,5 @@
 import jax
-from wandb import Image, wandb_log_validation
+from logging import Image, wandb_log_validation
 from flax.training.common_utils import shard
 
 

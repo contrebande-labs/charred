@@ -1,31 +1,31 @@
-import wandb
+import logging
 import jax
 
 
 def wandb_init(args):
 
-    wandb.init(
+    logging.init(
         entity="charred",
         project="charred",
         job_type="train",
         config=args,
     )
-    wandb.config.update(
+    logging.config.update(
         {
             "num_devices": jax.device_count(),
         }
     )
-    wandb.define_metric("*", step_metric="train/global_step")
-    wandb.define_metric("train/global_step", step_metric="walltime")
-    wandb.define_metric("train/epoch", step_metric="train/global_step")
-    wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
+    logging.define_metric("*", step_metric="train/global_step")
+    logging.define_metric("train/global_step", step_metric="walltime")
+    logging.define_metric("train/epoch", step_metric="train/global_step")
+    logging.define_metric("train/secs_per_epoch", step_metric="train/epoch")
 
     print("WandB setup...")
 
 
 def wandb_close():
 
-    wandb.finish()
+    logging.finish()
 
     print("WandB closed...")
 
@@ -38,7 +38,7 @@ def wandb_log_step(
     epoch,
     unreplicated_train_metric,
 ):
-    wandb.log(
+    logging.log(
         data={
             "walltime": global_walltime,
             "train/step": epoch_steps,
@@ -52,7 +52,7 @@ def wandb_log_step(
 
 
 def wandb_log_epoch(epoch_walltime, global_training_steps):
-    wandb.log(
+    logging.log(
         data={
             "train/secs_per_epoch": epoch_walltime,
             "train/global_step": global_training_steps,
@@ -69,10 +69,10 @@ def wandb_log_validation(image_logs):
         validation_image = log["validation_image"]
 
         formatted_images.append(
-            wandb.Image(validation_image, caption="Controlnet conditioning")
+            logging.Image(validation_image, caption="Controlnet conditioning")
         )
         for image in images:
-            image = wandb.Image(image, caption=validation_prompt)
+            image = logging.Image(image, caption=validation_prompt)
             formatted_images.append(image)
 
-    wandb.log({"validation": formatted_images})
+    logging.log({"validation": formatted_images})
