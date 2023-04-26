@@ -37,7 +37,7 @@ def main():
                 "num_devices": jax.device_count(),
             }
         )
-        wandb.define_metric("*", step_metric="train/step")
+        wandb.define_metric("*", step_metric="train/global_step")
         wandb.define_metric("train/step", step_metric="walltime")
 
     # init random number generator
