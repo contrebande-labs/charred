@@ -10,7 +10,7 @@ from flax import jax_utils
 
 from batch import setup_dataloader
 from dataset import setup_dataset
-from repository import save_to_repository
+from repository import save_to_local_directory
 from training_step import get_training_step_lambda
 
 
@@ -26,7 +26,6 @@ def training_loop(
     num_train_epochs,
     train_batch_size,
     output_dir,
-    repo_id,
     log_wandb,
 ):
 
@@ -98,11 +97,10 @@ def training_loop(
                 commit=True,
             )
 
-        if (epoch % 10 == 0) and repo_id is not None:
+        if epoch % 10 == 0:
 
-            save_to_repository(
+            save_to_local_directory(
                 output_dir,
                 unet,
                 state.params,
-                repo_id,
             )

@@ -1,15 +1,17 @@
+import os
+
 # jax/flax
 import jax
 from flax import jax_utils
+import wandb
 from flax.training import train_state
 from flax.core.frozen_dict import unfreeze
-import wandb
+
 
 # internal code
 from args import parse_args
 from architecture import setup_model
 from optimizer import setup_optimizer
-from repository import create_repository
 from training_loop import training_loop
 
 
@@ -18,6 +20,8 @@ def main():
     args = parse_args()
 
     output_dir = args.output_dir
+
+    load_pretrained = os.path.exists(output_dir) and os.path.isdir(output_dir)
 
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
@@ -36,24 +40,20 @@ def main():
         wandb.define_metric("*", step_metric="train/step")
         wandb.define_metric("train/step", step_metric="walltime")
 
-    if args.push_to_hub:
-        repo_id = create_repository(output_dir, args.hub_model_id)
-        print("connected to hugging face model git repo...")
-    else:
-        repo_id = None
-
     # init random number generator
     seed = args.seed
     seed_rng = jax.random.PRNGKey(seed)
     rng, rng_params = jax.random.split(seed_rng)
     print("random generator setup...")
 
-    # Pretrained freezed model setup
-    text_encoder, text_encoder_params, vae, vae_params, unet = setup_model(
+    # Pretrained/freezed and training model setup
+    text_encoder, text_encoder_params, vae, vae_params, unet, unet_params = setup_model(
         seed,
         args.mixed_precision,
+        load_pretrained,
+        output_dir,
     )
-    print("freezed models setup...")
+    print("models setup...")
 
     # Optimization & scheduling setup
     optimizer = setup_optimizer(
@@ -67,9 +67,11 @@ def main():
     print("optimizer setup...")
 
     # Training state setup
+    if unet_params is None:
+        unet_params = unet.init_weights(rng=rng_params)
     unet_training_state = train_state.TrainState.create(
         apply_fn=unet,
-        params=unfreeze(unet.init_weights(rng=rng_params)),
+        params=unfreeze(),
         tx=optimizer,
     )
     print("training state initialized...")
@@ -94,7 +96,6 @@ def main():
         args.num_train_epochs,
         args.train_batch_size,
         output_dir,
-        repo_id,
         log_wandb,
     )
     print("Training loop done...")

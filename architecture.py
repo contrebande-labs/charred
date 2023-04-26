@@ -5,7 +5,12 @@ from transformers import FlaxT5ForConditionalGeneration, set_seed
 from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel
 
 
-def setup_model(seed, mixed_precision):
+def setup_model(
+    seed,
+    mixed_precision,
+    load_pretrained,
+    output_dir,
+):
 
     set_seed(seed)
 
@@ -28,37 +33,51 @@ def setup_model(seed, mixed_precision):
         dtype=weight_dtype,
     )
 
-    unet = FlaxUNet2DConditionModel.from_config(
-        config={
-            "attention_head_dim": [5, 10, 20, 20],
-            "block_out_channels": [320, 640, 1280, 1280],
-            "cross_attention_dim": 1536,
-            "down_block_types": [
-                "CrossAttnDownBlock2D",
-                "CrossAttnDownBlock2D",
-                "CrossAttnDownBlock2D",
-                "DownBlock2D",
-            ],
-            "dropout": 0.0,
-            "flip_sin_to_cos": True,
-            "freq_shift": 0,
-            "in_channels": 4,
-            "layers_per_block": 2,
-            "only_cross_attention": False,
-            "out_channels": 4,
-            "sample_size": 64,
-            "up_block_types": [
-                "UpBlock2D",
-                "CrossAttnUpBlock2D",
-                "CrossAttnUpBlock2D",
-                "CrossAttnUpBlock2D",
-            ],
-            "use_linear_projection": True,
-        },
-        dtype=weight_dtype,
-    )
+    if load_pretrained:
+        unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+            output_dir,
+            dtype=weight_dtype,
+        )
+    else:
+        unet = FlaxUNet2DConditionModel.from_config(
+            config={
+                "attention_head_dim": [5, 10, 20, 20],
+                "block_out_channels": [320, 640, 1280, 1280],
+                "cross_attention_dim": 1536,
+                "down_block_types": [
+                    "CrossAttnDownBlock2D",
+                    "CrossAttnDownBlock2D",
+                    "CrossAttnDownBlock2D",
+                    "DownBlock2D",
+                ],
+                "dropout": 0.0,
+                "flip_sin_to_cos": True,
+                "freq_shift": 0,
+                "in_channels": 4,
+                "layers_per_block": 2,
+                "only_cross_attention": False,
+                "out_channels": 4,
+                "sample_size": 64,
+                "up_block_types": [
+                    "UpBlock2D",
+                    "CrossAttnUpBlock2D",
+                    "CrossAttnUpBlock2D",
+                    "CrossAttnUpBlock2D",
+                ],
+                "use_linear_projection": True,
+            },
+            dtype=weight_dtype,
+        )
+        unet_params = None
 
-    return language_model.encode, language_model.params, vae, vae_params, unet
+    return (
+        language_model.encode,
+        language_model.params,
+        vae,
+        vae_params,
+        unet,
+        unet_params,
+    )
 
 
 if __name__ == "__main__":

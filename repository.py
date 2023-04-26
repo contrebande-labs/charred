@@ -25,6 +25,20 @@ def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
 
+def save_to_local_directory(
+    output_dir,
+    unet,
+    unet_params,
+):
+
+    print("saving trained weights...")
+    unet.save_pretrained(
+        save_directory=output_dir,
+        params=unet_params,
+    )
+    print("trained weights saved...")
+
+
 def save_to_repository(
     output_dir,
     unet,
@@ -32,10 +46,12 @@ def save_to_repository(
     repo_id,
 ):
 
+    print("saving trained weights...")
     unet.save_pretrained(
         save_directory=output_dir,
         params=unet_params,
     )
+    print("trained weights saved...")
 
     Thread(
         target=lambda: upload_folder(
