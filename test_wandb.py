@@ -1,6 +1,6 @@
 import time
 
-import wandb
+import logger
 from args import parse_args
 
 
@@ -39,7 +39,7 @@ def training_loop(log_wandb):
             if log_wandb:
                 global_walltime = time.monotonic() - t0
                 delta_time = time.monotonic() - batch_walltime
-                wandb.log(
+                log_wandb.log(
                     data={
                         "walltime": global_walltime,
                         "train/step": epoch_steps,
@@ -52,7 +52,7 @@ def training_loop(log_wandb):
 
         if log_wandb:
             epoch_walltime = global_walltime - epoch_walltime
-            wandb.log(
+            log_wandb.log(
                 data={
                     "train/secs_per_epoch": epoch_walltime,
                     "train/global_step": global_training_steps,
@@ -67,16 +67,16 @@ def main():
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
     if log_wandb:
-        wandb.init(
+        log_wandb.init(
             entity="charred",
             project="charred",
             job_type="train",
             config=args,
         )
-        wandb.define_metric("*", step_metric="train/global_step")
-        wandb.define_metric("train/global_step", step_metric="walltime")
-        wandb.define_metric("train/epoch", step_metric="train/global_step")
-        wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
+        log_wandb.define_metric("*", step_metric="train/global_step")
+        log_wandb.define_metric("train/global_step", step_metric="walltime")
+        log_wandb.define_metric("train/epoch", step_metric="train/global_step")
+        log_wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
 
     print("random generator setup...")
 
@@ -95,7 +95,7 @@ def main():
     print("Training loop done...")
 
     if log_wandb:
-        wandb.finish()
+        log_wandb.finish()
         print("WandB closed...")
 
 

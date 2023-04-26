@@ -4,7 +4,7 @@ import jax
 from flax import jax_utils
 from flax.training.common_utils import shard
 
-import wandb
+import logger
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_local_directory
@@ -38,9 +38,7 @@ def training_loop(
     print("dataloader setup...")
 
     # Create parallel version of the train step
-    jax_pmap_train_step = jax.pmap(
-        get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,)
-    )
+    jax_pmap_train_step = jax.pmap(get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,))
     print("training step compiling...")
 
     # Epoch setup
@@ -64,33 +62,25 @@ def training_loop(
             epoch_steps += 1
             global_training_steps += 1
 
+            # per step metric logging
             if log_wandb:
                 unreplicated_train_metric = jax_utils.unreplicate(train_metric)
-                global_walltime = time.monotonic() - t0
-                delta_time = time.monotonic() - batch_walltime
-                wandb.log(
-                    data={
-                        "walltime": global_walltime,
-                        "train/step": epoch_steps,
-                        "train/global_step": global_training_steps,
-                        "train/steps_per_sec": 1 / delta_time,
-                        "train/epoch": epoch,
-                        **{
-                            f"train/{k}": v
-                            for k, v in unreplicated_train_metric.items()
-                        },
-                    },
-                    commit=True,
+                global_walltime = logger.log_train_step_metrics(
+                    global_walltime=global_walltime,
+                    epoch_steps=epoch_steps,
+                    global_training_steps=global_training_steps,
+                    epoch=epoch,
+                    unreplicated_train_metric=unreplicated_train_metric,
+                    t0=t0,
+                    batch_walltime=batch_walltime,
                 )
 
+        # per epoch metric logging
         if log_wandb:
-            epoch_walltime = global_walltime - epoch_walltime
-            wandb.log(
-                data={
-                    "train/secs_per_epoch": epoch_walltime,
-                    "train/global_step": global_training_steps,
-                },
-                commit=True,
+            epoch_walltime = logger.log_train_epoch_metrics(
+                epoch_walltime=epoch_walltime,
+                global_walltime=global_walltime,
+                global_training_steps=global_training_steps,
             )
 
         if epoch % 10 == 0:
