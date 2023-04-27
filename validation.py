@@ -150,8 +150,6 @@ if __name__ == "__main__":
 
     wandb_init(None)
     get_inference_log_validate_lambda("character-aware-diffusion/charred", 87)(
-        ["a running shoe"],
-        None,
-        20
+        ["a running shoe"], None, 20
     )
     wandb_close()
