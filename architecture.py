@@ -52,6 +52,7 @@ def setup_model(
     else:
         unet = FlaxUNet2DConditionModel.from_config(
             config={
+                "_diffusers_version": "0.16.0",
                 "attention_head_dim": [5, 10, 20, 20],
                 "block_out_channels": [320, 640, 1280, 1280],
                 "cross_attention_dim": 1536,
