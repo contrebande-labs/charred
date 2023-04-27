@@ -74,12 +74,12 @@ def get_inference_lambda(pretrained_unet_path, seed):
                 ]
             )
             .to(memory_format=torch.contiguous_format)
-            .float() # TODO: Maybe we should remove this?....
+            .float()  # TODO: Maybe we should remove this?....
             .numpy()
         )
 
         # Get the text embedding
-        text_embedding = text_encoder(
+        text_encoder(
             tokenized_prompt,
             params=text_encoder_params,
             train=False,
