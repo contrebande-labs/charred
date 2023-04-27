@@ -74,7 +74,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
                 ]
             )
             .to(memory_format=torch.contiguous_format)
-            .float()  # TODO: Maybe we should remove this?....
+            .float()
             .numpy()
         )
 
