@@ -73,7 +73,7 @@ def upload_to_repository(
 
 if __name__ == "__main__":
     upload_to_repository(
-        "/data/output/000170",
+        "/data/output/000270",
         "character-aware-diffusion/charred",
-        "Fixed output format to unreplicated JAX weights.",
+        "Latest training epoch version as of Apr 26 8PM EST.",
     )
