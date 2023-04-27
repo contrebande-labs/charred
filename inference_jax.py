@@ -59,9 +59,9 @@ def get_inference_lambda(pretrained_unet_path, seed):
 
     # rng = shard_prng_key(jax.random.PRNGKey(seed))
 
-    def __predict_image(prompt: str):
+    def __tokenize_prompt(prompt):
 
-        tokenized_prompt = (
+        return (
             torch.stack(
                 [
                     tokenizer(
@@ -77,6 +77,8 @@ def get_inference_lambda(pretrained_unet_path, seed):
             .float()  # TODO: Maybe we should remove this?....
             .numpy()
         )
+
+    def __predict_image(tokenized_prompt):
 
         # Get the text embedding
         text_encoder(
@@ -102,7 +104,9 @@ def get_inference_lambda(pretrained_unet_path, seed):
         #     )
         # )
 
-    return lambda prompt: __predict_image(prompt)
+    jax_pmap_predict_image = jax.pmap(__predict_image)
+
+    return lambda prompt: jax_pmap_predict_image(__tokenize_prompt(prompt))
 
 
 if __name__ == "__main__":
