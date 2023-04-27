@@ -61,7 +61,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
 
     def __tokenize_prompt(prompt):
 
-        return (
+        return shard(
             torch.stack(
                 [
                     tokenizer(
