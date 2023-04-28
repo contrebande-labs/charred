@@ -141,6 +141,8 @@ def get_inference_lambda(pretrained_unet_path, seed):
                 scheduler_state, guided_unet_prediction_sample, t, latents
             ).to_tuple()
 
+            jax.debug.print("did one step...")
+
             return latents, scheduler_state
 
         # initialize scheduler state
@@ -160,13 +162,14 @@ def get_inference_lambda(pretrained_unet_path, seed):
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
 
+        jax.debug.print("got final latents...")
+
         # scale and decode the image latents with vae
-        scaled_final_latents = 1 / vae.config.scaling_factor * final_latents
         image = (
             (
                 vae.apply(
                     {"params": vae_params},
-                    scaled_final_latents,
+                    1 / vae.config.scaling_factor * final_latents,
                     method=vae.decode,
                 ).sample
                 / 2
@@ -175,6 +178,8 @@ def get_inference_lambda(pretrained_unet_path, seed):
             .clip(0, 1)
             .transpose(0, 2, 3, 1)
         )
+
+        jax.debug.print("got vae decoded image output...")
 
         # return reshaped vae outputs
         return image
