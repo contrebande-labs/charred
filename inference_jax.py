@@ -3,7 +3,6 @@ import jax
 import jax.numpy as jnp
 
 import numpy as np
-
 from PIL import Image
 
 from diffusers import (
@@ -66,7 +65,13 @@ def get_inference_lambda(seed):
 
     image_width = image_height = 256
 
-    print("all models setup")
+    # Generating latent shape
+    latent_shape = (
+        negative_prompt_text_encoder_hidden_states.shape[0],
+        unet.in_channels,
+        image_width // vae_scale_factor,
+        image_height // vae_scale_factor,
+    )
 
     def __tokenize_prompt(prompt: str):
 
@@ -78,8 +83,9 @@ def get_inference_lambda(seed):
             return_tensors="jax",
         ).input_ids.astype(jnp.float32)
 
-    def __convert_image(vae_output):
-        return Image.fromarray(np.asarray(vae_output))
+    def __convert_image(image):
+        # create PIL image from JAX tensor converted to numpy
+        return Image.fromarray(np.asarray(image), mode="RGB")
 
     def __predict_image(tokenized_prompt: jnp.array):
 
@@ -91,14 +97,6 @@ def get_inference_lambda(seed):
         )[0]
         context = jnp.concatenate(
             [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
-        )
-        jax.debug.print(f"got text encoding: {context.shape}")
-
-        latent_shape = (
-            tokenized_prompt.shape[0],
-            unet.in_channels,
-            image_width // vae_scale_factor,
-            image_height // vae_scale_factor,
         )
 
         def ___timestep(step, step_args):
@@ -141,15 +139,12 @@ def get_inference_lambda(seed):
                 scheduler_state, guided_unet_prediction_sample, t, latents
             ).to_tuple()
 
-            jax.debug.print(f"did step #{step}")
-
             return latents, scheduler_state
 
         # initialize scheduler state
         initial_scheduler_state = scheduler.set_timesteps(
             scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
-        jax.debug.print(f"initialized scheduler state: {initial_scheduler_state.init_noise_sigma.shape}")
 
         # initialize latents
         initial_latents = (
@@ -158,30 +153,23 @@ def get_inference_lambda(seed):
             )
             * initial_scheduler_state.init_noise_sigma
         )
-        jax.debug.print(f"initialized latents: {initial_latents.shape}")
 
         final_latents, _ = jax.lax.fori_loop(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
-        jax.debug.print(f"got final latents: {final_latents.shape}")
 
         vae_output = vae.apply(
             {"params": vae_params},
             1 / vae.config.scaling_factor * final_latents,
             method=vae.decode,
         ).sample
-        jax.debug.print(f"got vae output: {vae_output.shape}")
 
-        # scale and decode the image latents with vae
-        image = (
+        # return 8 bit RGB image (width, height, rgb)
+        return (
             ((vae_output / 2 + 0.5).transpose(0, 2, 3, 1).clip(0, 1) * 255)
             .round()
-            .astype(jnp.uint8)
+            .astype(jnp.uint8)[0]
         )
-        jax.debug.print(f"got vae processed image output: {image.shape}")
-
-        # return reshaped vae outputs
-        return image
 
     jax_pmap_predict_image = jax.jit(__predict_image)
 
@@ -192,11 +180,8 @@ def get_inference_lambda(seed):
 
 if __name__ == "__main__":
 
-    # wandb_init(None)
-
     generate_image_for_prompt = get_inference_lambda(87)
 
     image = generate_image_for_prompt("a white car")
 
     image.save("./prediction.jpg")
-    # wandb_close()
