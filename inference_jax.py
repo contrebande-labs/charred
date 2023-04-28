@@ -170,8 +170,6 @@ def get_inference_lambda(seed):
         )
         jax.debug.print("got final latents...")
 
-        jax.debug.print("got final latents...")
-
         # scale and decode the image latents with vae
         image = (
             (
@@ -187,8 +185,6 @@ def get_inference_lambda(seed):
             .transpose(0, 2, 3, 1)
         )
         jax.debug.print("got vae processed image output...")
-
-        jax.debug.print("got vae decoded image output...")
 
         # return reshaped vae outputs
         return image
