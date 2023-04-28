@@ -81,7 +81,7 @@ def get_inference_lambda(seed):
             padding="max_length",
             truncation=True,
             return_tensors="jax",
-        ).input_ids.astype(jnp.float32)
+        ).input_ids
 
     def __convert_image(image):
         # create PIL image from JAX tensor converted to numpy
