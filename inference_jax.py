@@ -25,19 +25,15 @@ def get_inference_lambda(pretrained_unet_path, seed):
     )
     text_encoder = language_model.encode
     text_encoder_params = language_model.params
-    max_length=1024
+    max_length = 1024
     tokenized_negative_prompt = tokenizer(
-        "",
-        padding="max_length",
-        max_length=max_length,
-        return_tensors="np"
+        "", padding="max_length", max_length=max_length, return_tensors="np"
     ).input_ids
     negative_prompt_text_encoder_hidden_states = text_encoder(
         tokenized_negative_prompt,
         params=text_encoder_params,
         train=False,
     )[0]
-
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
         config={
@@ -83,7 +79,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
 
     def __convert_image(vae_output):
         print(type(vae_output))
-        #return [Image.fromarray(image) for image in (np.asarray(vae_output) * 255).round().astype(np.uint8)]
+        # return [Image.fromarray(image) for image in (np.asarray(vae_output) * 255).round().astype(np.uint8)]
 
     def __predict_image(tokenized_prompt: jnp.array):
 
@@ -94,13 +90,15 @@ def get_inference_lambda(pretrained_unet_path, seed):
             train=False,
         )[0]
 
-        context = jnp.concatenate([negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states])
+        context = jnp.concatenate(
+            [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
+        )
 
         latent_shape = (
             tokenized_prompt.shape[0],
             unet.in_channels,
             image_width // vae_scale_factor,
-            image_height // vae_scale_factor
+            image_height // vae_scale_factor,
         )
 
         def ___timestep(step, step_args):
@@ -116,7 +114,9 @@ def get_inference_lambda(pretrained_unet_path, seed):
 
             timestep = jnp.broadcast_to(t, latent_input.shape[0])
 
-            scaled_latent_input = scheduler.scale_model_input(scheduler_state, latent_input, t)
+            scaled_latent_input = scheduler.scale_model_input(
+                scheduler_state, latent_input, t
+            )
 
             # predict the noise residual
             unet_prediction_sample = unet.apply(
@@ -127,11 +127,19 @@ def get_inference_lambda(pretrained_unet_path, seed):
             ).sample
 
             # perform guidance
-            unet_prediction_sample_uncond, unet_prediction_text = jnp.split(unet_prediction_sample, 2, axis=0)
-            guided_unet_prediction_sample = unet_prediction_sample_uncond + guidance_scale * (unet_prediction_text - unet_prediction_sample_uncond)
+            unet_prediction_sample_uncond, unet_prediction_text = jnp.split(
+                unet_prediction_sample, 2, axis=0
+            )
+            guided_unet_prediction_sample = (
+                unet_prediction_sample_uncond
+                + guidance_scale
+                * (unet_prediction_text - unet_prediction_sample_uncond)
+            )
 
             # compute the previous noisy sample x_t -> x_t-1
-            latents, scheduler_state = scheduler.step(scheduler_state, guided_unet_prediction_sample, t, latents).to_tuple()
+            latents, scheduler_state = scheduler.step(
+                scheduler_state, guided_unet_prediction_sample, t, latents
+            ).to_tuple()
 
             return latents, scheduler_state
 
@@ -141,23 +149,32 @@ def get_inference_lambda(pretrained_unet_path, seed):
         )
 
         # initialize latents
-        initial_latents = jax.random.normal(
-            jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.float32
-        ) * initial_scheduler_state.init_noise_sigma
+        initial_latents = (
+            jax.random.normal(
+                jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.float32
+            )
+            * initial_scheduler_state.init_noise_sigma
+        )
 
-        final_latents, _ = jax.lax.fori_loop(0, timesteps, ___timestep, (initial_latents, initial_scheduler_state))
+        final_latents, _ = jax.lax.fori_loop(
+            0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
+        )
 
         # scale and decode the image latents with vae
         scaled_final_latents = 1 / vae.config.scaling_factor * final_latents
         image = (
-            
-            vae.apply(
-                {"params": vae_params},
-                scaled_final_latents,
-                method=vae.decode,
-            ).sample / 2 + 0.5
-
-        ).clip(0, 1).transpose(0, 2, 3, 1)
+            (
+                vae.apply(
+                    {"params": vae_params},
+                    scaled_final_latents,
+                    method=vae.decode,
+                ).sample
+                / 2
+                + 0.5
+            )
+            .clip(0, 1)
+            .transpose(0, 2, 3, 1)
+        )
 
         # return reshaped vae outputs
         return image
@@ -173,7 +190,9 @@ if __name__ == "__main__":
 
     # wandb_init(None)
 
-    generate_image_for_prompt = get_inference_lambda("character-aware-diffusion/charred", 87)
+    generate_image_for_prompt = get_inference_lambda(
+        "character-aware-diffusion/charred", 87
+    )
 
     generate_image_for_prompt("a white car")
     # wandb_close()
