@@ -54,6 +54,6 @@ def get_inference_lambda():
 
 if __name__ == "__main__":
 
-    infer = get_inference_lambda("character-aware-diffusion/charred", 87)
+    infer = get_inference_lambda()
 
-    infer(["a running shoe"])
+    infer(["a running shoe", "a white car"])
