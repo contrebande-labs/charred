@@ -35,19 +35,21 @@ def get_inference_lambda(seed):
     )[0]
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
-        config={
-            "_diffusers_version": "0.16.0",
-            "beta_end": 0.012,
-            "beta_schedule": "scaled_linear",
-            "beta_start": 0.00085,
-            "clip_sample": False,
-            "num_train_timesteps": 1000,
-            "prediction_type": "v_prediction",
-            "set_alpha_to_one": False,
-            "skip_prk_steps": True,
-            "steps_offset": 1,
-            "trained_betas": None,
-        }
+        FlaxDPMSolverMultistepScheduler.load_config(
+            config={
+                "_diffusers_version": "0.16.0",
+                "beta_end": 0.012,
+                "beta_schedule": "scaled_linear",
+                "beta_start": 0.00085,
+                "clip_sample": False,
+                "num_train_timesteps": 1000,
+                "prediction_type": "v_prediction",
+                "set_alpha_to_one": False,
+                "skip_prk_steps": True,
+                "steps_offset": 1,
+                "trained_betas": None,
+            }
+        )
     )
     timesteps = 20
     guidance_scale = jnp.array([7.5], dtype=jnp.float32)
