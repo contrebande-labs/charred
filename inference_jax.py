@@ -35,21 +35,19 @@ def get_inference_lambda(seed):
     )[0]
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
-        FlaxDPMSolverMultistepScheduler.load_config(
-            config={
-                "_diffusers_version": "0.16.0",
-                "beta_end": 0.012,
-                "beta_schedule": "scaled_linear",
-                "beta_start": 0.00085,
-                "clip_sample": False,
-                "num_train_timesteps": 1000,
-                "prediction_type": "v_prediction",
-                "set_alpha_to_one": False,
-                "skip_prk_steps": True,
-                "steps_offset": 1,
-                "trained_betas": None,
-            }
-        )
+        config=dict({
+            "_diffusers_version": "0.16.0",
+            "beta_end": 0.012,
+            "beta_schedule": "scaled_linear",
+            "beta_start": 0.00085,
+            "clip_sample": False,
+            "num_train_timesteps": 1000,
+            "prediction_type": "v_prediction",
+            "set_alpha_to_one": False,
+            "skip_prk_steps": True,
+            "steps_offset": 1,
+            "trained_betas": None,
+        })
     )
     timesteps = 20
     guidance_scale = jnp.array([7.5], dtype=jnp.float32)
@@ -81,13 +79,7 @@ def get_inference_lambda(seed):
         ).input_ids.astype(jnp.float32)
 
     def __convert_image(vae_output):
-        return (
-            Image.fromarray(
-                (np.asarray(vae_output) * 255)
-                .round()
-                .astype(np.uint8)
-            )
-        )
+        return Image.fromarray(np.asarray(vae_output))
 
     def __predict_image(tokenized_prompt: jnp.array):
 
@@ -157,7 +149,7 @@ def get_inference_lambda(seed):
         initial_scheduler_state = scheduler.set_timesteps(
             scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
-        jax.debug.print("initialized scheduler state...")
+        jax.debug.print("initialized scheduler state: ", initial_scheduler_state.keys())
 
         # initialize latents
         initial_latents = (
@@ -166,28 +158,32 @@ def get_inference_lambda(seed):
             )
             * initial_scheduler_state.init_noise_sigma
         )
-        jax.debug.print("initialized latents...")
+        jax.debug.print("initialized latents: ", initial_latents.shape)
 
         final_latents, _ = jax.lax.fori_loop(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
-        jax.debug.print("got final latents...")
+        jax.debug.print("got final latents: ", final_latents.shape)
 
         # scale and decode the image latents with vae
         image = (
             (
-                vae.apply(
-                    {"params": vae_params},
-                    1 / vae.config.scaling_factor * final_latents,
-                    method=vae.decode,
-                ).sample
-                / 2
-                + 0.5
+                (
+                    vae.apply(
+                        {"params": vae_params},
+                        1 / vae.config.scaling_factor * final_latents,
+                        method=vae.decode,
+                    ).sample
+                    / 2
+                    + 0.5
+                )
+                .transpose(0, 2, 3, 1)
+                .clip(0, 1) * 255
             )
-            .clip(0, 1)
-            .transpose(0, 2, 3, 1)
+            .round()
+            .astype(jnp.uint8)
         )
-        jax.debug.print("got vae processed image output...")
+        jax.debug.print("got vae processed image output: ", image.shape)
 
         # return reshaped vae outputs
         return image
