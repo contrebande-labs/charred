@@ -56,4 +56,4 @@ if __name__ == "__main__":
 
     infer = get_inference_lambda()
 
-    infer(["a running shoe", "a white car"])
+    infer("a white car")
