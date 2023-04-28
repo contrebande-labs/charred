@@ -35,7 +35,7 @@ def get_inference_lambda(seed):
     )[0]
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
-        config=dict({
+        config={
             "_diffusers_version": "0.16.0",
             "beta_end": 0.012,
             "beta_schedule": "scaled_linear",
@@ -47,7 +47,7 @@ def get_inference_lambda(seed):
             "skip_prk_steps": True,
             "steps_offset": 1,
             "trained_betas": None,
-        })
+        }
     )
     timesteps = 20
     guidance_scale = jnp.array([7.5], dtype=jnp.float32)
@@ -92,7 +92,7 @@ def get_inference_lambda(seed):
         context = jnp.concatenate(
             [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
         )
-        jax.debug.print("got text encoding...")
+        jax.debug.print(f"got text encoding: {context.shape}")
 
         latent_shape = (
             tokenized_prompt.shape[0],
@@ -141,7 +141,7 @@ def get_inference_lambda(seed):
                 scheduler_state, guided_unet_prediction_sample, t, latents
             ).to_tuple()
 
-            jax.debug.print("did one step...")
+            jax.debug.print(f"did step #{step}")
 
             return latents, scheduler_state
 
@@ -149,7 +149,7 @@ def get_inference_lambda(seed):
         initial_scheduler_state = scheduler.set_timesteps(
             scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
-        jax.debug.print("initialized scheduler state: ", initial_scheduler_state.keys())
+        jax.debug.print(f"initialized scheduler state: {initial_scheduler_state.shape}")
 
         # initialize latents
         initial_latents = (
@@ -158,32 +158,27 @@ def get_inference_lambda(seed):
             )
             * initial_scheduler_state.init_noise_sigma
         )
-        jax.debug.print("initialized latents: ", initial_latents.shape)
+        jax.debug.print(f"initialized latents: {initial_latents.shape}")
 
         final_latents, _ = jax.lax.fori_loop(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
-        jax.debug.print("got final latents: ", final_latents.shape)
+        jax.debug.print(f"got final latents: {final_latents.shape}")
+
+        vae_output = vae.apply(
+            {"params": vae_params},
+            1 / vae.config.scaling_factor * final_latents,
+            method=vae.decode,
+        ).sample
+        jax.debug.print(f"got vae output: {vae_output.shape}")
 
         # scale and decode the image latents with vae
         image = (
-            (
-                (
-                    vae.apply(
-                        {"params": vae_params},
-                        1 / vae.config.scaling_factor * final_latents,
-                        method=vae.decode,
-                    ).sample
-                    / 2
-                    + 0.5
-                )
-                .transpose(0, 2, 3, 1)
-                .clip(0, 1) * 255
-            )
+            ((vae_output / 2 + 0.5).transpose(0, 2, 3, 1).clip(0, 1) * 255)
             .round()
             .astype(jnp.uint8)
         )
-        jax.debug.print("got vae processed image output: ", image.shape)
+        jax.debug.print(f"got vae processed image output: {image.shape}")
 
         # return reshaped vae outputs
         return image
