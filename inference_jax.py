@@ -1,21 +1,20 @@
-import numpy as np
-
+import jax
 import jax
 import jax.numpy as jnp
 
-from PIL import Image
+import numpy as np
 
+from PIL import Image
 
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxDPMSolverMultistepScheduler,
     FlaxUNet2DConditionModel,
 )
-
 from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
 
 
-def get_inference_lambda(pretrained_unet_path, seed):
+def get_inference_lambda(seed):
 
     tokenizer = ByT5Tokenizer()
 
@@ -54,7 +53,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
     guidance_scale = jnp.array([7.5], dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        pretrained_unet_path,
+        "character-aware-diffusion/charred",
         dtype=jnp.float32,
     )
 
@@ -67,6 +66,8 @@ def get_inference_lambda(pretrained_unet_path, seed):
 
     image_width = image_height = 256
 
+    print("all models setup")
+
     def __tokenize_prompt(prompt: str):
 
         return tokenizer(
@@ -78,8 +79,12 @@ def get_inference_lambda(pretrained_unet_path, seed):
         ).input_ids.astype(jnp.float32)
 
     def __convert_image(vae_output):
-        print(type(vae_output))
-        # return [Image.fromarray(image) for image in (np.asarray(vae_output) * 255).round().astype(np.uint8)]
+        print("skipping image conversion...")
+        return None
+        # return [
+        #     Image.fromarray(image)
+        #     for image in (np.asarray(vae_output) * 255).round().astype(np.uint8)
+        # ]
 
     def __predict_image(tokenized_prompt: jnp.array):
 
@@ -89,10 +94,10 @@ def get_inference_lambda(pretrained_unet_path, seed):
             params=text_encoder_params,
             train=False,
         )[0]
-
         context = jnp.concatenate(
             [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
         )
+        jax.debug.print("got text encoding...")
 
         latent_shape = (
             tokenized_prompt.shape[0],
@@ -149,6 +154,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
         initial_scheduler_state = scheduler.set_timesteps(
             scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
+        jax.debug.print("initialized scheduler state...")
 
         # initialize latents
         initial_latents = (
@@ -157,10 +163,12 @@ def get_inference_lambda(pretrained_unet_path, seed):
             )
             * initial_scheduler_state.init_noise_sigma
         )
+        jax.debug.print("initialized latents...")
 
         final_latents, _ = jax.lax.fori_loop(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
+        jax.debug.print("got final latents...")
 
         jax.debug.print("got final latents...")
 
@@ -178,6 +186,7 @@ def get_inference_lambda(pretrained_unet_path, seed):
             .clip(0, 1)
             .transpose(0, 2, 3, 1)
         )
+        jax.debug.print("got vae processed image output...")
 
         jax.debug.print("got vae decoded image output...")
 
@@ -195,9 +204,7 @@ if __name__ == "__main__":
 
     # wandb_init(None)
 
-    generate_image_for_prompt = get_inference_lambda(
-        "character-aware-diffusion/charred", 87
-    )
+    generate_image_for_prompt = get_inference_lambda(87)
 
     generate_image_for_prompt("a white car")
     # wandb_close()
