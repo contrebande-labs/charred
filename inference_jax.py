@@ -49,7 +49,7 @@ def get_inference_lambda(seed):
             "trained_betas": None,
         }
     )
-    timesteps = 50
+    timesteps = 20
     guidance_scale = jnp.array([7.5], dtype=jnp.float32)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
@@ -79,12 +79,13 @@ def get_inference_lambda(seed):
         ).input_ids.astype(jnp.float32)
 
     def __convert_image(vae_output):
-        print("skipping image conversion...")
-        return None
-        # return [
-        #     Image.fromarray(image)
-        #     for image in (np.asarray(vae_output) * 255).round().astype(np.uint8)
-        # ]
+        return (
+            Image.fromarray(
+                (np.asarray(vae_output) * 255)
+                .round()
+                .astype(np.uint8)
+            )
+        )
 
     def __predict_image(tokenized_prompt: jnp.array):
 
@@ -202,5 +203,7 @@ if __name__ == "__main__":
 
     generate_image_for_prompt = get_inference_lambda(87)
 
-    generate_image_for_prompt("a white car")
+    image = generate_image_for_prompt("a white car")
+
+    image.save("./prediction.jpg")
     # wandb_close()
