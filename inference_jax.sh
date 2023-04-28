@@ -1,5 +1,5 @@
 export TCMALLOC_LARGE_ALLOC_REPORT_THRESHOLD=34359738368
 #export JAX_PLATFORMS=""
-export JAX_PLATFORMS="cpu"
+#export JAX_PLATFORMS="cpu"
 export TF_CPP_MIN_LOG_LEVEL=2
 python3 ./inference_jax.py

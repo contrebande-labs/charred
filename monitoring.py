@@ -2,6 +2,32 @@ import wandb
 import jax
 
 
+def wandb_inference_init():
+
+    wandb.init(
+        entity="charred",
+        project="charred-inference",
+        job_type="inference",
+    )
+    wandb.config.update(
+        {
+            "num_devices": jax.device_count(),
+        }
+    )
+
+    print("WandB inference init...")
+
+def wandb_inference_log(log: list):
+
+    wandb_log = []
+
+    for entry in log:
+        wandb_log.append(wandb.Image(entry["image"], caption=entry["prompt"]))
+
+    wandb.log({"inference": wandb_log})
+
+    print("WandB inference log...")
+
 def wandb_init(args):
 
     wandb.init(

@@ -1,6 +1,7 @@
 import jax
 import jax
 import jax.numpy as jnp
+from monitoring import wandb_close, wandb_inference_init, wandb_inference_log
 
 import numpy as np
 from PIL import Image
@@ -180,8 +181,27 @@ def get_inference_lambda(seed):
 
 if __name__ == "__main__":
 
+    wandb_inference_init()
+
     generate_image_for_prompt = get_inference_lambda(87)
 
-    image = generate_image_for_prompt("a white car")
+    prompts = [
+        "a white car",
+        "a running shoe",
+        "a forest",
+        "two people",
+        "a happy cartoon cat",
+    ]
 
-    image.save("./prediction.jpg")
+    log = []
+
+    for prompt in prompts:
+ 
+        log.append({
+            "prompt": prompt,
+            "image": generate_image_for_prompt(prompt)
+        })
+  
+    wandb_inference_log(log)
+
+    wandb_close()
