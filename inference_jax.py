@@ -171,10 +171,10 @@ def get_inference_lambda(seed):
             .astype(jnp.uint8)[0]
         )
 
-    jax_pmap_predict_image = jax.jit(__predict_image)
+    jax_jit_compiled_predict_image = jax.jit(__predict_image)
 
     return lambda prompt: __convert_image(
-        jax_pmap_predict_image(__tokenize_prompt(prompt))
+        jax_jit_compiled_predict_image(__tokenize_prompt(prompt))
     )
 
 
