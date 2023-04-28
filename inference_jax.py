@@ -149,7 +149,7 @@ def get_inference_lambda(seed):
         initial_scheduler_state = scheduler.set_timesteps(
             scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
-        jax.debug.print(f"initialized scheduler state: {initial_scheduler_state.shape}")
+        jax.debug.print(f"initialized scheduler state: {initial_scheduler_state.init_noise_sigma.shape}")
 
         # initialize latents
         initial_latents = (
