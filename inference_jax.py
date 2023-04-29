@@ -49,17 +49,17 @@ def get_inference_lambda(seed):
         }
     )
     timesteps = 20
-    guidance_scale = jnp.array([7.5], dtype=jnp.float32)
+    guidance_scale = jnp.array([7.5], dtype=jnp.bfloat16)
 
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         "character-aware-diffusion/charred",
-        dtype=jnp.float32,
+        dtype=jnp.bfloat16,
     )
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         "flax/stable-diffusion-2-1",
         subfolder="vae",
-        dtype=jnp.float32,
+        dtype=jnp.bfloat16,
     )
     vae_scale_factor = 2 ** (len(vae.config.block_out_channels) - 1)
 
@@ -86,17 +86,20 @@ def get_inference_lambda(seed):
         # create PIL image from JAX tensor converted to numpy
         return Image.fromarray(np.asarray(image), mode="RGB")
 
-    def __predict_image(tokenized_prompt: jnp.array):
+    def __get_context(tokenized_prompt: jnp.array):
         # Get the text embedding
         text_encoder_hidden_states = text_encoder(
             tokenized_prompt,
             params=text_encoder_params,
             train=False,
         )[0]
-        context = jnp.concatenate(
+
+        # context = empty negative prompt embedding + prompt embedding
+        return jnp.concatenate(
             [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
         )
 
+    def __predict_image(context: jnp.array):
         def ___timestep(step, step_args):
             latents, scheduler_state = step_args
 
@@ -146,7 +149,7 @@ def get_inference_lambda(seed):
         # initialize latents
         initial_latents = (
             jax.random.normal(
-                jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.float32
+                jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.bfloat16
             )
             * initial_scheduler_state.init_noise_sigma
         )
@@ -168,10 +171,16 @@ def get_inference_lambda(seed):
             .astype(jnp.uint8)[0]
         )
 
-    jax_jit_compiled_predict_image = jax.jit(__predict_image)
+    jax_jit_compiled_accel_predict_image = jax.jit(__predict_image)
+
+    jax_jit_compiled_cpu_get_context = jax.jit(
+        __get_context, device=jax.devices(backend="cpu")[0]
+    )
 
     return lambda prompt: __convert_image(
-        jax_jit_compiled_predict_image(__tokenize_prompt(prompt))
+        jax_jit_compiled_accel_predict_image(
+            jax_jit_compiled_cpu_get_context(__tokenize_prompt(prompt))
+        )
     )
 
 
