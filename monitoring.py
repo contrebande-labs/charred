@@ -1,8 +1,6 @@
 import wandb
 import jax
 
-from validation import get_validation_predictions_lambda
-
 
 def wandb_inference_init():
     wandb.init(
