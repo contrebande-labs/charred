@@ -8,7 +8,6 @@ from torchvision import transforms
 
 from transformers import ByT5Tokenizer
 
-
 def _prefilter(sample):
     image_url = sample["URL"]
     caption = sample["TEXT"]
@@ -149,7 +148,8 @@ def setup_dataset(n):
                 # "train": "/data/laion-high-resolution-filtered-shuffled.snappy.parquet",
                 # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet",
                 # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
-                "train": "/data/laion-high-resolution-filtered-shuffled-validated-10k.zstd.parquet",
+                # "train": "/data/laion-high-resolution-filtered-shuffled-validated-10k.zstd.parquet",
+                "train" : "/data/laion-high-resolution-1M.zstd.parquet",
             },
             split="train[:%d]" % n,
             cache_dir="/data/cache",
@@ -162,11 +162,31 @@ def setup_dataset(n):
             batch_size=16,
             num_proc=4,
         )
-        .select_columns(["input_ids", "pixel_values"])
+        .select_columns(["input_ids", "TEXT"])
     )
 
     return dataset
 
+
+def prepare_1m_dataset():
+    (
+        load_dataset(
+            "laion/laion-high-resolution",
+            split="train",
+            cache_dir="/data/cache",
+        )
+        .with_format("torch")
+        .filter(
+            function=_filter_out_unprocessed,
+            num_proc=96,
+        )
+        .select_columns(["hash", "pixel_values"])
+        .to_parquet(
+            "/data/laion-high-resolution-1M.zstd.parquet",
+            batch_size=96,
+            compression="ZSTD"
+        )
+    )
 
 if __name__ == "__main__":
     dataset = setup_dataset(64)
