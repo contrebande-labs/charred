@@ -12,15 +12,17 @@ from diffusers import (
 )
 from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
 
+from architecture import setup_model
 
-def get_validation_lambda(
+
+def get_validation_prediction_lambda(
     text_encoder: FlaxT5ForConditionalGeneration,
     text_encoder_params,
     vae: FlaxAutoencoderKL,
     vae_params,
     unet: FlaxUNet2DConditionModel,
+    prompts: list[str],
 ):
-
     tokenizer = ByT5Tokenizer()
     tokenized_prompt_max_length = 1024
     tokenized_negative_prompt = tokenizer(
@@ -68,7 +70,6 @@ def get_validation_lambda(
     )
 
     def __tokenize_prompt(prompt: str):
-
         return tokenizer(
             text=prompt,
             max_length=1024,
@@ -78,12 +79,10 @@ def get_validation_lambda(
         ).input_ids
 
     def __convert_image(image):
-
         # create PIL image from JAX tensor converted to numpy
         return Image.fromarray(np.asarray(image), mode="RGB")
 
-    def __predict_image(seed, unet_params, tokenized_prompt: jnp.array):
-
+    def __get_context(tokenized_prompt: jnp.array):
         # Get the text embedding
         text_encoder_hidden_states = text_encoder(
             tokenized_prompt,
@@ -92,12 +91,16 @@ def get_validation_lambda(
         )[0]
 
         # context = empty negative prompt embedding + prompt embedding
-        context = jnp.concatenate(
+        return jnp.concatenate(
             [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
         )
 
-        def ___timestep(step, step_args):
+    get_context = jax.jit(__get_context, device=jax.devices(backend="cpu")[0])
 
+    context = get_context(prompts)
+
+    def __predict_image(seed, unet_params):
+        def ___timestep(step, step_args):
             latents, scheduler_state = step_args
 
             t = jnp.array(scheduler_state.timesteps, dtype=jnp.int32)[step]
@@ -151,10 +154,12 @@ def get_validation_lambda(
             * initial_scheduler_state.init_noise_sigma
         )
 
+        # get denoises latents
         final_latents, _ = jax.lax.fori_loop(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
 
+        # get image from latents
         vae_output = vae.apply(
             {"params": vae_params},
             1 / vae.config.scaling_factor * final_latents,
@@ -172,4 +177,15 @@ def get_validation_lambda(
 
     return lambda seed, unet_params, prompt: __convert_image(
         jax_jit_compiled_predict_image(seed, unet_params, __tokenize_prompt(prompt))
+    )
+
+
+if __name__ == "__main__":
+    # Pretrained/freezed and training model setup
+    text_encoder, text_encoder_params, vae, vae_params, unet, unet_params = setup_model(
+        43,  # seed
+        None,  # dtype (defaults to float32)
+        True,  # load pre-trained
+        "character-aware-diffusion/charred",
+        None,
     )

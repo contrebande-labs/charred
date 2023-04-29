@@ -36,12 +36,15 @@ def setup_model(
     )
 
     if load_pretrained:
-        # find latest epoch output
-        pretrained_dir = [
-            dir
-            for dir in os.listdir(output_dir).sort(reverse=True)
-            if os.path.isdir(os.path.join(output_dir, dir))
-        ][0]
+        if os.path.isdir(output_dir):
+            # find latest epoch output
+            pretrained_dir = [
+                dir
+                for dir in os.listdir(output_dir).sort(reverse=True)
+                if os.path.isdir(os.path.join(output_dir, dir))
+            ][0]
+        else:
+            pretrained_dir = output_dir
 
         unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
             pretrained_dir,
