@@ -13,7 +13,6 @@ from args import parse_args
 from optimizer import setup_optimizer
 from training_loop import training_loop
 from monitoring import wandb_close, wandb_init
-from validation import get_validation_predictions_lambda
 
 
 def main():
@@ -64,36 +63,8 @@ def main():
     print("training state initialized...")
 
     if log_wandb:
-        # validation prompts
-        validation_prompts = [
-            "a white car",
-            "une voiture blanche",
-            "a running shoe",
-            "une chaussure de course",
-            "a perfumer and his perfume organ",
-            "un parfumeur et son orgue à parfums",
-            "two people",
-            "deux personnes",
-            "a happy cartoon cat",
-            "un dessin de chat heureux",
-            "a city skyline",
-            "un panorama urbain",
-            "a Marilyn Monroe portrait",
-            "un portrait de Marilyn Monroe",
-            "a rainy day in London",
-            "Londres sous la pluie",
-        ]
-
-        # training step wandb logging function
-        get_validation_predictions = get_validation_predictions_lambda(
-            seed,
-            text_encoder,
-            text_encoder_params,
-            vae,
-            vae_params,
-            unet,
-            validation_prompts,
-        )
+        log_wandb = False
+        get_validation_predictions = None
     else:
         get_validation_predictions = None
 

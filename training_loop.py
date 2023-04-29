@@ -43,8 +43,11 @@ def training_loop(
     print("dataloader setup...")
 
     # Create parallel version of the train step
+    training_step_lambda = get_training_step_lambda(text_encoder, vae, unet)
     jax_pmap_train_step = jax.pmap(
-        get_training_step_lambda(text_encoder, vae, unet), "batch", donate_argnums=(0,)
+        fun=training_step_lambda,
+        axis_name="batch",
+        donate_argnums=(0,),
     )
     print("training step compiling...")
 

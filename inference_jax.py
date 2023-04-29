@@ -67,7 +67,9 @@ def get_inference_lambda(seed):
 
     # Generating latent shape
     latent_shape = (
-        negative_prompt_text_encoder_hidden_states.shape[0],  # is th
+        negative_prompt_text_encoder_hidden_states.shape[
+            0
+        ],  # TODO: if is this for the whole context (positive + negative prompts), we should multiply by two
         unet.in_channels,
         image_width // vae_scale_factor,
         image_height // vae_scale_factor,

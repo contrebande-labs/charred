@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import jax
 import jax
 import jax.numpy as jnp
+from flax.jax_utils import replicate, unreplicate
+from flax.training.common_utils import shard
 
 import numpy as np
 from PIL import Image
@@ -10,33 +14,39 @@ from diffusers import (
     FlaxDPMSolverMultistepScheduler,
     FlaxUNet2DConditionModel,
 )
-from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
+from transformers import ByT5Tokenizer
 
 from architecture import setup_model
 
 
+# TODO: try half-precision
+
+tokenized_prompt_max_length = 1024
+
+
+def tokenize_prompts(prompt: list[str]):
+    return ByT5Tokenizer()(
+        text=prompt,
+        max_length=tokenized_prompt_max_length,
+        padding="max_length",
+        truncation=True,
+        return_tensors="jax",
+    ).input_ids
+
+
+def convert_images(images: jnp.ndarray):
+    # create PIL image from JAX tensor converted to numpy
+    return [Image.fromarray(np.asarray(image), mode="RGB") for image in images]
+
+
 def get_validation_predictions_lambda(
-    seed,
-    text_encoder: FlaxT5ForConditionalGeneration,
+    text_encoder,
     text_encoder_params,
     vae: FlaxAutoencoderKL,
     vae_params,
     unet: FlaxUNet2DConditionModel,
-    prompts: list[str],
+    tokenized_prompts: jnp.ndarray,
 ):
-    tokenizer = ByT5Tokenizer()
-    tokenized_prompt_max_length = 1024
-    tokenized_negative_prompt = tokenizer(
-        "",
-        padding="max_length",
-        max_length=tokenized_prompt_max_length,
-        return_tensors="jax",
-    ).input_ids
-    negative_prompt_text_encoder_hidden_states = text_encoder(
-        tokenized_negative_prompt,
-        params=text_encoder_params,
-        train=False,
-    )[0]
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
         config={
@@ -54,98 +64,49 @@ def get_validation_predictions_lambda(
         }
     )
     timesteps = 20
-    guidance_scale = jnp.array([7.5], dtype=jnp.float32)
 
     vae_scale_factor = 2 ** (len(vae.config.block_out_channels) - 1)
 
     image_width = image_height = 256
 
+    encoded_prompts = text_encoder(
+        tokenized_prompts,
+        params=text_encoder_params,
+        train=False,
+    )
+
     # Generating latent shape
     latent_shape = (
-        negative_prompt_text_encoder_hidden_states.shape[
-            0
-        ],  # TODO: if is this for the whole context (positive + negative prompts), we should multiply by two
+        1536,
         unet.in_channels,
         image_width // vae_scale_factor,
         image_height // vae_scale_factor,
     )
 
-    def __tokenize_prompts(prompt: list[str]):
-        return tokenizer(
-            text=prompt,
-            max_length=1024,
-            padding="max_length",
-            truncation=True,
-            return_tensors="jax",
-        ).input_ids
-
-    def __convert_images(images):
-        # create PIL image from JAX tensor converted to numpy
-        return [Image.fromarray(np.asarray(image), mode="RGB") for image in images]
-
-    def __get_context(tokenized_prompt: jnp.array):
-        # Get the text embedding
-        text_encoder_hidden_states = text_encoder(
-            tokenized_prompt,
-            params=text_encoder_params,
-            train=False,
-        )[0]
-
-        # context = empty negative prompt embedding + prompt embedding
-        return jnp.concatenate(
-            [negative_prompt_text_encoder_hidden_states, text_encoder_hidden_states]
-        )
-
-    get_context = jax.jit(__get_context, device=jax.devices(backend="cpu")[0])
-
-    context = get_context(prompts)
-
     def __predict_images(seed, unet_params):
         def ___timestep(step, step_args):
             latents, scheduler_state = step_args
 
-            t = jnp.array(scheduler_state.timesteps, dtype=jnp.int32)[step]
+            t = jnp.asarray(scheduler_state.timesteps, dtype=jnp.int32)[step]
 
-            # For classifier-free guidance, we need to do two forward passes.
-            # Here we concatenate the unconditional and text embeddings into a single batch
-            # to avoid doing two forward passes
-            latent_input = jnp.concatenate([latents] * 2)
+            timestep = jnp.array(jnp.broadcast_to(t, latents.shape[0]), dtype=jnp.int32)
 
-            timestep = jnp.broadcast_to(t, latent_input.shape[0])
-
-            scaled_latent_input = scheduler.scale_model_input(
-                scheduler_state, latent_input, t
+            scaled_latent_input = jnp.array(
+                scheduler.scale_model_input(scheduler_state, latents, t)
             )
 
             # predict the noise residual
             unet_prediction_sample = unet.apply(
                 {"params": unet_params},
-                jnp.array(scaled_latent_input),
-                jnp.array(timestep, dtype=jnp.int32),
-                context,
+                scaled_latent_input,
+                timestep,
+                encoded_prompts,
             ).sample
 
-            # perform guidance
-            unet_prediction_sample_uncond, unet_prediction_text = jnp.split(
-                unet_prediction_sample, 2, axis=0
-            )
-            guided_unet_prediction_sample = (
-                unet_prediction_sample_uncond
-                + guidance_scale
-                * (unet_prediction_text - unet_prediction_sample_uncond)
-            )
-
             # compute the previous noisy sample x_t -> x_t-1
-            latents, scheduler_state = scheduler.step(
-                scheduler_state, guided_unet_prediction_sample, t, latents
+            return scheduler.step(
+                scheduler_state, unet_prediction_sample, t, latents
             ).to_tuple()
-
-            return latents, scheduler_state
-
-        # initialize scheduler state
-        initial_scheduler_state = scheduler.set_timesteps(
-            scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
-        )
 
         # initialize latents
         initial_latents = (
@@ -153,6 +114,11 @@ def get_validation_predictions_lambda(
                 jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.float32
             )
             * initial_scheduler_state.init_noise_sigma
+        )
+
+        # initialize scheduler state
+        initial_scheduler_state = scheduler.set_timesteps(
+            scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
 
         # get denoises latents
@@ -174,16 +140,7 @@ def get_validation_predictions_lambda(
             .astype(jnp.uint8)[0]
         )
 
-    jax_jit_compiled_predict_images = jax.jit(__predict_images)
-
-    return lambda unet_params: zip(
-        prompts,
-        __convert_images(
-            jax_jit_compiled_predict_images(
-                seed, unet_params, __tokenize_prompts(prompts)
-            )
-        ),
-    )
+    return lambda seed, unet_params: __predict_images(seed, unet_params)
 
 
 if __name__ == "__main__":
@@ -195,3 +152,43 @@ if __name__ == "__main__":
         "character-aware-diffusion/charred",
         None,
     )
+    # validation prompts
+    validation_prompts = [
+        "a white car",
+        "une voiture blanche",
+        "a running shoe",
+        "une chaussure de course",
+        "a perfumer and his perfume organ",
+        "un parfumeur et son orgue à parfums",
+        "two people",
+        "deux personnes",
+        "a happy cartoon cat",
+        "un dessin de chat heureux",
+        "a city skyline",
+        "un panorama urbain",
+        "a Marilyn Monroe portrait",
+        "un portrait de Marilyn Monroe",
+        "a rainy day in London",
+        "Londres sous la pluie",
+    ]
+
+    validation_predictions_lambda = get_validation_predictions_lambda(
+        text_encoder,
+        replicate(text_encoder_params),
+        vae,
+        replicate(vae_params),
+        unet,
+        shard(validation_prompts),
+    )
+
+    get_validation_predictions = jax.pmap(
+        fun=validation_predictions_lambda,
+        axis_name="batch",
+        donate_argnums=(0,),
+    )
+
+    image_predictions = unreplicate(
+        get_validation_predictions(42, replicate(unet_params))
+    )
+
+    images = convert_images(image_predictions)
