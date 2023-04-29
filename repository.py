@@ -5,8 +5,6 @@ from threading import Thread
 # hugging face
 from huggingface_hub import create_repo, upload_folder
 
-import jax
-
 
 def create_repository(output_dir, hub_model_id):
     if output_dir is not None:
@@ -20,9 +18,6 @@ def create_repository(output_dir, hub_model_id):
     return repo_id
 
 
-def get_params_to_save(params):
-    return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
-
 
 def save_to_local_directory(
     output_dir,
@@ -32,7 +27,7 @@ def save_to_local_directory(
     print("saving trained weights...")
     unet.save_pretrained(
         save_directory=output_dir,
-        params=get_params_to_save(unet_params),
+        params=unet_params,
     )
     print("trained weights saved...")
 

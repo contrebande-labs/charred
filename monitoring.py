@@ -41,10 +41,8 @@ def wandb_init(args):
             "num_devices": jax.device_count(),
         }
     )
-    wandb.define_metric("*", step_metric="train/global_step")
-    wandb.define_metric("train/global_step", step_metric="walltime")
-    wandb.define_metric("train/epoch", step_metric="train/global_step")
-    wandb.define_metric("train/secs_per_epoch", step_metric="train/epoch")
+    wandb.define_metric("*", step_metric="step")
+    wandb.define_metric("step", step_metric="walltime")
 
     print("WandB setup...")
 
@@ -58,32 +56,43 @@ def wandb_close():
 
 def wandb_log_step(
     global_walltime,
-    epoch_steps,
     global_training_steps,
     delta_time,
     epoch,
     unreplicated_train_metric,
+    text_encoder,
+    text_encoder_params,
+    vae,
+    vae_params,
+    unet,
+    unet_params,
 ):
+    
+    def __validate():
+        pass
+ 
+    is_milestone = True if global_training_steps % 10_000 == 0 else False
+
+    log_data = {
+        "walltime": global_walltime,
+        "step": global_training_steps,
+        "batch_delta_time": delta_time,
+        "epoch": epoch,
+        **{k: v for k, v in unreplicated_train_metric.items()},
+    }
+
+    if is_milestone:
+        log_data["validation"] = __validate()
+
     wandb.log(
         data={
             "walltime": global_walltime,
-            "train/step": epoch_steps,
-            "train/global_step": global_training_steps,
-            "train/steps_per_sec": 1 / delta_time,
-            "train/epoch": epoch,
-            **{f"train/{k}": v for k, v in unreplicated_train_metric.items()},
+            "step": global_training_steps,
+            "batch_delta_time": delta_time,
+            "epoch": epoch,
+            **{k: v for k, v in unreplicated_train_metric.items()},
         },
-        commit=True,
-    )
-
-
-def wandb_log_epoch(epoch_walltime, global_training_steps):
-    wandb.log(
-        data={
-            "train/secs_per_epoch": epoch_walltime,
-            "train/global_step": global_training_steps,
-        },
-        commit=True,
+        commit=is_milestone,
     )
 
 

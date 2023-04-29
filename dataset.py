@@ -169,6 +169,7 @@ def setup_dataset(n):
 
 
 def prepare_1m_dataset():
+    # Gives 1267072 samples to be exact
     (
         load_dataset(
             "laion/laion-high-resolution",
@@ -176,7 +177,7 @@ def prepare_1m_dataset():
             cache_dir="/data/cache",
         )
         .with_format("torch")
-        .select_columns(["hash", "TEXT"])
+        .select_columns(["TEXT", "hash"])
         .filter(
             function=_filter_out_unprocessed,
             num_proc=96,

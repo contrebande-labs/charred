@@ -4,11 +4,14 @@ import jax
 from flax import jax_utils
 from flax.training.common_utils import shard
 
-from monitoring import wandb_log_epoch, wandb_log_step
+from monitoring import wandb_log_step
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_local_directory
 from training_step import get_training_step_lambda
+
+def get_training_state_params_from_devices(params):
+    return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
 
 def training_loop(
@@ -48,42 +51,42 @@ def training_loop(
     global_training_steps = 0
     global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-        epoch_walltime = time.monotonic()
-        epoch_steps = 0
+
         unreplicated_train_metric = None
 
         for batch in train_dataloader:
+ 
             batch_walltime = time.monotonic()
+ 
             batch = shard(batch)
-            state, train_rngs, train_metric = jax_pmap_train_step(
+ 
+            state, train_rngs, train_metrics = jax_pmap_train_step(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
-            if global_training_steps == 0:
-                print("training step compiled (process #%d)..." % jax.process_index())
 
-            epoch_steps += 1
             global_training_steps += 1
 
             if log_wandb:
-                unreplicated_train_metric = jax_utils.unreplicate(train_metric)
+                unreplicated_train_metric = jax_utils.unreplicate(train_metrics)
                 global_walltime = time.monotonic() - t0
                 delta_time = time.monotonic() - batch_walltime
                 wandb_log_step(
                     global_walltime,
-                    epoch_steps,
                     global_training_steps,
                     delta_time,
                     epoch,
                     unreplicated_train_metric,
+                    text_encoder,
+                    text_encoder_params,
+                    vae,
+                    vae_params,
+                    unet,
+                    state.params
                 )
-
-        if log_wandb:
-            epoch_walltime = global_walltime - epoch_walltime
-            wandb_log_epoch(epoch_walltime, global_training_steps)
 
         if epoch % 10 == 0:
             save_to_local_directory(
                 f"{ output_dir }/{ str(epoch).zfill(6) }",
                 unet,
-                state.params,
+                get_training_state_params_from_devices(state.params),
             )
