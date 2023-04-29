@@ -162,7 +162,7 @@ def setup_dataset(n):
             batch_size=16,
             num_proc=4,
         )
-        .select_columns(["input_ids", "TEXT"])
+        .select_columns(["input_ids", "pixel_values"])
     )
 
     return dataset
@@ -180,7 +180,7 @@ def prepare_1m_dataset():
             function=_filter_out_unprocessed,
             num_proc=96,
         )
-        .select_columns(["hash", "pixel_values"])
+        .select_columns(["hash", "TEXT"])
         .to_parquet(
             "/data/laion-high-resolution-1M.zstd.parquet",
             batch_size=96,
