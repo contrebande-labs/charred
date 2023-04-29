@@ -15,7 +15,8 @@ from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
 from architecture import setup_model
 
 
-def get_validation_prediction_lambda(
+def get_validation_predictions_lambda(
+    seed,
     text_encoder: FlaxT5ForConditionalGeneration,
     text_encoder_params,
     vae: FlaxAutoencoderKL,
@@ -69,7 +70,7 @@ def get_validation_prediction_lambda(
         image_height // vae_scale_factor,
     )
 
-    def __tokenize_prompt(prompt: str):
+    def __tokenize_prompts(prompt: list[str]):
         return tokenizer(
             text=prompt,
             max_length=1024,
@@ -78,9 +79,9 @@ def get_validation_prediction_lambda(
             return_tensors="jax",
         ).input_ids
 
-    def __convert_image(image):
+    def __convert_images(images):
         # create PIL image from JAX tensor converted to numpy
-        return Image.fromarray(np.asarray(image), mode="RGB")
+        return [Image.fromarray(np.asarray(image), mode="RGB") for image in images]
 
     def __get_context(tokenized_prompt: jnp.array):
         # Get the text embedding
@@ -99,7 +100,7 @@ def get_validation_prediction_lambda(
 
     context = get_context(prompts)
 
-    def __predict_image(seed, unet_params):
+    def __predict_images(seed, unet_params):
         def ___timestep(step, step_args):
             latents, scheduler_state = step_args
 
@@ -173,10 +174,15 @@ def get_validation_prediction_lambda(
             .astype(jnp.uint8)[0]
         )
 
-    jax_jit_compiled_predict_image = jax.jit(__predict_image)
+    jax_jit_compiled_predict_images = jax.jit(__predict_images)
 
-    return lambda seed, unet_params, prompt: __convert_image(
-        jax_jit_compiled_predict_image(seed, unet_params, __tokenize_prompt(prompt))
+    return lambda unet_params: zip(
+        prompts,
+        __convert_images(
+            jax_jit_compiled_predict_images(
+                seed, unet_params, __tokenize_prompts(prompts)
+            )
+        ),
     )
 
 

@@ -4,7 +4,7 @@ import jax
 from flax import jax_utils
 from flax.training.common_utils import shard
 
-from monitoring import wandb_log_step
+from monitoring import get_wandb_log_step_lambda
 from batch import setup_dataloader
 from dataset import setup_dataset
 from repository import save_to_local_directory
@@ -28,6 +28,7 @@ def training_loop(
     train_batch_size,
     output_dir,
     log_wandb,
+    get_validation_predictions,
 ):
     # rng setup
     train_rngs = jax.random.split(rng, jax.local_device_count())
@@ -47,16 +48,18 @@ def training_loop(
     )
     print("training step compiling...")
 
+    wandb_log_step = get_wandb_log_step_lambda(
+        get_validation_predictions,
+    )
+
     # Epoch setup
     t0 = time.monotonic()
     global_training_steps = 0
     global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-
         unreplicated_train_metric = None
 
         for batch in train_dataloader:
-
             batch_walltime = time.monotonic()
 
             batch = shard(batch)
@@ -77,11 +80,6 @@ def training_loop(
                     delta_time,
                     epoch,
                     unreplicated_train_metric,
-                    text_encoder,
-                    text_encoder_params,
-                    vae,
-                    vae_params,
-                    unet,
                     state.params,
                 )
 

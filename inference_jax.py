@@ -15,7 +15,6 @@ from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
 
 
 def get_inference_lambda(seed):
-
     tokenizer = ByT5Tokenizer()
 
     language_model = FlaxT5ForConditionalGeneration.from_pretrained(
@@ -75,7 +74,6 @@ def get_inference_lambda(seed):
     )
 
     def __tokenize_prompt(prompt: str):
-
         return tokenizer(
             text=prompt,
             max_length=1024,
@@ -89,7 +87,6 @@ def get_inference_lambda(seed):
         return Image.fromarray(np.asarray(image), mode="RGB")
 
     def __predict_image(tokenized_prompt: jnp.array):
-
         # Get the text embedding
         text_encoder_hidden_states = text_encoder(
             tokenized_prompt,
@@ -101,7 +98,6 @@ def get_inference_lambda(seed):
         )
 
         def ___timestep(step, step_args):
-
             latents, scheduler_state = step_args
 
             t = jnp.array(scheduler_state.timesteps, dtype=jnp.int32)[step]
@@ -180,7 +176,6 @@ def get_inference_lambda(seed):
 
 
 if __name__ == "__main__":
-
     wandb_inference_init()
 
     generate_image_for_prompt = get_inference_lambda(87)
@@ -196,7 +191,6 @@ if __name__ == "__main__":
     log = []
 
     for prompt in prompts:
-
         log.append({"prompt": prompt, "image": generate_image_for_prompt(prompt)})
 
     wandb_inference_log(log)

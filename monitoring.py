@@ -1,9 +1,10 @@
 import wandb
 import jax
 
+from validation import get_validation_predictions_lambda
+
 
 def wandb_inference_init():
-
     wandb.init(
         entity="charred",
         project="charred-inference",
@@ -19,7 +20,6 @@ def wandb_inference_init():
 
 
 def wandb_inference_log(log: list):
-
     wandb_log = []
 
     for entry in log:
@@ -31,7 +31,6 @@ def wandb_inference_log(log: list):
 
 
 def wandb_init(args):
-
     wandb.init(
         entity="charred",
         project="charred",
@@ -50,63 +49,41 @@ def wandb_init(args):
 
 
 def wandb_close():
-
     wandb.finish()
 
     print("WandB closed...")
 
 
-def wandb_log_step(
-    global_walltime,
-    global_training_steps,
-    delta_time,
-    epoch,
-    unreplicated_train_metric,
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
-    unet,
-    unet_params,
+def get_wandb_log_step_lambda(
+    get_predictions,
 ):
-    def __validate():
-        pass
+    def __wandb_log_step(
+        global_walltime,
+        global_training_steps,
+        delta_time,
+        epoch,
+        unreplicated_train_metric,
+        unet_params,
+    ):
+        is_milestone = True if global_training_steps % 10_000 == 0 else False
 
-    is_milestone = True if global_training_steps % 10_000 == 0 else False
-
-    log_data = {
-        "walltime": global_walltime,
-        "step": global_training_steps,
-        "batch_delta_time": delta_time,
-        "epoch": epoch,
-        **{k: v for k, v in unreplicated_train_metric.items()},
-    }
-
-    if is_milestone:
-        log_data["validation"] = __validate()
-
-    wandb.log(
-        data={
+        log_data = {
             "walltime": global_walltime,
             "step": global_training_steps,
             "batch_delta_time": delta_time,
             "epoch": epoch,
             **{k: v for k, v in unreplicated_train_metric.items()},
-        },
-        commit=is_milestone,
-    )
+        }
 
+        if is_milestone:
+            log_data["validation"] = [
+                wandb.Image(image, caption=prompt)
+                for prompt, image in get_predictions(unet_params)
+            ]
 
-def wandb_log_validation(image_logs):
-    formatted_images = []
-    for log in image_logs:
-        images = log["images"]
-        validation_prompt = log["validation_prompt"]
-        validation_image = log["validation_image"]
+        wandb.log(
+            data=log_data,
+            commit=is_milestone,
+        )
 
-        formatted_images.append(wandb.Image(validation_image, caption="target image"))
-        for image in images:
-            image = wandb.Image(image, caption=validation_prompt)
-            formatted_images.append(image)
-
-    wandb.log({"validation": formatted_images})
+    return __wandb_log_step
