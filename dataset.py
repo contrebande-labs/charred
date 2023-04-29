@@ -189,8 +189,9 @@ def prepare_1m_dataset():
     )
 
 if __name__ == "__main__":
-    dataset = setup_dataset(64)
+    prepare_1m_dataset()
+    # dataset = setup_dataset(64)
 
-    dataloader = setup_dataloader(dataset, 16)
-    for batch in dataloader:
-        print(batch["pixel_values"].shape)
+    # dataloader = setup_dataloader(dataset, 16)
+    # for batch in dataloader:
+    #     print(batch["pixel_values"].shape)
