@@ -18,7 +18,6 @@ def create_repository(output_dir, hub_model_id):
     return repo_id
 
 
-
 def save_to_local_directory(
     output_dir,
     unet,

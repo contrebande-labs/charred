@@ -17,6 +17,7 @@ def wandb_inference_init():
 
     print("WandB inference init...")
 
+
 def wandb_inference_log(log: list):
 
     wandb_log = []
@@ -27,6 +28,7 @@ def wandb_inference_log(log: list):
     wandb.log({"inference": wandb_log})
 
     print("WandB inference log...")
+
 
 def wandb_init(args):
 
@@ -67,10 +69,9 @@ def wandb_log_step(
     unet,
     unet_params,
 ):
-    
     def __validate():
         pass
- 
+
     is_milestone = True if global_training_steps % 10_000 == 0 else False
 
     log_data = {

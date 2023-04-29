@@ -14,12 +14,12 @@ from transformers import ByT5Tokenizer, FlaxT5ForConditionalGeneration
 
 
 def get_validation_lambda(
-        text_encoder : FlaxT5ForConditionalGeneration,
-        text_encoder_params,
-        vae: FlaxAutoencoderKL,
-        vae_params,
-        unet: FlaxUNet2DConditionModel,
-    ):
+    text_encoder: FlaxT5ForConditionalGeneration,
+    text_encoder_params,
+    vae: FlaxAutoencoderKL,
+    vae_params,
+    unet: FlaxUNet2DConditionModel,
+):
 
     tokenizer = ByT5Tokenizer()
     tokenized_prompt_max_length = 1024
@@ -27,7 +27,7 @@ def get_validation_lambda(
         "",
         padding="max_length",
         max_length=tokenized_prompt_max_length,
-        return_tensors="jax"
+        return_tensors="jax",
     ).input_ids
     negative_prompt_text_encoder_hidden_states = text_encoder(
         tokenized_negative_prompt,
@@ -59,7 +59,9 @@ def get_validation_lambda(
 
     # Generating latent shape
     latent_shape = (
-        negative_prompt_text_encoder_hidden_states.shape[0],  # TODO: if is this for the whole context (positive + negative prompts), we should multiply by two
+        negative_prompt_text_encoder_hidden_states.shape[
+            0
+        ],  # TODO: if is this for the whole context (positive + negative prompts), we should multiply by two
         unet.in_channels,
         image_width // vae_scale_factor,
         image_height // vae_scale_factor,
@@ -76,7 +78,7 @@ def get_validation_lambda(
         ).input_ids
 
     def __convert_image(image):
- 
+
         # create PIL image from JAX tensor converted to numpy
         return Image.fromarray(np.asarray(image), mode="RGB")
 

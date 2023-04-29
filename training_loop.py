@@ -10,6 +10,7 @@ from dataset import setup_dataset
 from repository import save_to_local_directory
 from training_step import get_training_step_lambda
 
+
 def get_training_state_params_from_devices(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
@@ -55,11 +56,11 @@ def training_loop(
         unreplicated_train_metric = None
 
         for batch in train_dataloader:
- 
+
             batch_walltime = time.monotonic()
- 
+
             batch = shard(batch)
- 
+
             state, train_rngs, train_metrics = jax_pmap_train_step(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
@@ -81,7 +82,7 @@ def training_loop(
                     vae,
                     vae_params,
                     unet,
-                    state.params
+                    state.params,
                 )
 
         if epoch % 10 == 0:

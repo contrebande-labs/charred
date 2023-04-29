@@ -8,6 +8,7 @@ from torchvision import transforms
 
 from transformers import ByT5Tokenizer
 
+
 def _prefilter(sample):
     image_url = sample["URL"]
     caption = sample["TEXT"]
@@ -149,7 +150,7 @@ def setup_dataset(n):
                 # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split.zstd.parquet",
                 # "train": "/data/laion-high-resolution-filtered-shuffled-processed-split-byt5-vae.zstd.parquet",
                 # "train": "/data/laion-high-resolution-filtered-shuffled-validated-10k.zstd.parquet",
-                "train" : "/data/laion-high-resolution-1M.zstd.parquet",
+                "train": "/data/laion-high-resolution-1M.zstd.parquet",
             },
             split="train[:%d]" % n,
             cache_dir="/data/cache",
@@ -185,9 +186,10 @@ def prepare_1m_dataset():
         .to_parquet(
             "/data/laion-high-resolution-1M.zstd.parquet",
             batch_size=128,
-            compression="ZSTD"
+            compression="ZSTD",
         )
     )
+
 
 if __name__ == "__main__":
     prepare_1m_dataset()

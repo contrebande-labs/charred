@@ -68,7 +68,7 @@ def get_inference_lambda(seed):
 
     # Generating latent shape
     latent_shape = (
-        negative_prompt_text_encoder_hidden_states.shape[0], # is th
+        negative_prompt_text_encoder_hidden_states.shape[0],  # is th
         unet.in_channels,
         image_width // vae_scale_factor,
         image_height // vae_scale_factor,
@@ -196,12 +196,9 @@ if __name__ == "__main__":
     log = []
 
     for prompt in prompts:
- 
-        log.append({
-            "prompt": prompt,
-            "image": generate_image_for_prompt(prompt)
-        })
-  
+
+        log.append({"prompt": prompt, "image": generate_image_for_prompt(prompt)})
+
     wandb_inference_log(log)
 
     wandb_close()
