@@ -176,14 +176,14 @@ def prepare_1m_dataset():
             cache_dir="/data/cache",
         )
         .with_format("torch")
+        .select_columns(["hash", "TEXT"])
         .filter(
             function=_filter_out_unprocessed,
             num_proc=96,
         )
-        .select_columns(["hash", "TEXT"])
         .to_parquet(
             "/data/laion-high-resolution-1M.zstd.parquet",
-            batch_size=96,
+            batch_size=128,
             compression="ZSTD"
         )
     )
