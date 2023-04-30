@@ -118,14 +118,14 @@ def get_validation_predictions_lambda(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
 
-        jax.debug.print(final_latents.shape)
-
+        # scale latents
         scaled_final_latents = 1 / vae.config.scaling_factor * final_latents
 
         # get image from latents
         vae_output = vae.apply(
             {"params": vae_params},
-            scaled_final_latents,
+            latents=scaled_final_latents,
+            deterministic=True,
             method=vae.decode,
         ).sample
 
