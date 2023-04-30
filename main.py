@@ -63,8 +63,7 @@ def main():
     print("training state initialized...")
 
     if log_wandb:
-        log_wandb = False
-        get_validation_predictions = None
+        get_validation_predictions = None # TODO: put validation here
     else:
         get_validation_predictions = None
 

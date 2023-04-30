@@ -73,7 +73,7 @@ def get_wandb_log_step_lambda(
             **{k: v for k, v in unreplicated_train_metric.items()},
         }
 
-        if is_milestone:
+        if is_milestone and get_predictions is not None:
             log_data["validation"] = [
                 wandb.Image(image, caption=prompt)
                 for prompt, image in get_predictions(unet_params)
