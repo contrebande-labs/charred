@@ -43,7 +43,6 @@ def get_validation_predictions_lambda(
     vae: FlaxAutoencoderKL,
     vae_params,
     unet: FlaxUNet2DConditionModel,
-    encoded_prompts,
 ):
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
@@ -75,7 +74,7 @@ def get_validation_predictions_lambda(
         image_height // vae_scale_factor,
     )
 
-    def __predict_images(seed, unet_params):
+    def __predict_images(seed, unet_params, encoded_prompts):
         def ___timestep(step, step_args):
             latents, scheduler_state = step_args
 
@@ -132,7 +131,7 @@ def get_validation_predictions_lambda(
             .astype(jnp.uint8)
         )
 
-    return lambda seed, unet_params: __predict_images(seed, unet_params)
+    return lambda seed, unet_params, encoded_prompts: __predict_images(seed, unet_params, encoded_prompts)
 
 
 if __name__ == "__main__":
@@ -176,17 +175,16 @@ if __name__ == "__main__":
         vae,
         vae_params,
         unet,
-        shard(encoded_prompts),
     )
 
     get_validation_predictions = jax.pmap(
         fun=validation_predictions_lambda,
-        axis_name=None,
+        axis_name="encoded_prompts",
         donate_argnums=(),
     )
 
     seed = replicate(2)
 
-    image_predictions = get_validation_predictions(seed, replicate(unet_params))
+    image_predictions = get_validation_predictions(seed, replicate(unet_params), encoded_prompts)
 
     images = convert_images(image_predictions)
