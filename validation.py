@@ -89,9 +89,10 @@ def get_validation_predictions_lambda(
             # predict the noise residual
             unet_prediction_sample = unet.apply(
                 {"params": unet_params},
-                scaled_latent_input,
-                timestep,
-                encoded_prompts,
+                sample=scaled_latent_input,
+                timesteps=timestep,
+                encoder_hidden_states=encoded_prompts,
+                train=False,
             ).sample
 
             # compute the previous noisy sample x_t -> x_t-1
@@ -117,16 +118,24 @@ def get_validation_predictions_lambda(
             0, timesteps, ___timestep, (initial_latents, initial_scheduler_state)
         )
 
+        jax.debug.print(final_latents.shape)
+
+        scaled_final_latents = 1 / vae.config.scaling_factor * final_latents
+
         # get image from latents
         vae_output = vae.apply(
             {"params": vae_params},
-            1 / vae.config.scaling_factor * final_latents,
+            scaled_final_latents,
             method=vae.decode,
         ).sample
 
         # return 8 bit RGB image (width, height, rgb)
         return (
-            ((vae_output / 2 + 0.5).transpose(0, 2, 3, 1).clip(0, 1) * 255)
+            (
+                (vae_output / 2 + 0.5) # TODO: find out why this is necessary
+                .transpose(0, 2, 3, 1) # (batch, channel, height, width) => (batch, height, width, channel)
+                .clip(0, 1) * 255
+             )
             .round()
             .astype(jnp.uint8)
         )
