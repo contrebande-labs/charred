@@ -172,13 +172,15 @@ if __name__ == "__main__":
         "Londres sous la pluie",
     ]
 
+    tokenized_prompts = tokenize_prompts(validation_prompts)
+
     validation_predictions_lambda = get_validation_predictions_lambda(
         text_encoder,
         replicate(text_encoder_params),
         vae,
         replicate(vae_params),
         unet,
-        shard(validation_prompts),
+        shard(tokenized_prompts),
     )
 
     get_validation_predictions = jax.pmap(
