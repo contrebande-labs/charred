@@ -165,8 +165,6 @@ if __name__ == "__main__":
 
     tokenized_prompts = tokenize_prompts(validation_prompts)
 
-    print(tokenized_prompts.shape)
-
     encoded_prompts = text_encoder(
         tokenized_prompts,
         params=text_encoder_params,
