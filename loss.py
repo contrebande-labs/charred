@@ -3,7 +3,6 @@ import jax
 
 from diffusers import FlaxDDPMScheduler
 
-
 def get_vae_latent_distribution_samples(
     image_latent_distribution_sampling,
     sample_rng,
@@ -95,7 +94,27 @@ def get_compute_loss_lambda(
             train=True,
         ).sample
 
-        # Compute loss from noisy target
-        return ((image_sampling_noisy_target - model_pred) ** 2).mean()
+        # Min-SNR
+        def __compute_snr(timesteps):
+            """
+            Computes SNR as per https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L847-L849
+            """
+            alphas_cumprod = noise_scheduler_state.common.alphas_cumprod
+            sqrt_alphas_cumprod = alphas_cumprod**0.5
+            sqrt_one_minus_alphas_cumprod = (1.0 - alphas_cumprod) ** 0.5
+
+            alpha = sqrt_alphas_cumprod[timesteps]
+            sigma = sqrt_one_minus_alphas_cumprod[timesteps]
+            # Compute SNR.
+            snr = (alpha / sigma) ** 2
+            return snr
+        snr_gamma = 5.0 # SNR weighting gamma to be used when rebalancing the loss with Min-SNR. Recommended value is 5.0.
+        snr = jnp.array(__compute_snr(image_sampling_timesteps))
+        snr_loss_weights = jnp.where(snr < snr_gamma, snr, jnp.ones_like(snr) * snr_gamma) / snr
+ 
+        # Compute loss from noisy target with Min-SNR
+        loss = (((image_sampling_noisy_target - model_pred) ** 2) * snr_loss_weights).mean()
+
+        return loss
 
     return __compute_loss_lambda
