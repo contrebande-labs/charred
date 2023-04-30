@@ -24,7 +24,6 @@ def setup_dataloader(dataset, batch_size):
         }
 
     return torch.utils.data.DataLoader(
-        # we don't shuffle here because the dataset is already shuffled
         dataset,
         shuffle=True,
         collate_fn=_collate,
