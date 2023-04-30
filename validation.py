@@ -165,11 +165,13 @@ if __name__ == "__main__":
 
     tokenized_prompts = tokenize_prompts(validation_prompts)
 
+    print(tokenized_prompts.shape)
+
     encoded_prompts = text_encoder(
         tokenized_prompts,
         params=text_encoder_params,
         train=False,
-    )
+    )[0]
 
     validation_predictions_lambda = get_validation_predictions_lambda(
         vae,
