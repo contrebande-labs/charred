@@ -108,17 +108,17 @@ def get_validation_predictions_lambda(
                 scheduler_state, unet_prediction_sample, t, latents
             ).to_tuple()
 
+        # initialize scheduler state
+        initial_scheduler_state = scheduler.set_timesteps(
+            scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
+        )
+
         # initialize latents
         initial_latents = (
             jax.random.normal(
                 jax.random.PRNGKey(seed), shape=latent_shape, dtype=jnp.float32
             )
             * initial_scheduler_state.init_noise_sigma
-        )
-
-        # initialize scheduler state
-        initial_scheduler_state = scheduler.set_timesteps(
-            scheduler.create_state(), num_inference_steps=timesteps, shape=latent_shape
         )
 
         # get denoises latents
