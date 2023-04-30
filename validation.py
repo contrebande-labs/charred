@@ -40,7 +40,6 @@ def convert_images(images: jnp.ndarray):
 
 
 def get_validation_predictions_lambda(
-    seed,
     text_encoder,
     text_encoder_params,
     vae: FlaxAutoencoderKL,
@@ -141,7 +140,7 @@ def get_validation_predictions_lambda(
             .astype(jnp.uint8)
         )
 
-    return lambda seed, unet_params: __predict_images(unet_params)
+    return lambda seed, unet_params: __predict_images(seed, unet_params)
 
 
 if __name__ == "__main__":
@@ -176,7 +175,6 @@ if __name__ == "__main__":
     tokenized_prompts = tokenize_prompts(validation_prompts)
 
     validation_predictions_lambda = get_validation_predictions_lambda(
-        27,
         text_encoder,
         text_encoder_params,
         vae,
@@ -191,6 +189,6 @@ if __name__ == "__main__":
         donate_argnums=(),
     )
 
-    image_predictions = get_validation_predictions(unet_params)
+    image_predictions = get_validation_predictions(replicate(2), replicate(unet_params))
 
     images = convert_images(image_predictions)
