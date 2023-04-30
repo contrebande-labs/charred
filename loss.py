@@ -68,7 +68,7 @@ def get_compute_loss_lambda(
         # Get the image embedding
         vae_outputs = vae.apply(
             {"params": vae_params},
-            batch["pixel_values"],
+            sample=batch["pixel_values"],
             deterministic=True,
             method=vae.encode,
         )
@@ -89,9 +89,9 @@ def get_compute_loss_lambda(
         # Predict the noise residual and compute loss
         model_pred = unet.apply(
             {"params": state_params},
-            image_sampling_noisy_input,
-            image_sampling_timesteps,
-            text_encoder_hidden_states,
+            sample=image_sampling_noisy_input,
+            timesteps=image_sampling_timesteps,
+            encoder_hidden_states=text_encoder_hidden_states,
             train=True,
         ).sample
 
