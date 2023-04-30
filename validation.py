@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     get_validation_predictions = jax.pmap(
         fun=validation_predictions_lambda,
-        axis_name=None,
+        axis_name="encoded_prompts",
         donate_argnums=(),
     )
 
