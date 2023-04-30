@@ -3,7 +3,7 @@ from __future__ import annotations
 import jax
 import jax
 import jax.numpy as jnp
-from flax.jax_utils import replicate, unreplicate
+from flax.jax_utils import replicate
 from flax.training.common_utils import shard
 
 import numpy as np
@@ -137,7 +137,7 @@ def get_validation_predictions_lambda(
         return (
             ((vae_output / 2 + 0.5).transpose(0, 2, 3, 1).clip(0, 1) * 255)
             .round()
-            .astype(jnp.uint8)[0]
+            .astype(jnp.uint8)
         )
 
     return lambda seed, unet_params: __predict_images(seed, unet_params)
@@ -183,12 +183,10 @@ if __name__ == "__main__":
 
     get_validation_predictions = jax.pmap(
         fun=validation_predictions_lambda,
-        axis_name="batch",
-        donate_argnums=(0,),
+        axis_name=None,
+        donate_argnums=(),
     )
 
-    image_predictions = unreplicate(
-        get_validation_predictions(42, replicate(unet_params))
-    )
+    image_predictions = get_validation_predictions(42, unet_params)
 
     images = convert_images(image_predictions)
