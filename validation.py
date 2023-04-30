@@ -179,12 +179,10 @@ if __name__ == "__main__":
 
     get_validation_predictions = jax.pmap(
         fun=validation_predictions_lambda,
-        axis_name="encoded_prompts",
+        axis_name=None,
         donate_argnums=(),
     )
 
-    seed = replicate(2)
-
-    image_predictions = get_validation_predictions(seed, replicate(unet_params), encoded_prompts)
+    image_predictions = get_validation_predictions(replicate(2), replicate(unet_params), shard(encoded_prompts))
 
     images = convert_images(image_predictions)
