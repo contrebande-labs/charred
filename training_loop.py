@@ -51,6 +51,9 @@ def training_loop(
     )
     print("training step compiling...")
 
+    milestone_step_count = min(10_000, max_train_steps)
+    print(f"milestone step count: {milestone_step_count}")
+
     wandb_log_step = get_wandb_log_step_lambda(
         get_validation_predictions,
     )
@@ -73,6 +76,8 @@ def training_loop(
 
             global_training_steps += 1
 
+            is_milestone = True if global_training_steps % milestone_step_count == 0 else False
+
             if log_wandb:
                 unreplicated_train_metric = jax_utils.unreplicate(train_metrics)
                 global_walltime = time.monotonic() - t0
@@ -84,11 +89,12 @@ def training_loop(
                     epoch,
                     unreplicated_train_metric,
                     state.params,
+                    is_milestone,
                 )
 
-        if epoch % 10 == 0:
-            save_to_local_directory(
-                f"{ output_dir }/{ str(epoch).zfill(6) }",
-                unet,
-                get_training_state_params_from_devices(state.params),
-            )
+            if is_milestone:
+                save_to_local_directory(
+                    f"{ output_dir }/{ str(global_training_steps).zfill(12) }",
+                    unet,
+                    get_training_state_params_from_devices(state.params),
+                )

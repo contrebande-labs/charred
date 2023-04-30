@@ -62,8 +62,8 @@ def get_wandb_log_step_lambda(
         epoch,
         unreplicated_train_metric,
         unet_params,
+        is_milestone,
     ):
-        is_milestone = True if global_training_steps % 10_000 == 0 else False
 
         log_data = {
             "walltime": global_walltime,
@@ -81,7 +81,7 @@ def get_wandb_log_step_lambda(
 
         wandb.log(
             data=log_data,
-            commit=is_milestone,
+            commit=True,
         )
 
     return __wandb_log_step

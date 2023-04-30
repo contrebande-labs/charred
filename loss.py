@@ -114,10 +114,13 @@ def get_compute_loss_lambda(
             return jnp.where(snr < snr_gamma, snr, jnp.ones_like(snr) * snr_gamma) / snr
 
         # Compute Min-SNR loss weights
-        snr_loss_weights = __compute_snr_loss_weights(image_sampling_timesteps)
+        #snr_loss_weights = __compute_snr_loss_weights(image_sampling_timesteps)
  
         # Compute loss from noisy target with Min-SNR
-        loss = (((image_sampling_noisy_target - model_pred) ** 2) * snr_loss_weights).mean()
+        #loss = (((image_sampling_noisy_target - model_pred) ** 2) * snr_loss_weights).mean()
+
+        # Compute loss from noisy target w/o Min-SNR
+        loss = ((image_sampling_noisy_target - model_pred) ** 2).mean()
 
         return loss
 
