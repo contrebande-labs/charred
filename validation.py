@@ -40,12 +40,10 @@ def convert_images(images: jnp.ndarray):
 
 
 def get_validation_predictions_lambda(
-    text_encoder,
-    text_encoder_params,
     vae: FlaxAutoencoderKL,
     vae_params,
     unet: FlaxUNet2DConditionModel,
-    tokenized_prompts: jnp.ndarray,
+    encoded_prompts,
 ):
 
     scheduler = FlaxDPMSolverMultistepScheduler.from_config(
@@ -68,12 +66,6 @@ def get_validation_predictions_lambda(
     vae_scale_factor = 2 ** (len(vae.config.block_out_channels) - 1)
 
     image_width = image_height = 256
-
-    encoded_prompts = text_encoder(
-        tokenized_prompts,
-        params=text_encoder_params,
-        train=False,
-    )
 
     # Generating latent shape
     latent_shape = (
@@ -174,13 +166,17 @@ if __name__ == "__main__":
 
     tokenized_prompts = tokenize_prompts(validation_prompts)
 
+    encoded_prompts = text_encoder(
+        tokenized_prompts,
+        params=text_encoder_params,
+        train=False,
+    )
+
     validation_predictions_lambda = get_validation_predictions_lambda(
-        text_encoder,
-        text_encoder_params,
         vae,
         vae_params,
         unet,
-        shard(tokenized_prompts),
+        shard(encoded_prompts),
     )
 
     get_validation_predictions = jax.pmap(
@@ -189,6 +185,8 @@ if __name__ == "__main__":
         donate_argnums=(),
     )
 
-    image_predictions = get_validation_predictions(replicate(2), replicate(unet_params))
+    seed = replicate(2)
+
+    image_predictions = get_validation_predictions(seed, replicate(unet_params))
 
     images = convert_images(image_predictions)
