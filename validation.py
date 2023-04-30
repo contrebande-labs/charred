@@ -180,7 +180,7 @@ if __name__ == "__main__":
         vae,
         vae_params,
         unet,
-        tokenized_prompts,
+        shard(tokenized_prompts),
     )
 
     get_validation_predictions = jax.pmap(
