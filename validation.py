@@ -176,11 +176,11 @@ if __name__ == "__main__":
 
     validation_predictions_lambda = get_validation_predictions_lambda(
         text_encoder,
-        replicate(text_encoder_params),
+        text_encoder_params,
         vae,
-        replicate(vae_params),
+        vae_params,
         unet,
-        shard(tokenized_prompts),
+        tokenized_prompts,
     )
 
     get_validation_predictions = jax.pmap(
