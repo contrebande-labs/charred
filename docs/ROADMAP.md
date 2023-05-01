@@ -32,7 +32,7 @@ Integrate Big Vision optimizaitions: https://github.com/google-research/big_visi
 Use ByT5-Large instead of ByT5-Base: https://huggingface.co/google/byt5-large
 Implement streaming, mini-batching and gradient accumulation with image aspect ratio and tokenized caption size bucketing: https://github.com/NovelAI/novelai-aspect-ratio-bucketing https://optax.readthedocs.io/en/latest/gradient_accumulation.html https://optax.readthedocs.io/en/latest/api.html#optax.MultiSteps
 Use ByT5-XXL instead of ByT5-Large: https://huggingface.co/google/byt5-xxl https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints https://github.com/google-research/t5x/blob/main/t5x/scripts/convert_tf_checkpoint.py
-Port to JAX and Integrate Imagen, SDXL and Deep Floyd improvements: https://github.com/lucidrains/imagen-pytorch https://github.com/deep-floyd/IF https://stable-diffusion-art.com/sdxl-beta/ https://huggingface.co/docs/diffusers/api/pipelines/if https://huggingface.co/spaces/DeepFloyd/IF https://huggingface.co/DeepFloyd/IF-I-XL-v1.0 https://huggingface.co/DeepFloyd/IF-II-L-v1.0 https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler https://huggingface.co/DeepFloyd/IF-notebooks/tree/main https://huggingface.co/blog/if https://huggingface.co/docs/diffusers/main/en/api/pipelines/if https://stability.ai/blog/deepfloyd-if-text-to-image-model https://deepfloyd.ai/
+Port to JAX and Integrate Imagen, SDXL and Deep Floyd improvements: https://github.com/lucidrains/imagen-pytorch https://github.com/deep-floyd/IF https://stable-diffusion-art.com/sdxl-beta/ https://huggingface.co/docs/diffusers/api/pipelines/if https://huggingface.co/spaces/DeepFloyd/IF https://huggingface.co/DeepFloyd/IF-I-XL-v1.0 https://huggingface.co/DeepFloyd/IF-II-L-v1.0 https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler https://huggingface.co/DeepFloyd/IF-notebooks/tree/main https://huggingface.co/blog/if https://huggingface.co/docs/diffusers/main/en/api/pipelines/if https://stability.ai/blog/deepfloyd-if-text-to-image-model https://deepfloyd.ai/ https://www.assemblyai.com/blog/how-imagen-actually-works/ https://www.youtube.com/watch?v=af6WPqvzjjk https://www.youtube.com/watch?v=xqDeAz0U-R4
 Save checkpoints using JAX-native methods: https://flax.readthedocs.io/en/latest/api_reference/flax.training.html https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#save-checkpoints
 
 
@@ -50,7 +50,67 @@ Implement accelerated U-Net prediction and VAE decoding with int8 precision : ht
 https://github.com/google-research/google-research/tree/master/vrdu
 https://github.com/google-research/google-research/tree/master/wt5 https://github.com/google-research/google-research/tree/master/invariant_explanations
 https://github.com/google-research/google-research/tree/master/ul2 https://ai.googleblog.com/2022/10/ul2-20b-open-source-unified-language.html
+https://github.com/google-research/t5x/blob/main/t5x/train.py
+https://github.com/google-research/t5x/blob/main/docs/usage/finetune.md
+https://github.com/google-research/text-to-text-transfer-transformer/blob/main/t5/data/tasks.py
+https://github.com/google-research/text-to-text-transfer-transformer/blob/main/t5/data/mixtures.py
+https://github.com/google-research/t5x/blob/main/docs/usage/eval.md
+https://github.com/google-research/t5x/blob/main/docs/usage/infer-seqio.md
+https://github.com/google-research/t5x/blob/main/t5x/contrib/gpu/t5/configs/runs/finetune.gin
+https://github.com/google-research/t5x/blob/main/t5x/contrib/gpu/t5/configs/runs/finetune_mnli.gin
+https://github.com/google-research/t5x/blob/main/t5x/contrib/gpu/t5/configs/runs/finetune_squad1.gin
+https://github.com/google-research/t5x/blob/main/t5x/configs/runs/finetune.gin
+https://github.com/google-research/t5x/tree/main/t5x/examples/scalable_t5
+https://github.com/google-research/t5x/tree/main/t5x/contrib/moe
+https://github.com/tensorflow/mesh/blob/master/mesh_tensorflow/transformer/moe.py
+https://arxiv.org/abs/2101.03961
+https://www.infoq.com/news/2021/02/google-trillion-parameter-ai/
+https://towardsdatascience.com/understanding-googles-switch-transformer-904b8bf29f66
+https://towardsdatascience.com/the-switch-transformer-59f3854c7050
+https://github.com/google-research/longt5
+https://arxiv.org/abs/2208.02813
+https://github.com/google-research/google-research/tree/master/moe_models_implicit_bias
+https://github.com/google-research/google-research/tree/master/moe_mtl
+https://github.com/google-research/google-research/tree/master/dselect_k_moe
+https://huggingface.co/google/switch-c-2048
+https://github.com/google-research/t5x/tree/main/t5x/contrib/calm
 https://github.com/google-research/google-research/tree/master/pali
 https://laion.ai/blog/paella/
 https://laion.ai/blog/open-flamingo/
 https://laion.ai/blog/datacomp/
+https://aclanthology.org/2022.semeval-1.226/
+https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887
+https://github.com/gsarti/t5-flax-gcp
+https://github.com/PiotrNawrot/nanoT5
+https://github.com/Ki6an/fastT5
+https://www.marktechpost.com/2023/02/06/google-ai-open-sources-flan-t5-a-transformer-based-language-model-that-uses-a-text-to-text-approach-for-nlp-tasks/
+https://arxiv.org/abs/2203.17189
+https://github.com/google-research/t5x/tree/main/t5x/contrib/gpu/scripts_gpu
+https://huggingface.co/dbmdz/t5-base-conll03-english
+https://huggingface.co/mesolitica/finetune-dependency-t5-base-standard-bahasa-cased
+https://huggingface.co/datasets/wikiann
+https://huggingface.co/datasets/xtreme
+https://huggingface.co/datasets/joelito/lextreme
+https://huggingface.co/datasets/polyglot_ner
+https://huggingface.co/datasets/xglue
+https://huggingface.co/datasets/euronews
+https://huggingface.co/datasets/Babelscape/wikineural
+https://huggingface.co/datasets/Babelscape/multinerd
+https://huggingface.co/datasets/tner/multinerd
+https://huggingface.co/datasets/tner/wikineural
+https://huggingface.co/datasets/universal_dependencies
+https://surfacesyntacticud.github.io/
+https://multiconer.github.io/
+https://multiconer.github.io/multiconer_1/
+https://registry.opendata.aws/multiconer/
+https://registry.opendata.aws/fast-ai-nlp/
+https://registry.opendata.aws/lowcontext-ner-gaz/
+https://registry.opendata.aws/code-mixed-ner/
+https://registry.opendata.aws/lei/
+https://huggingface.co/datasets/MultiCoNER/multiconer_v2
+https://arxiv.org/abs/2208.14536
+https://github.com/Alibaba-NLP/KB-NER https://github.com/modelscope/AdaSeq
+https://github.com/mckysse/gain
+https://github.com/SairamNaragoni/named-entity-recognition-T5
+https://github.com/MarSanTeam/Complex_NER_SemEval
+https://huggingface.co/docs/transformers/tasks/token_classification
