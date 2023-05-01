@@ -114,3 +114,4 @@ https://github.com/mckysse/gain
 https://github.com/SairamNaragoni/named-entity-recognition-T5
 https://github.com/MarSanTeam/Complex_NER_SemEval
 https://huggingface.co/docs/transformers/tasks/token_classification
+Simple T5 NER example: https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc
