@@ -30,15 +30,18 @@ def training_loop(
     log_wandb,
     get_validation_predictions,
 ):
+    # number of splits/partitions/devices
+    num_partitions = jax.local_device_count()
+
     # rng setup
-    train_rngs = jax.random.split(rng, jax.local_device_count())
+    train_rngs = jax.random.split(rng, num_partitions)
 
     # dataset setup
     train_dataset = setup_dataset(max_train_steps)
     print("dataset loaded...")
 
     # batch setup
-    total_train_batch_size = train_batch_size * jax.local_device_count()
+    total_train_batch_size = train_batch_size * num_partitions
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
     print("dataloader setup...")
 
@@ -74,9 +77,11 @@ def training_loop(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
 
-            global_training_steps += 1
+            global_training_steps += num_partitions
 
-            is_milestone = True if global_training_steps % milestone_step_count == 0 else False
+            is_milestone = (
+                True if global_training_steps % milestone_step_count == 0 else False
+            )
 
             if log_wandb:
                 unreplicated_train_metric = jax_utils.unreplicate(train_metrics)

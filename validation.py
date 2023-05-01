@@ -132,15 +132,20 @@ def get_validation_predictions_lambda(
         # return 8 bit RGB image (width, height, rgb)
         return (
             (
-                (vae_output / 2 + 0.5) # TODO: find out why this is necessary
-                .transpose(0, 2, 3, 1) # (batch, channel, height, width) => (batch, height, width, channel)
-                .clip(0, 1) * 255
-             )
+                (vae_output / 2 + 0.5)  # TODO: find out why this is necessary
+                .transpose(
+                    0, 2, 3, 1
+                )  # (batch, channel, height, width) => (batch, height, width, channel)
+                .clip(0, 1)
+                * 255
+            )
             .round()
             .astype(jnp.uint8)
         )
 
-    return lambda seed, unet_params, encoded_prompts: __predict_images(seed, unet_params, encoded_prompts)
+    return lambda seed, unet_params, encoded_prompts: __predict_images(
+        seed, unet_params, encoded_prompts
+    )
 
 
 if __name__ == "__main__":
@@ -192,6 +197,8 @@ if __name__ == "__main__":
         donate_argnums=(),
     )
 
-    image_predictions = get_validation_predictions(replicate(2), replicate(unet_params), shard(encoded_prompts))
+    image_predictions = get_validation_predictions(
+        replicate(2), replicate(unet_params), shard(encoded_prompts)
+    )
 
     images = convert_images(image_predictions)

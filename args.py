@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument(
         "--max_train_steps",
         type=int,
-        default=1_048_577, # 33_554_432, 67_108_864, 134_217_728, 1_073_741_824, 2_147_483_648, 17_179_869_184
+        default=1_048_577,  # 33_554_432, 67_108_864, 134_217_728, 1_073_741_824, 2_147_483_648, 17_179_869_184
         help="Total number of training steps per epoch to perform.",
     )
     parser.add_argument(
