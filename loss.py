@@ -122,8 +122,11 @@ def get_compute_loss_lambda(
             noise_scheduler_state, image_sampling_timesteps
         )
 
-        # Compute loss from noisy target with Min-SNR
-        min_snr_loss = (((image_sampling_noisy_target - model_pred) ** 2).mean() * snr_loss_weights).mean()
+        # Compute loss from noisy target
+        loss = ((image_sampling_noisy_target - model_pred) ** 2).mean()
+
+        # Balance loss with Min-SNR
+        min_snr_loss = (loss * snr_loss_weights).mean()
 
         return min_snr_loss
 
