@@ -58,7 +58,7 @@ def get_vae_latent_distribution_samples(
     return noisy_latents, timesteps, noisy_image_target
 
 
-def get_compute_loss_lambda(
+def get_compute_losses_lambda(
     text_encoder,
     text_encoder_params,
     vae,
@@ -77,7 +77,7 @@ def get_compute_loss_lambda(
 
     noise_scheduler_state = noise_scheduler.create_state()
 
-    def __compute_loss_lambda(
+    def __compute_losses_lambda(
         state_params,
     ):
         # Get the text embedding
@@ -88,13 +88,13 @@ def get_compute_loss_lambda(
         )[0]
 
         # Get the image embedding
+        # TODO: vae_outputs.latent_dist.mode() # <--- can this be cached ?
         vae_outputs = vae.apply(
             {"params": vae_params},
             sample=batch["pixel_values"],
             deterministic=True,
             method=vae.encode,
         )
-        # vae_outputs.latent_dist.mode() # <--- can this be cached ?
         image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
         (
             image_sampling_noisy_input,
@@ -130,11 +130,9 @@ def get_compute_loss_lambda(
         losses = jax.numpy.average(
             loss_tensors,
             axis=tuple(range(1, loss_tensors.ndim)),
-        )
+        ) * snr_loss_weights # Balance losses with Min-SNR
 
-        # Balance loss with Min-SNR
-        loss = (losses * snr_loss_weights).mean()
+        # TODO: is this correct? This was losses.mean() before...
+        return losses
 
-        return loss
-
-    return __compute_loss_lambda
+    return __compute_losses_lambda

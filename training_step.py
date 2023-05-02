@@ -1,6 +1,6 @@
 import jax
 
-from loss import get_compute_loss_lambda
+from loss import get_compute_losses_lambda
 
 
 def get_training_step_lambda(text_encoder, vae, unet):
@@ -13,25 +13,31 @@ def get_training_step_lambda(text_encoder, vae, unet):
     ):
         sample_rng, new_rng = jax.random.split(rng, 2)
 
-        compute_loss_lambda = get_compute_loss_lambda(
-            text_encoder,
-            text_encoder_params,
-            vae,
-            vae_params,
-            unet,
-            batch,
-            sample_rng,
+        # TODO: move this compilation higher up
+        jax_loss_value_and_gradient = jax.value_and_grad(
+            get_compute_losses_lambda(
+                text_encoder,
+                text_encoder_params,
+                vae,
+                vae_params,
+                unet,
+            )
         )
 
-        jax_grad_value_loss = jax.value_and_grad(compute_loss_lambda)
+        # Compute loss and gradients
+        # TODO: is this correct?
+        loss, grad = jax.lax.pmean(
+            jax_loss_value_and_gradient(
+                state.params, 
+                batch,
+                sample_rng,
+            ),
+            axis_name="batch",
+        )
 
-        loss, grad = jax_grad_value_loss(state.params)
+        new_state = state.apply_gradients(grads=grad)
 
-        grad_mean = jax.lax.pmean(grad, "batch")
-
-        new_state = state.apply_gradients(grads=grad_mean)
-
-        metrics = jax.lax.pmean({"loss": loss}, axis_name="batch")
+        metrics = { "loss": loss }
 
         return new_state, new_rng, metrics
 
