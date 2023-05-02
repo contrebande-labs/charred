@@ -13,7 +13,7 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
     ):
 
         # Compile loss function.
-        # NOTE: Can't have this compiled higher up because jax.value_and_grad required real numbers (floating point) dtypes as arguments
+        # NOTE: Can't have this compiled higher up because jax.value_and_grad-compiled functions require real numbers (floating point) dtypes as arguments
         jax_loss_value_and_gradient = jax.value_and_grad(
             get_compute_losses_lambda(
                 text_encoder,
