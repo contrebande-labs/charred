@@ -1,5 +1,11 @@
 # CHARRED Roadmap
 
+## Use cases
+
+OCR
+Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing caracters, ex MARI)
+
+
 ## Dataset
 
 DONE: Integrate LAION-HR: https://huggingface.co/datasets/laion/laion-high-resolution
