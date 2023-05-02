@@ -1,7 +1,7 @@
 import time
 
 import jax
-from flax import jax_utils
+from flax.jax_utils import unreplicate
 from flax.training.common_utils import shard
 
 from monitoring import get_wandb_log_step_lambda
@@ -66,7 +66,7 @@ def training_loop(
     global_training_steps = 0
     global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-        unreplicated_train_metric = None
+        batch_device_averaged_train_metrics = None
 
         for batch in train_dataloader:
             batch_walltime = time.monotonic()
@@ -84,7 +84,8 @@ def training_loop(
             )
 
             if log_wandb:
-                unreplicated_train_metric = jax_utils.unreplicate(train_metrics)
+                # TODO: is this correct? was only unreplicated before, with no averaging
+                batch_device_averaged_train_metrics = jax.tree_util.tree_map(lambda train_metric: train_metric.mean(), train_metrics)
                 global_walltime = time.monotonic() - t0
                 delta_time = time.monotonic() - batch_walltime
                 wandb_log_step(
@@ -92,7 +93,7 @@ def training_loop(
                     global_training_steps,
                     delta_time,
                     epoch,
-                    unreplicated_train_metric,
+                    batch_device_averaged_train_metrics,
                     state.params,
                     is_milestone,
                 )

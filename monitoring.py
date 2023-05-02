@@ -60,7 +60,7 @@ def get_wandb_log_step_lambda(
         global_training_steps,
         delta_time,
         epoch,
-        unreplicated_train_metric,
+        unreplicated_train_metrics,
         unet_params,
         is_milestone,
     ):
@@ -70,7 +70,7 @@ def get_wandb_log_step_lambda(
             "step": global_training_steps,
             "batch_delta_time": delta_time,
             "epoch": epoch,
-            **{k: v for k, v in unreplicated_train_metric.items()},
+            **{k: v for k, v in unreplicated_train_metrics.items()},
         }
 
         if is_milestone and get_predictions is not None:
