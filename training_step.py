@@ -11,6 +11,9 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
         rng,
         state,
     ):
+ 
+        # Split RNGs
+        sample_rng, new_rng = jax.random.split(rng, 2)
 
         # Compile loss function.
         # NOTE: Can't have this compiled higher up because jax.value_and_grad-compiled functions require real numbers (floating point) dtypes as arguments
@@ -25,9 +28,6 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
                 sample_rng,
             )
         )
- 
-        # Split RNGs
-        sample_rng, new_rng = jax.random.split(rng, 2)
 
         # Compute loss and gradients
         # TODO: is this correct?
