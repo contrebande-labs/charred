@@ -118,20 +118,23 @@ def get_compute_loss_lambda(
         ).sample
 
         # Compute Min-SNR loss weights
-        snr_loss_weights = jax.numpy.average(
-            compute_snr_loss_weights(
-                noise_scheduler_state,
-                image_sampling_timesteps,
-            ),
-            axis=0,
+        snr_loss_weight_tensors = compute_snr_loss_weights(
+            noise_scheduler_state,
+            image_sampling_timesteps,
         )
 
-        # Compute loss from noisy target
-        loss = ((image_sampling_noisy_target - model_pred) ** 2)
+        # Get one weight scalar per batch sample
+        snr_loss_weights = jax.numpy.average(
+            snr_loss_weight_tensors,
+            axis=tuple(range(1, snr_loss_weight_tensors.ndim)),
+        )
+
+        # Compute each batch sample's loss from noisy target
+        losses = (image_sampling_noisy_target - model_pred) ** 2
 
         # Balance loss with Min-SNR
-        min_snr_loss = (loss * snr_loss_weights).mean()
+        loss = (losses * snr_loss_weights).mean()
 
-        return min_snr_loss
+        return loss
 
     return __compute_loss_lambda
