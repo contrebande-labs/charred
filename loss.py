@@ -64,6 +64,8 @@ def get_compute_losses_lambda(
     vae,
     vae_params,
     unet,
+    batch,
+    sample_rng,
 ):
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -75,38 +77,37 @@ def get_compute_losses_lambda(
 
     noise_scheduler_state = noise_scheduler.create_state()
 
-    def __compute_losses_lambda(
-        batch,
+    # Get the text embedding
+    text_encoder_hidden_states = text_encoder(
+        batch["input_ids"],
+        params=text_encoder_params,
+        train=False,
+    )[0]
+
+    # Get the image embedding
+    # TODO: vae_outputs.latent_dist.mode() # <--- can this be cached ?
+    vae_outputs = vae.apply(
+        {"params": vae_params},
+        sample=batch["pixel_values"],
+        deterministic=True,
+        method=vae.encode,
+    )
+    image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
+    (
+        image_sampling_noisy_input,
+        image_sampling_timesteps,
+        image_sampling_noisy_target,
+    ) = get_vae_latent_distribution_samples(
+        image_latent_distribution_sampling,
         sample_rng,
+        vae.config.scaling_factor,
+        noise_scheduler,
+        noise_scheduler_state,
+    )
+
+    def __compute_losses_lambda(
         state_params,
     ):
-        # Get the text embedding
-        text_encoder_hidden_states = text_encoder(
-            batch["input_ids"],
-            params=text_encoder_params,
-            train=False,
-        )[0]
-
-        # Get the image embedding
-        # TODO: vae_outputs.latent_dist.mode() # <--- can this be cached ?
-        vae_outputs = vae.apply(
-            {"params": vae_params},
-            sample=batch["pixel_values"],
-            deterministic=True,
-            method=vae.encode,
-        )
-        image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
-        (
-            image_sampling_noisy_input,
-            image_sampling_timesteps,
-            image_sampling_noisy_target,
-        ) = get_vae_latent_distribution_samples(
-            image_latent_distribution_sampling,
-            sample_rng,
-            vae.config.scaling_factor,
-            noise_scheduler,
-            noise_scheduler_state,
-        )
 
         # Predict the noise residual and compute loss
         model_pred = unet.apply(
