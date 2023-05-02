@@ -1,5 +1,5 @@
 import wandb
-import jax
+import numpy as np
 
 
 def wandb_inference_init():
@@ -7,11 +7,6 @@ def wandb_inference_init():
         entity="charred",
         project="charred-inference",
         job_type="inference",
-    )
-    wandb.config.update(
-        {
-            "num_devices": jax.device_count(),
-        }
     )
 
     print("WandB inference init...")
@@ -70,7 +65,7 @@ def get_wandb_log_step_lambda(
             "step": global_training_steps,
             "batch_delta_time": delta_time,
             "epoch": epoch,
-            **{k: v for k, v in unreplicated_train_metrics.items().mean()},
+            **{k: v for k, v in np.asarray(unreplicated_train_metrics.items()).mean()},
         }
 
         if is_milestone and get_predictions is not None:

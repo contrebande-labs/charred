@@ -44,11 +44,11 @@ def training_loop(
     print("dataloader setup...")
 
     # Create parallel version of the train step
-    training_step_lambda = get_training_step_lambda(text_encoder, vae, unet)
+    training_step_lambda = get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params, unet)
     jax_pmap_train_step = jax.pmap(
         fun=training_step_lambda,
         axis_name="batch",
-        donate_argnums=(0,),
+        donate_argnums=(1,2,),
     )
     print("training step compiling...")
 
@@ -64,7 +64,6 @@ def training_loop(
     global_training_steps = 0
     global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-        train_metrics = None
 
         for batch in train_dataloader:
             batch_walltime = time.monotonic()
@@ -72,7 +71,7 @@ def training_loop(
             batch = shard(batch)
 
             state, train_rngs, train_metrics = jax_pmap_train_step(
-                state, text_encoder_params, vae_params, batch, train_rngs
+                batch, train_rngs, state, 
             )
 
             global_training_steps += num_devices

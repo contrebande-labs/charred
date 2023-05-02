@@ -64,8 +64,6 @@ def get_compute_losses_lambda(
     vae,
     vae_params,
     unet,
-    batch,
-    sample_rng,
 ):
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -78,6 +76,8 @@ def get_compute_losses_lambda(
     noise_scheduler_state = noise_scheduler.create_state()
 
     def __compute_losses_lambda(
+        batch,
+        sample_rng,
         state_params,
     ):
         # Get the text embedding
