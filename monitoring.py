@@ -28,7 +28,7 @@ def wandb_inference_log(log: list):
     print("WandB inference log...")
 
 
-def wandb_init(args):
+def wandb_init(args, num_devices):
     wandb.init(
         entity="charred",
         project="charred",
@@ -37,7 +37,7 @@ def wandb_init(args):
     )
     wandb.config.update(
         {
-            "num_devices": jax.device_count(),
+            "num_devices": num_devices,
         }
     )
     wandb.define_metric("*", step_metric="step")
@@ -70,7 +70,7 @@ def get_wandb_log_step_lambda(
             "step": global_training_steps,
             "batch_delta_time": delta_time,
             "epoch": epoch,
-            **{k: v for k, v in unreplicated_train_metrics.items()},
+            **{k: v for k, v in unreplicated_train_metrics.items().mean()},
         }
 
         if is_milestone and get_predictions is not None:

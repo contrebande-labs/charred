@@ -1,7 +1,6 @@
 import time
 
 import jax
-from flax.jax_utils import unreplicate
 from flax.training.common_utils import shard
 
 from monitoring import get_wandb_log_step_lambda
@@ -29,19 +28,18 @@ def training_loop(
     output_dir,
     log_wandb,
     get_validation_predictions,
+    num_devices,
 ):
-    # number of splits/partitions/devices
-    num_partitions = jax.local_device_count()
 
     # rng setup
-    train_rngs = jax.random.split(rng, num_partitions)
+    train_rngs = jax.random.split(rng, num_devices)
 
     # dataset setup
     train_dataset = setup_dataset(max_train_steps)
     print("dataset loaded...")
 
     # batch setup
-    total_train_batch_size = train_batch_size * num_partitions
+    total_train_batch_size = train_batch_size * num_devices
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
     print("dataloader setup...")
 
@@ -66,7 +64,7 @@ def training_loop(
     global_training_steps = 0
     global_walltime = time.monotonic()
     for epoch in range(num_train_epochs):
-        batch_device_averaged_train_metrics = None
+        train_metrics = None
 
         for batch in train_dataloader:
             batch_walltime = time.monotonic()
@@ -77,7 +75,7 @@ def training_loop(
                 state, text_encoder_params, vae_params, batch, train_rngs
             )
 
-            global_training_steps += num_partitions
+            global_training_steps += num_devices
 
             is_milestone = (
                 True if global_training_steps % milestone_step_count == 0 else False
@@ -85,7 +83,6 @@ def training_loop(
 
             if log_wandb:
                 # TODO: is this correct? was only unreplicated before, with no averaging
-                batch_device_averaged_train_metrics = jax.tree_util.tree_map(lambda train_metric: train_metric.mean(), train_metrics)
                 global_walltime = time.monotonic() - t0
                 delta_time = time.monotonic() - batch_walltime
                 wandb_log_step(
@@ -93,7 +90,7 @@ def training_loop(
                     global_training_steps,
                     delta_time,
                     epoch,
-                    batch_device_averaged_train_metrics,
+                    train_metrics,
                     state.params,
                     is_milestone,
                 )

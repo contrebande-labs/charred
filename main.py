@@ -17,6 +17,9 @@ from monitoring import wandb_close, wandb_init
 
 def main():
     args = parse_args()
+ 
+    # number of splits/partitions/devices
+    num_devices = jax.local_device_count()
 
     output_dir = args.output_dir
 
@@ -25,7 +28,7 @@ def main():
     # Setup WandB for logging & tracking
     log_wandb = args.log_wandb
     if log_wandb:
-        wandb_init(args)
+        wandb_init(args, num_devices)
 
     # init random number generator
     seed = args.seed
@@ -89,6 +92,7 @@ def main():
         output_dir,
         log_wandb,
         get_validation_predictions,
+        num_devices,
     )
     print("Training loop done...")
 
