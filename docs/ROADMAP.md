@@ -3,7 +3,7 @@
 ## Use cases
 
 OCR
-Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing caracters, ex MARI)
+Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing characters, ex MARI)
 
 ## MlOps
 https://airflow.apache.org/
@@ -26,6 +26,8 @@ https://github.com/pachyderm/pachyderm
 
 ### XLA
 https://github.com/openxla/iree https://openxla.github.io/iree/
+https://openjdk.org/jeps/442
+https://openjdk.org/jeps/448
 
 ### Java pipeline
 https://kafka.apache.org/
@@ -65,12 +67,6 @@ Filter out samples with a low-aesthetic image score or a meaningless caption (co
 Cache freezed models (ByT5 and VAE) embeddings
 Save preprocessed images and original datasets in JPEG XL
 Preprocess images with JAX-native methods: https://jax.readthedocs.io/en/latest/jax.image.html https://dm-pix.readthedocs.io/ https://github.com/4rtemi5/imax https://github.com/rolandgvc/flaxvision
-
-## Codebase
-
-https://github.com/deepmind/chex
-https://github.com/mpi4jax/mpi4jax
-https://github.com/jeremiecoullon/jax-tqdm
 
 ## Training
 

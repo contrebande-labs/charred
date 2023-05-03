@@ -88,7 +88,7 @@ def training_loop(
             batch_walltime = time.monotonic()
 
             state, train_rngs, train_metrics = jax_pmap_train_step(
-                shard(batch), # TODO: check if charding is necessary, since pmap has axis_name="batch"
+                shard(batch), # TODO: check if sharding is necessary, since pmap has axis_name="batch"
                 train_rngs,
                 state,
             )
