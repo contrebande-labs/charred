@@ -67,15 +67,6 @@ def get_compute_losses_lambda(
     batch,
     sample_rng,
 ):
-    noise_scheduler = FlaxDDPMScheduler(
-        beta_start=0.00085,
-        beta_end=0.012,
-        beta_schedule="scaled_linear",
-        prediction_type="epsilon",
-        num_train_timesteps=1000,
-    )
-
-    noise_scheduler_state = noise_scheduler.create_state()
 
     # Get the text embedding
     text_encoder_hidden_states = text_encoder(
@@ -83,6 +74,16 @@ def get_compute_losses_lambda(
         params=text_encoder_params,
         train=False,
     )[0]
+ 
+    # Instanciate training noise scheduler
+    noise_scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085,
+        beta_end=0.012,
+        beta_schedule="scaled_linear",
+        prediction_type="epsilon",
+        num_train_timesteps=1000,
+    )
+    noise_scheduler_state = noise_scheduler.create_state()
 
     # Get the image embedding
     # TODO: vae_outputs.latent_dist.mode() # <--- can this be cached ?
@@ -125,15 +126,16 @@ def get_compute_losses_lambda(
         )
 
         # Compute each batch sample's loss from noisy target
-        loss_tensors = (image_sampling_noisy_target - model_pred) ** 2
+        loss_tensors = (
+            ((image_sampling_noisy_target - model_pred) ** 2)
+        )
 
         # Get one loss scalar per batch sample
-        losses = jax.numpy.average(
-            loss_tensors,
+        losses = loss_tensors.mean(
             axis=tuple(range(1, loss_tensors.ndim)),
         ) * snr_loss_weights # Balance losses with Min-SNR
 
-        # TODO: is this correct? This was losses.mean() before...
-        return losses
+        # This must be an averaged scalar, otherwise, you get this:TypeError: Gradient only defined for scalar-output functions. Output had shape: (8,).
+        return losses.mean()
 
     return __compute_losses_lambda

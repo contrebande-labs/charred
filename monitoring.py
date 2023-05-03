@@ -47,10 +47,10 @@ def wandb_close():
     print("WandB closed...")
 
 
-def get_wandb_log_step_lambda(
+def get_wandb_log_batch_lambda(
     get_predictions,
 ):
-    def __wandb_log_step(
+    def __wandb_log_batch(
         global_walltime,
         global_training_steps,
         delta_time,
@@ -79,4 +79,4 @@ def get_wandb_log_step_lambda(
             commit=True,
         )
 
-    return __wandb_log_step
+    return __wandb_log_batch
