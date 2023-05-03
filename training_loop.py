@@ -1,7 +1,6 @@
 import time
 
 from jax import pmap
-import jax.numpy as jnp
 from jax.tree_util import tree_map
 import jax.random as random
 from flax.training.common_utils import shard
@@ -41,16 +40,21 @@ def training_loop(
     print("dataloader setup...")
 
     # Create parallel version of the train step
-    training_step_lambda = get_training_step_lambda(
-        text_encoder, text_encoder_params, vae, vae_params, unet
-    )
+    # TODO: sanity check all of this
+    # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
     jax_pmap_train_step = pmap(
-        fun=training_step_lambda,
-        axis_name="batch",
+        fun=get_training_step_lambda(
+            # TODO should these be passed as "static_broadcasted_argnums" instead?
+            text_encoder, text_encoder_params, vae, vae_params, unet
+        ),
+        axis_name="batch", # TODO: is this necessary ?
+        in_axes=0, # TODO: Should we try "in_axes=(0,None,None)" instead ?
+        out_axis=0, # TODO: Should we try to do something with "out_axis" ?
+        static_broadcasted_argnums=(),
         # We cannot donate the "batch" argument. Otherwise, we get this:
-        # /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
-        # See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
-        # warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
+        #   /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
+        #   See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
+        #   warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
         donate_argnums=(
             1,
             2,
@@ -85,11 +89,11 @@ def training_loop(
 
             batch_walltime = time.monotonic()
 
-            # TODO: check if sharding is necessary, since pmap has axis_name="batch"
+            # TODO: check if sharding, replication or splitting is necessary, since pmap has axis_name="batch"
             unet_training_state, rng, train_metrics = jax_pmap_train_step(
-                shard(batch),
-                random.split(rng, num_devices),
-                replicate(unet_training_state),
+                shard(batch), # TODO: maybe not necessary ?
+                random.split(rng, num_devices), # TODO: maybe do this in main like before?
+                replicate(unet_training_state), # TODO: maybe do this in main like before?
             )
 
             if is_first_step:
