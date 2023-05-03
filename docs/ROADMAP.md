@@ -14,6 +14,15 @@ https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-wit
 https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
 https://github.com/kingoflolz/mesh-transformer-jax
 https://www.kubeflow.org/
+https://mlflow.org/
+https://metaflow.org/
+https://kedro.org/
+https://zenml.io/
+https://www.iguazio.com/open-source/mlrun/
+https://cml.dev/
+https://www.seldon.io/solutions/open-source-projects/core
+https://h2o.ai/platform/h2o-automl/
+https://github.com/pachyderm/pachyderm
 
 ### XLA
 https://github.com/openxla/iree https://openxla.github.io/iree/
