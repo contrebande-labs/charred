@@ -14,6 +14,9 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
         sample_rng, new_rng = jax.random.split(rng, 2)
 
         # Get loss function lambda
+        # TODO: Are we copying all this static data on every batch, here?
+        # TODO: Solution #1: avoid copying the static data at every batch
+        # TODO: Solution #2: offload freezed model computing to CPU, at lease for the text encoding
         compute_batch_losses = get_compute_losses_lambda(
             text_encoder,
             text_encoder_params,
