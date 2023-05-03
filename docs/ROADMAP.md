@@ -59,11 +59,11 @@ https://vertx.io/docs/vertx-micrometer-metrics/java/
 2. Dataset merging: synthetic data, LAION-HR: https://huggingface.co/datasets/laion/laion-high-resolution, WiT dataset: https://huggingface.co/datasets/google/wit, handwritten and printed documents scans, graphemes-in-the-wild, etc.
 3. Language augmentation and sampling to match ByT5's C4 training distribution: https://huggingface.co/datasets/allenai/c4 https://huggingface.co/datasets/mc4
 4. Complementary downloads from dataset URLs (mostly images) and JPEG XL archiving (see IIIF)
-5. Document/scene segmentation and layout understanding
+5. Scene segmentation, document layout understanding and caption NER: https://github.com/google-research/t5x/blob/main/docs/usage/finetune.md https://huggingface.co/dbmdz/t5-base-conll03-english https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887 https://github.com/SairamNaragoni/named-entity-recognition-T5 https://github.com/MarSanTeam/Complex_NER_SemEval https://huggingface.co/docs/transformers/tasks/token_classification https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc
 6. Image aesthetics and caption meaningfulness (CoLa) evaluation and filtering: https://github.com/google-research/google-research/tree/master/vila https://github.com/google-research/google-research/tree/master/musiq https://github.com/christophschuhmann/improved-aesthetic-predictor https://www.mdpi.com/2313-433X/9/2/30 https://paperswithcode.com/dataset/aesthetic-visual-analysis https://www.tandfonline.com/doi/full/10.1080/09540091.2022.2147902 https://github.com/bcmi/Awesome-Aesthetic-Evaluation-and-Cropping https://github.com/rmokady/CLIP_prefix_caption https://github.com/google-research-datasets/Image-Caption-Quality-Dataset https://github.com/gchhablani/multilingual-image-captioning https://ai.googleblog.com/2022/10/crossmodal-3600-multilingual-reference.html https://www.cl.uni-heidelberg.de/statnlpgroup/wikicaps/ https://huggingface.co/docs/transformers/main/tasks/image_captioning https://www.mdpi.com/2076-3417/13/4/2446 https://arxiv.org/abs/2201.12723 https://laion.ai/blog/laion-aesthetics/ 
 7. Bucketing and batching (similar caption lengths for padding and truncating, similar image ratio for up/downsampling)
 8. Images preprocessing with JAX-native methods: https://jax.readthedocs.io/en/latest/jax.image.html https://dm-pix.readthedocs.io/ https://github.com/4rtemi5/imax https://github.com/rolandgvc/flaxvision
-9. Freezed models (ByT5 and VAE) embeddings caching
+9.  Freezed models (ByT5 and VAE) embeddings caching
 
 ## Training
 
@@ -123,14 +123,12 @@ https://laion.ai/blog/paella/
 https://laion.ai/blog/open-flamingo/
 https://laion.ai/blog/datacomp/
 https://aclanthology.org/2022.semeval-1.226/
-https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887
 https://github.com/gsarti/t5-flax-gcp
 https://github.com/PiotrNawrot/nanoT5
 https://github.com/Ki6an/fastT5
 https://www.marktechpost.com/2023/02/06/google-ai-open-sources-flan-t5-a-transformer-based-language-model-that-uses-a-text-to-text-approach-for-nlp-tasks/
 https://arxiv.org/abs/2203.17189
 https://github.com/google-research/t5x/tree/main/t5x/contrib/gpu/scripts_gpu
-https://huggingface.co/dbmdz/t5-base-conll03-english
 https://huggingface.co/mesolitica/finetune-dependency-t5-base-standard-bahasa-cased
 https://huggingface.co/datasets/wikiann
 https://huggingface.co/datasets/xtreme
@@ -155,7 +153,3 @@ https://huggingface.co/datasets/MultiCoNER/multiconer_v2
 https://arxiv.org/abs/2208.14536
 https://github.com/Alibaba-NLP/KB-NER https://github.com/modelscope/AdaSeq
 https://github.com/mckysse/gain
-https://github.com/SairamNaragoni/named-entity-recognition-T5
-https://github.com/MarSanTeam/Complex_NER_SemEval
-https://huggingface.co/docs/transformers/tasks/token_classification
-Simple T5 NER example: https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc
