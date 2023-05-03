@@ -5,6 +5,38 @@
 OCR
 Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing caracters, ex MARI)
 
+## MlOps
+https://airflow.apache.org/
+https://github.com/confluentinc/confluent-kafka-python
+https://cloud.google.com/tpu/docs/preemptible
+https://cloud.google.com/tpu/docs/kubernetes-engine-setup
+https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-with-gradient-descent-a4ba9faefcea
+https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
+https://github.com/kingoflolz/mesh-transformer-jax
+
+### Java pipeline
+https://kafka.apache.org/
+https://kogito.kie.org/trustyai/
+https://www.optaplanner.org/
+https://www.drools.org/
+https://vertx.io/docs/vertx-web-api-service/java/
+https://vertx.io/docs/vertx-web-proxy/java/
+https://vertx.io/docs/vertx-infinispan/java/
+https://vertx.io/docs/vertx-stomp/java/ https://github.com/stomp-js/stompjs https://activemq.apache.org/ https://developers.cloudflare.com/queues/
+https://vertx.io/docs/vertx-service-proxy/java/
+https://vertx.io/docs/vertx-grpc/java/
+https://vertx.io/docs/vertx-service-discovery/java/
+
+### Testing
+https://github.com/deepmind/chex
+
+### HA & Telemetry
+https://github.com/resilience4j/resilience4j https://resilience4j.readme.io/docs/micrometer https://vertx.io/docs/vertx-micrometer-metrics/java/
+https://github.com/open-telemetry/opentelemetry-java-instrumentation
+https://github.com/google/pprof https://github.com/grafana/JPProf https://jax.readthedocs.io/en/latest/device_memory_profiling.html https://github.com/google/pprof/tree/main/proto https://github.com/grafana/pyroscope https://github.com/grafana/otel-profiling-go https://github.com/grafana/metrictank
+https://jax.readthedocs.io/en/latest/profiling.html https://github.com/google/perfetto/tree/master/protos
+https://vertx.io/docs/vertx-opentelemetry/java/
+https://vertx.io/docs/vertx-micrometer-metrics/java/
 
 ## Dataset
 
