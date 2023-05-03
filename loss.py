@@ -74,7 +74,7 @@ def get_compute_losses_lambda(
         params=text_encoder_params,
         train=False,
     )[0]
- 
+
     # Instanciate training noise scheduler
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -126,14 +126,15 @@ def get_compute_losses_lambda(
         )
 
         # Compute each batch sample's loss from noisy target
-        loss_tensors = (
-            ((image_sampling_noisy_target - model_pred) ** 2)
-        )
+        loss_tensors = (image_sampling_noisy_target - model_pred) ** 2
 
         # Get one loss scalar per batch sample
-        losses = loss_tensors.mean(
-            axis=tuple(range(1, loss_tensors.ndim)),
-        ) * snr_loss_weights # Balance losses with Min-SNR
+        losses = (
+            loss_tensors.mean(
+                axis=tuple(range(1, loss_tensors.ndim)),
+            )
+            * snr_loss_weights
+        )  # Balance losses with Min-SNR
 
         # This must be an averaged scalar, otherwise, you get this:TypeError: Gradient only defined for scalar-output functions. Output had shape: (8,).
         return losses.mean()

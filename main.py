@@ -17,7 +17,7 @@ from monitoring import wandb_close, wandb_init
 
 def main():
     args = parse_args()
- 
+
     # number of splits/partitions/devices/shards
     num_devices = jax.local_device_count()
 

@@ -12,6 +12,7 @@ from dataset import setup_dataset
 from repository import save_to_local_directory
 from training_step import get_training_step_lambda
 
+
 def training_loop(
     text_encoder,
     text_encoder_params,
@@ -42,7 +43,9 @@ def training_loop(
     print("dataloader setup...")
 
     # Create parallel version of the train step
-    training_step_lambda = get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params, unet)
+    training_step_lambda = get_training_step_lambda(
+        text_encoder, text_encoder_params, vae, vae_params, unet
+    )
     jax_pmap_train_step = pmap(
         fun=training_step_lambda,
         axis_name="batch",
@@ -50,7 +53,10 @@ def training_loop(
         # /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
         # See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
         # warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
-        donate_argnums=(1,2,),
+        donate_argnums=(
+            1,
+            2,
+        ),
     )
     print("training step compiling...")
 
@@ -71,19 +77,24 @@ def training_loop(
 
         is_first_step = global_training_steps == 0
 
-        if is_first_step: print("entering first epoch...")
+        if is_first_step:
+            print("entering first epoch...")
 
         for batch in train_dataloader:
 
-            if is_first_step: print("entering first batch...")
- 
+            if is_first_step:
+                print("entering first batch...")
+
             batch_walltime = time.monotonic()
 
             state, train_rngs, train_metrics = jax_pmap_train_step(
-                shard(batch), train_rngs, state, 
+                shard(batch),
+                train_rngs,
+                state,
             )
 
-            if is_first_step: print("computed first batch...")
+            if is_first_step:
+                print("computed first batch...")
 
             global_training_steps += num_devices
 
@@ -104,7 +115,8 @@ def training_loop(
                     state.params,
                     is_milestone,
                 )
-                if is_first_step: print("logged first batch...")
+                if is_first_step:
+                    print("logged first batch...")
 
             if is_milestone:
                 save_to_local_directory(
@@ -116,5 +128,5 @@ def training_loop(
                     # and then, also: jax.device_get(state.params)
                     # and then, again: unreplicate(state.params)
                     # Finally found a way to average along the splits/device/partition/shard axis
-                    tree_map(f=lambda x: x.mean(axis=0), tree=state.params)
+                    tree_map(f=lambda x: x.mean(axis=0), tree=state.params),
                 )

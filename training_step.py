@@ -4,13 +4,12 @@ from loss import get_compute_losses_lambda
 
 
 def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params, unet):
- 
     def __training_step_lambda(
         batch,
         rng,
         state,
     ):
- 
+
         # Split RNGs
         sample_rng, new_rng = jax.random.split(rng, 2)
 
