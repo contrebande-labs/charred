@@ -13,6 +13,10 @@ https://cloud.google.com/tpu/docs/kubernetes-engine-setup
 https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-with-gradient-descent-a4ba9faefcea
 https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
 https://github.com/kingoflolz/mesh-transformer-jax
+https://www.kubeflow.org/
+
+### XLA
+https://github.com/openxla/iree https://openxla.github.io/iree/
 
 ### Java pipeline
 https://kafka.apache.org/
