@@ -5,6 +5,7 @@ import jax.numpy as jnp
 from jax.tree_util import tree_map
 import jax.random as random
 from flax.training.common_utils import shard
+from flax.jax_utils import replicate
 
 from monitoring import get_wandb_log_batch_lambda
 from batch import setup_dataloader
@@ -19,7 +20,7 @@ def training_loop(
     vae,
     vae_params,
     unet,
-    state,
+    unet_training_state,
     rng,
     max_train_steps,
     num_train_epochs,
@@ -29,9 +30,6 @@ def training_loop(
     get_validation_predictions,
     num_devices,
 ):
-
-    # rng setup
-    train_rngs = random.split(rng, num_devices)
 
     # dataset setup
     train_dataset = setup_dataset(max_train_steps)
@@ -87,10 +85,11 @@ def training_loop(
 
             batch_walltime = time.monotonic()
 
-            state, train_rngs, train_metrics = jax_pmap_train_step(
-                shard(batch), # TODO: check if sharding is necessary, since pmap has axis_name="batch"
-                train_rngs,
-                state,
+            # TODO: check if sharding is necessary, since pmap has axis_name="batch"
+            unet_training_state, rng, train_metrics = jax_pmap_train_step(
+                shard(batch),
+                random.split(rng, num_devices),
+                replicate(unet_training_state),
             )
 
             if is_first_step:
@@ -112,7 +111,7 @@ def training_loop(
                     delta_time,
                     epoch,
                     train_metrics,
-                    state.params,
+                    unet_training_state.params,
                     is_milestone,
                 )
                 if is_first_step:
@@ -128,5 +127,5 @@ def training_loop(
                     # and then, also: jax.device_get(state.params)
                     # and then, again: unreplicate(state.params)
                     # Finally found a way to average along the splits/device/partition/shard axis
-                    tree_map(f=lambda x: x.mean(axis=0), tree=state.params),
+                    tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
                 )

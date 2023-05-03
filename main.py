@@ -2,7 +2,6 @@ import os
 
 # jax/flax
 import jax
-from flax.jax_utils import replicate
 from flax.core.frozen_dict import unfreeze
 from flax.training import train_state
 
@@ -71,11 +70,11 @@ def main():
         get_validation_predictions = None
 
     # JAX device data replication
-    replicated_state = replicate(unet_training_state)
+    # replicated_state = replicate(unet_training_state)
     # NOTE: # These can't be replicated here, otherwise, you get this whenever they are used: flax.errors.ScopeParamShapeError: Initializer expected to generate shape (4, 384, 1536) but got shape (384, 1536) instead for parameter "embedding" in "/shared". (https://flax.readthedocs.io/en/latest/api_reference/flax.errors.html#flax.errors.ScopeParamShapeError)
     # replicated_text_encoder_params = jax_utils.replicate(text_encoder_params)
     # replicated_vae_params = jax_utils.replicate(vae_params)
-    print("states & params replicated to TPUs...")
+    # print("states & params replicated to TPUs...")
 
     # Train!
     print("Training loop init...")
@@ -85,7 +84,7 @@ def main():
         vae,
         vae_params,
         unet,
-        replicated_state,
+        unet_training_state,
         rng,
         args.max_train_steps,
         args.num_train_epochs,
