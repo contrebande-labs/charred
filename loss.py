@@ -24,16 +24,11 @@ def compute_snr_loss_weights(noise_scheduler_state, timesteps):
     return jnp.where(snr < snr_gamma, snr, jnp.ones_like(snr) * snr_gamma) / snr
 
 def get_vae_latent_distribution_samples(
-    image_latent_distribution_sampling,
+    latents,
     sample_rng,
-    scaling_factor,
     noise_scheduler,
     noise_scheduler_state,
 ):
-    # (NHWC) -> (NCHW)
-    latents = (
-        jnp.transpose(image_latent_distribution_sampling, (0, 3, 1, 2)) * scaling_factor
-    )
 
     # Sample noise that we'll add to the latents
     noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -63,6 +58,7 @@ def get_cacheable_samples(text_encoder, text_encoder_params, input_ids, vae, vae
 
         # Get the text embedding
         # TODO: Cache this
+        # TODO: use t5x library
         text_encoder_hidden_states = text_encoder(
             input_ids,
             params=text_encoder_params,
@@ -79,7 +75,10 @@ def get_cacheable_samples(text_encoder, text_encoder_params, input_ids, vae, vae
 
         # Sample the image embedding
         # TODO: Cache this
-        image_latent_distribution_sampling = vae_outputs.latent_dist.sample(rng)
+        image_latent_distribution_sampling = (
+            # (NHWC) -> (NCHW)
+            jnp.transpose(vae_outputs.latent_dist.sample(rng), (0, 3, 1, 2)) * vae.config.scaling_factor 
+        )
 
         return text_encoder_hidden_states, image_latent_distribution_sampling
 
@@ -90,10 +89,9 @@ def get_compute_losses_lambda(
     vae_params, # <-- TODO: take this out of here
     unet,
 ):
-
-    vae_scaling_factor = vae.config.scaling_factor # <-- TODO: take this out of here
  
     # Instanciate training noise scheduler
+    # TODO: write pure function
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
         beta_end=0.012,
@@ -130,12 +128,12 @@ def get_compute_losses_lambda(
         ) = get_vae_latent_distribution_samples(
             image_latent_distribution_sampling,
             sample_rng,
-            vae_scaling_factor,
             noise_scheduler,
             noise_scheduler_state,
         )
 
         # Predict the noise residual and compute loss
+        # TODO: write pure function
         unet_predictions = unet.apply(
             {"params": state_params},
             sample=image_sampling_noisy_input,
