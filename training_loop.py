@@ -1,10 +1,9 @@
 import time
 
 from jax import pmap
-from jax.tree_util import tree_map
 from jax.random import split
 from flax.training.common_utils import shard
-from flax.jax_utils import replicate
+from flax.jax_utils import replicate, unreplicate
 
 from monitoring import get_wandb_log_batch_lambda
 from batch import setup_dataloader
@@ -96,14 +95,13 @@ def training_loop(
             # getting batch start time
             batch_walltime = time.monotonic()
 
+            # training step
             # TODO: Fix this jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXHAUSTED: Error loading program: Attempting to allocate 1.28G. That was not possible. There are 785.61M free.; (0x0x0_HBM0): while running replica 0 and partition 0 of a replicated computation (other replicas may have failed as well).
             unet_training_state, rng, loss = jax_pmapped_training_step(
                 unet_training_state,
                 rng,
                 shard(batch),
             )
-
-            # TODO: should we "average" and re-replicate the training state here before it's sent back again in the next step, or used for evaluation or saved to disc?
 
             if is_first_step:
                 print("computed first batch...")
@@ -140,8 +138,6 @@ def training_loop(
                     # then: jax.device_get(flax.jax_utils.unreplicate(state.params))
                     # and then, also: jax.device_get(state.params)
                     # and then, again: unreplicate(state.params)
-                    # Finally found a way to average along the splits/device/partition/shard axis
-                    tree_map(
-                        f=lambda x: x.mean(axis=0), tree=unet_training_state.params
-                    ),
+                    # Finally found a way to average along the splits/device/partition/shard axis: jax.tree_util.tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
+                    unreplicate(tree=unet_training_state.params)
                 )
