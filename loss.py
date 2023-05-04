@@ -90,6 +90,9 @@ def get_compute_losses_lambda(
     vae_params, # <-- TODO: take this out of here
     unet,
 ):
+
+    vae_scaling_factor = vae.config.scaling_factor # <-- TODO: take this out of here
+ 
     # Instanciate training noise scheduler
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085,
@@ -98,8 +101,6 @@ def get_compute_losses_lambda(
         prediction_type="epsilon",
         num_train_timesteps=1000,
     )
-
-    vae_scaling_factor = vae.config.scaling_factor # <-- TODO: take this out of here
 
     def __compute_losses_lambda(
         state_params,
@@ -135,7 +136,7 @@ def get_compute_losses_lambda(
         )
 
         # Predict the noise residual and compute loss
-        model_pred = unet.apply(
+        unet_predictions = unet.apply(
             {"params": state_params},
             sample=image_sampling_noisy_input,
             timesteps=image_sampling_timesteps,
@@ -143,14 +144,14 @@ def get_compute_losses_lambda(
             train=True,
         ).sample
 
+        # Compute each batch sample's loss from noisy target
+        loss_tensors = (noise - unet_predictions) ** 2
+
         # Compute Min-SNR loss weights
         snr_loss_weights = compute_snr_loss_weights(
             noise_scheduler_state,
             image_sampling_timesteps,
         )
-
-        # Compute each batch sample's loss from noisy target
-        loss_tensors = (noise - model_pred) ** 2
 
         # Get one loss scalar per batch sample
         losses = (
