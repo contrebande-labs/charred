@@ -18,6 +18,7 @@ def compute_snr_loss_weights(noise_scheduler_state, timesteps):
 
     alpha = sqrt_alphas_cumprod[timesteps]
     sigma = sqrt_one_minus_alphas_cumprod[timesteps]
+ 
     # Compute SNR.
     snr = jnp.array((alpha / sigma) ** 2)
 
@@ -39,72 +40,100 @@ def get_vae_latent_distribution_samples(
 
     # Sample noise that we'll add to the latents
     noise_rng, timestep_rng = jax.random.split(sample_rng)
-    noisy_image_target = jax.random.normal(noise_rng, latents.shape)
+    noise = jax.random.normal(noise_rng, latents.shape)
 
     # Sample a random timestep for each image
     timesteps = jax.random.randint(
-        timestep_rng,
-        (latents.shape[0],),
-        0,
-        noise_scheduler.config.num_train_timesteps,
+        key=timestep_rng,
+        shape=(latents.shape[0],),
+        minval=0,
+        maxval=noise_scheduler.config.num_train_timesteps,
+        dtype=jnp.int32,
     )
 
     # Add noise to the latents according to the noise magnitude at each timestep
     # (this is the forward diffusion process)
     noisy_latents = noise_scheduler.add_noise(
-        noise_scheduler_state, latents, noisy_image_target, timesteps
+        state=noise_scheduler_state,
+        original_samples=latents,
+        noise=noise,
+        timesteps=timesteps,
     )
 
-    return noisy_latents, timesteps, noisy_image_target
+    return noisy_latents, timesteps, noise
 
+
+def get_cacheable_samples(text_encoder, text_encoder_params, input_ids, vae, vae_params, pixel_values, rng):
+
+        # Get the text embedding
+        # TODO: Cache this
+        text_encoder_hidden_states = text_encoder(
+            input_ids,
+            params=text_encoder_params,
+            train=False,
+        )[0]
+
+        # Get the image embedding
+        vae_outputs = vae.apply(
+            {"params": vae_params},
+            sample=pixel_values,
+            deterministic=True,
+            method=vae.encode,
+        )
+
+        # Sample the image embedding
+        # TODO: Cache this
+        image_latent_distribution_sampling = vae_outputs.latent_dist.sample(rng)
+
+        return text_encoder_hidden_states, image_latent_distribution_sampling
 
 def get_compute_losses_lambda(
-    text_encoder,
-    text_encoder_params,
-    vae,
-    vae_params,
+    text_encoder, # <-- TODO: take this out of here
+    text_encoder_params, # <-- TODO: take this out of here
+    vae, # <-- TODO: take this out of here
+    vae_params, # <-- TODO: take this out of here
     unet,
 ):
+    # Instanciate training noise scheduler
+    noise_scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085,
+        beta_end=0.012,
+        beta_schedule="scaled_linear",
+        prediction_type="epsilon",
+        num_train_timesteps=1000,
+    )
+
+    vae_scaling_factor = vae.config.scaling_factor # <-- TODO: take this out of here
+
     def __compute_losses_lambda(
         state_params,
         batch,
         sample_rng,
     ):
-
-        # Get the text embedding
-        text_encoder_hidden_states = text_encoder(
-            batch["input_ids"],
-            params=text_encoder_params,
-            train=False,
-        )[0]
-
-        # Instanciate training noise scheduler
-        noise_scheduler = FlaxDDPMScheduler(
-            beta_start=0.00085,
-            beta_end=0.012,
-            beta_schedule="scaled_linear",
-            prediction_type="epsilon",
-            num_train_timesteps=1000,
+        
+        # TODO: take this out of here
+        text_encoder_hidden_states, image_latent_distribution_sampling = get_cacheable_samples(
+             text_encoder,
+             text_encoder_params,
+             batch["input_ids"],
+             vae,
+             vae_params,
+             batch["pixel_values"],
+             sample_rng,
         )
+
+        # initialize scheduler state
         noise_scheduler_state = noise_scheduler.create_state()
 
-        # Get the image embedding
-        # TODO: vae_outputs.latent_dist.mode() # <--- can this be cached ?
-        vae_outputs = vae.apply(
-            {"params": vae_params},
-            sample=batch["pixel_values"],
-            deterministic=True,
-            method=vae.encode,
-        )
-        image_latent_distribution_sampling = vae_outputs.latent_dist.sample(sample_rng)
+        # Get the vae latent distribution samples
         (
             image_sampling_noisy_input,
             image_sampling_timesteps,
-            image_sampling_noisy_target,
+            noise,
         ) = get_vae_latent_distribution_samples(
             image_latent_distribution_sampling,
             sample_rng,
-            vae.config.scaling_factor,
+            vae_scaling_factor,
             noise_scheduler,
             noise_scheduler_state,
         )
@@ -125,7 +154,7 @@ def get_compute_losses_lambda(
         )
 
         # Compute each batch sample's loss from noisy target
-        loss_tensors = (image_sampling_noisy_target - model_pred) ** 2
+        loss_tensors = (noise - model_pred) ** 2
 
         # Get one loss scalar per batch sample
         losses = (
@@ -136,6 +165,6 @@ def get_compute_losses_lambda(
         )  # Balance losses with Min-SNR
 
         # This must be an averaged scalar, otherwise, you get this:TypeError: Gradient only defined for scalar-output functions. Output had shape: (8,).
-        return losses.mean()
+        return losses.mean(axis=0)
 
     return __compute_losses_lambda
