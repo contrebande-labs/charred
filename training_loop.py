@@ -54,6 +54,29 @@ def training_loop(
         )
         print("wand log batch setup...")
 
+    # Create parallel version of the train step
+    # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
+    jax_pmapped_training_step = pmap(
+        # cannot send these as static broadcasted arguments because they are not hashable
+        # TODO: rewrite text_encoder, vae and unet as pure
+        fun=get_training_step_lambda(
+            text_encoder, text_encoder_params, vae, vae_params, unet
+        ),
+        axis_name="batch",
+        in_axes=(0, 0, 0),
+        out_axes=(0, 0, 0),
+        static_broadcasted_argnums=(),
+        # We cannot donate the "batch" argument. Otherwise, we get this:
+        #   /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
+        #   See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
+        #   warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
+        # donating rng and training state
+        donate_argnums=(
+            0,
+            1,
+        ),
+    )
+
     # Epoch setup
     t0 = time.monotonic()
     global_training_steps = 0
@@ -70,29 +93,11 @@ def training_loop(
             if is_first_step:
                 print("entering first batch...")
 
+            # getting batch start time
             batch_walltime = time.monotonic()
 
-            # Create parallel version of the train step
-            # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
-            unet_training_state, rng, loss = pmap(
-                # cannot send these as static broadcasted arguments because they are not hashable
-                # TODO: rewrite text_encoder, vae and unet as pure
-                fun=get_training_step_lambda(
-                    text_encoder, text_encoder_params, vae, vae_params, unet
-                ),
-                axis_name="batch",
-                in_axes=(0, 0, 0),
-                out_axes=(0, 0, 0),
-                static_broadcasted_argnums=(),
-                # We cannot donate the "batch" argument. Otherwise, we get this:
-                #   /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
-                #   See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
-                #   warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
-                donate_argnums=(
-                    1,
-                    2,
-                ),  # donating rng and training state
-            )(
+            # TODO: Fix this jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXHAUSTED: Error loading program: Attempting to allocate 1.28G. That was not possible. There are 785.61M free.; (0x0x0_HBM0): while running replica 0 and partition 0 of a replicated computation (other replicas may have failed as well).
+            unet_training_state, rng, loss = jax_pmapped_training_step(
                 unet_training_state,
                 rng,
                 shard(batch),
@@ -105,6 +110,7 @@ def training_loop(
 
             global_training_steps += num_devices
 
+            # checking if current batch is a milestone
             is_milestone = (
                 True if global_training_steps % milestone_step_count == 0 else False
             )
