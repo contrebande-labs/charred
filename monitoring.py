@@ -55,7 +55,7 @@ def get_wandb_log_batch_lambda(
         global_training_steps,
         delta_time,
         epoch,
-        unreplicated_train_metrics,
+        loss,
         unet_params,
         is_milestone,
     ):
@@ -65,7 +65,7 @@ def get_wandb_log_batch_lambda(
             "step": global_training_steps,
             "batch_delta_time": delta_time,
             "epoch": epoch,
-            **{k: v for k, v in np.asarray(unreplicated_train_metrics.items()).mean()},
+            "loss": loss.mean(),
         }
 
         if is_milestone and get_predictions is not None:

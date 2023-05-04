@@ -74,7 +74,7 @@ def training_loop(
 
             # Create parallel version of the train step
             # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
-            unet_training_state, rng, train_metrics = pmap(
+            unet_training_state, rng, loss = pmap(
                 # cannot send these as static broadcasted arguments because they are not hashable
                 # TODO: rewrite text_encoder, vae and unet as pure
                 fun=get_training_step_lambda(
@@ -118,7 +118,7 @@ def training_loop(
                     global_training_steps,
                     delta_time,
                     epoch,
-                    train_metrics,
+                    loss,
                     unet_training_state.params,
                     is_milestone,
                 )

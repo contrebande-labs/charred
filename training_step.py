@@ -9,17 +9,18 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
     # TODO: Are we copying all this static data on every batch, here?
     # TODO: Solution #1: avoid copying the static data at every batch
     # TODO: Solution #2: offload freezed model computing to CPU, at lease for the text encoding
-    compute_batch_losses = get_compute_losses_lambda(
-        text_encoder,
-        text_encoder_params,
-        vae,
-        vae_params,
-        unet,
-    )
-
     # Compile loss function.
     # NOTE: Can't have this compiled higher up because jax.value_and_grad-compiled functions require real numbers (floating point) dtypes as arguments
-    jax_loss_value_and_gradient = jax.value_and_grad(compute_batch_losses)
+    jax_loss_value_and_gradient = jax.value_and_grad(
+        fun=get_compute_losses_lambda(
+            text_encoder,
+            text_encoder_params,
+            vae,
+            vae_params,
+            unet,
+        ),
+        argnums=0,
+    )
 
     def __training_step_lambda(
         batch,
@@ -37,7 +38,6 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
                 batch,
                 sample_rng,
             ),
-            argnums=0,
             axis_name="batch",
         )
 
