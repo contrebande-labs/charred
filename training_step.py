@@ -23,15 +23,16 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
     )
 
     def __training_step_lambda(
-        batch,
-        rng,
         state,
+        rng,
+        batch,
     ):
 
         # Split RNGs
         sample_rng, new_rng = jax.random.split(rng, 2)
 
         # Compute loss and gradients
+        # TODO: why are we doing this here instead of in "value_and_grad" with "reduce_axes"?
         loss, grad = jax.lax.pmean(
             jax_loss_value_and_gradient(
                 state.params,
