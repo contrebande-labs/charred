@@ -1,0 +1,1 @@
+Thanks to Hugging Face and Google for providing for 21 days free value of more than 6000 USD and GPU T4
