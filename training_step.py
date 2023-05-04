@@ -32,8 +32,11 @@ def get_training_step_lambda(text_encoder, text_encoder_params, vae, vae_params,
         jax_loss_value_and_gradient = jax.value_and_grad(compute_batch_losses)
 
         # Compute loss and gradients
-        loss, grad = jax_loss_value_and_gradient(
-            state.params,
+        loss, grad =  jax.lax.pmean(
+            jax_loss_value_and_gradient(
+                state.params,
+            ),
+            axis_name="batch"
         )
 
         # Apply gradients to training state

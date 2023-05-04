@@ -2,7 +2,7 @@ import time
 
 from jax import pmap
 from jax.tree_util import tree_map
-import jax.random as random
+from jax.random import split
 from flax.training.common_utils import shard
 from flax.jax_utils import replicate
 
@@ -30,6 +30,10 @@ def training_loop(
     num_devices,
 ):
 
+    # replication setup
+    unet_training_state = replicate(unet_training_state)
+    rng = split(rng, num_devices)
+
     # dataset setup
     train_dataset = setup_dataset(max_train_steps)
     print("dataset loaded...")
@@ -39,32 +43,11 @@ def training_loop(
     train_dataloader = setup_dataloader(train_dataset, total_train_batch_size)
     print("dataloader setup...")
 
-    # Create parallel version of the train step
-    # TODO: sanity check all of this
-    # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
-    jax_pmap_train_step = pmap(
-        fun=get_training_step_lambda(
-            # TODO should these be passed as "static_broadcasted_argnums" instead?
-            text_encoder, text_encoder_params, vae, vae_params, unet
-        ),
-        axis_name="batch", # TODO: is this necessary ?
-        in_axes=0, # TODO: Should we try "in_axes=(0,None,None)" instead ?
-        out_axis=0, # TODO: Should we try to do something with "out_axis" ?
-        static_broadcasted_argnums=(),
-        # We cannot donate the "batch" argument. Otherwise, we get this:
-        #   /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
-        #   See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
-        #   warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
-        donate_argnums=(
-            1,
-            2,
-        ),
-    )
-    print("training step compiling...")
-
+    # milestone setup
     milestone_step_count = min(100_000, max_train_steps)
     print(f"milestone step count: {milestone_step_count}")
 
+    # wandb setup
     if log_wandb:
         wandb_log_batch = get_wandb_log_batch_lambda(
             get_validation_predictions,
@@ -89,12 +72,33 @@ def training_loop(
 
             batch_walltime = time.monotonic()
 
-            # TODO: check if sharding, replication or splitting is necessary, since pmap has axis_name="batch"
-            unet_training_state, rng, train_metrics = jax_pmap_train_step(
-                shard(batch), # TODO: maybe not necessary ?
-                random.split(rng, num_devices), # TODO: maybe do this in main like before?
-                replicate(unet_training_state), # TODO: maybe do this in main like before?
+            # Create parallel version of the train step
+            # TODO: Should we try "axis_size=num_devices" or "axis_size=total_train_batch_size" ?
+            unet_training_state, rng, train_metrics = pmap(
+                # cannot send these as static broadcasted arguments because they are not hashable
+                # TODO: rewrite text_encoder, vae and unet as pure
+                fun=get_training_step_lambda(
+                    text_encoder, text_encoder_params, vae, vae_params, unet
+                ),
+                axis_name="batch",
+                in_axes=(0, 0, 0),
+                out_axes=(0, 0, 0),
+                static_broadcasted_argnums=(),
+                # We cannot donate the "batch" argument. Otherwise, we get this:
+                #   /site-packages/jax/_src/interpreters/mlir.py:711: UserWarning: Some donated buffers were not usable: ShapedArray(int32[8,1024]), ShapedArray(float32[8,3,512,512]).
+                #   See an explanation at https://jax.readthedocs.io/en/latest/faq.html#buffer-donation.
+                #   warnings.warn(f"Some donated buffers were not usable: {', '.join(unused_donations)}.\n{msg}")
+                donate_argnums=(
+                    1,
+                    2,
+                ),  # donating rng and training state
+            )(
+                unet_training_state,
+                rng,
+                shard(batch),
             )
+
+            # TODO: should we "average" and re-replicate the training state here before it's sent back again in the next step, or used for evaluation or saved to disc?
 
             if is_first_step:
                 print("computed first batch...")
@@ -131,5 +135,7 @@ def training_loop(
                     # and then, also: jax.device_get(state.params)
                     # and then, again: unreplicate(state.params)
                     # Finally found a way to average along the splits/device/partition/shard axis
-                    tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
+                    tree_map(
+                        f=lambda x: x.mean(axis=0), tree=unet_training_state.params
+                    ),
                 )
