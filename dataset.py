@@ -1,4 +1,3 @@
-from batch import setup_dataloader
 from datasets import load_dataset
 import os
 from PIL import Image
