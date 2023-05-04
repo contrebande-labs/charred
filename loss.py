@@ -159,7 +159,8 @@ def get_compute_losses_lambda(
             * snr_loss_weights
         )  # Balance losses with Min-SNR
 
-        # This must be an averaged scalar, otherwise, you get this:TypeError: Gradient only defined for scalar-output functions. Output had shape: (8,).
+        # This must be an averaged scalar, otherwise, you get this:
+        # TypeError: Gradient only defined for scalar-output functions. Output had shape: (8,).
         return losses.mean(axis=0)
 
     return __compute_losses_lambda
