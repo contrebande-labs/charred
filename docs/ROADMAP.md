@@ -24,15 +24,21 @@ https://www.seldon.io/solutions/open-source-projects/core
 https://h2o.ai/platform/h2o-automl/
 https://github.com/pachyderm/pachyderm
 
-### XLA
+### XLA, MLIR
 https://github.com/openxla/iree https://openxla.github.io/iree/
 https://github.com/openxla/xla/blob/main/xla/xla.proto
 https://github.com/openxla/xla/blob/main/xla/xla_data.proto
 https://github.com/openxla/xla/blob/main/xla/service/hlo.proto
 https://github.com/openxla/xla/tree/main/third_party/tsl/tsl/protobuf
 https://github.com/openxla/xla/blob/main/xla/pjrt/distributed/protocol.proto
-https://openjdk.org/jeps/442
-https://openjdk.org/jeps/448
+https://github.com/apache/tvm/
+https://github.com/openai/triton
+https://github.com/onnx/onnx-mlir
+https://github.com/plaidml/plaidml
+https://github.com/llvm/torch-mlir
+https://github.com/pytorch/pytorch/tree/main/torch/_dynamo
+https://github.com/pytorch/pytorch/tree/main/torch/_inductor
+https://github.com/llvm/llvm-project/tree/main/mlir/ https://mlir.llvm.org/
 
 ### Java pipeline
 https://kafka.apache.org/ https://github.com/provectus/kafka-ui
@@ -46,6 +52,9 @@ https://vertx.io/docs/vertx-stomp/java/ https://github.com/stomp-js/stompjs http
 https://vertx.io/docs/vertx-service-proxy/java/
 https://vertx.io/docs/vertx-grpc/java/
 https://vertx.io/docs/vertx-service-discovery/java/
+https://github.com/deepjavalibrary/djl
+https://openjdk.org/jeps/442
+https://openjdk.org/jeps/448
 
 ### Testing
 https://github.com/deepmind/chex
