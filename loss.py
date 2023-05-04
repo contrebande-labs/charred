@@ -3,10 +3,8 @@ import jax
 
 from diffusers import FlaxDDPMScheduler
 
-
 # Min-SNR
 snr_gamma = 5.0  # SNR weighting gamma to be used when rebalancing the loss with Min-SNR. Recommended value is 5.0.
-
 
 def compute_snr_loss_weights(noise_scheduler_state, timesteps):
     """
@@ -24,7 +22,6 @@ def compute_snr_loss_weights(noise_scheduler_state, timesteps):
 
     # Compute SNR loss weights
     return jnp.where(snr < snr_gamma, snr, jnp.ones_like(snr) * snr_gamma) / snr
-
 
 def get_vae_latent_distribution_samples(
     image_latent_distribution_sampling,
@@ -61,7 +58,6 @@ def get_vae_latent_distribution_samples(
     )
 
     return noisy_latents, timesteps, noise
-
 
 def get_cacheable_samples(text_encoder, text_encoder_params, input_ids, vae, vae_params, pixel_values, rng):
 
