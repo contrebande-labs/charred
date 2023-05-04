@@ -4,6 +4,7 @@ from jax import pmap
 from jax.random import split
 from flax.training.common_utils import shard
 from flax.jax_utils import replicate, unreplicate
+from jax.profiler import start_trace, stop_trace, save_device_memory_profile, device_memory_profile
 
 from monitoring import get_wandb_log_batch_lambda
 from batch import setup_dataloader
@@ -80,20 +81,24 @@ def training_loop(
     t0 = time.monotonic()
     global_training_steps = 0
     global_walltime = time.monotonic()
+    is_compilation_step = True
+    is_first_compiled_step = False
+    loss = None
     for epoch in range(num_train_epochs):
-
-        is_first_step = global_training_steps == 0
-
-        if is_first_step:
-            print("entering first epoch...")
 
         for batch in train_dataloader:
 
-            if is_first_step:
-                print("entering first batch...")
-
             # getting batch start time
-            batch_walltime = time.monotonic()
+            batch_walltime = time.monotonic()   
+
+            if is_compilation_step:
+                print("computing compilation batch...")
+                device_memory_profile()
+                start_trace(log_dir="./profiling/compilation_step", create_perfetto_link=False, create_perfetto_trace=True)
+            elif is_first_compiled_step:
+                print("computing first compiled batch...")
+                device_memory_profile()
+                start_trace(log_dir="./profiling/first_compiled_step", create_perfetto_link=False, create_perfetto_trace=True)
 
             # training step
             # TODO: Fix this jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXHAUSTED: Error loading program: Attempting to allocate 1.28G. That was not possible. There are 785.61M free.; (0x0x0_HBM0): while running replica 0 and partition 0 of a replicated computation (other replicas may have failed as well).
@@ -103,8 +108,17 @@ def training_loop(
                 shard(batch),
             )
 
-            if is_first_step:
-                print("computed first batch...")
+            # block until train step has completed
+            loss.block_until_ready()
+
+            if is_compilation_step:
+                stop_trace()
+                save_device_memory_profile(filename="./profiling/compilation_step/pprof_memory_profile.pb")
+                print("computed compilation batch...")
+            elif is_first_compiled_step:
+                stop_trace()
+                save_device_memory_profile(filename="./profiling/first_compiled_step/pprof_memory_profile.pb")
+                print("computed first compiled batch...")
 
             global_training_steps += num_devices
 
@@ -126,8 +140,6 @@ def training_loop(
                     unet_training_state.params,
                     is_milestone,
                 )
-                if is_first_step:
-                    print("logged first batch...")
 
             if is_milestone:
                 save_to_local_directory(
@@ -141,3 +153,10 @@ def training_loop(
                     # Finally found a way to average along the splits/device/partition/shard axis: jax.tree_util.tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
                     unreplicate(tree=unet_training_state.params)
                 )
+
+
+        if is_compilation_step:
+            is_compilation_step = False
+            is_first_compiled_step = True
+        elif is_first_compiled_step:
+            is_first_compiled_step = False
