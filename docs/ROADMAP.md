@@ -63,6 +63,13 @@ https://vertx.io/docs/vertx-service-discovery/java/
 https://github.com/deepjavalibrary/djl
 https://openjdk.org/jeps/442
 https://openjdk.org/jeps/448
+https://github.com/apache/arrow/tree/main/java
+https://github.com/apache/thrift
+https://github.com/apache/avro
+https://github.com/apache/orc
+https://github.com/apache/parquet-mr
+https://github.com/strategicblue/parquet-floor
+https://github.com/apache/iceberg
 
 ### Testing
 https://github.com/deepmind/chex
