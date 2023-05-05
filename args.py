@@ -45,7 +45,7 @@ def parse_args():
         default=4,
         help="Batch size (per device) for the training dataloader.",
     )
-    parser.add_argument("--num_train_epochs", type=int, default=100)
+    parser.add_argument("--num_train_epochs", type=int, default=1_000_000)
     parser.add_argument(
         "--max_train_steps",
         type=int,
@@ -85,7 +85,7 @@ def parse_args():
     parser.add_argument(
         "--push_to_hub",
         type=bool,
-        default=False,
+        default=True,
         help="Whether or not to push the model to the Hub.",
     )
     parser.add_argument(

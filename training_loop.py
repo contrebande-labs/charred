@@ -94,6 +94,7 @@ def training_loop(
 
             if is_compilation_step:
                 print("computing compilation batch...")
+                # TODO: fix this: 2023-05-05 16:34:23.937383: E external/xla/xla/python/profiler/internal/python_hooks.cc:398] Can't import tensorflow.python.profiler.trace
                 device_memory_profile()
                 start_trace(log_dir="./profiling/compilation_step", create_perfetto_link=False, create_perfetto_trace=True)
             elif is_first_compiled_step:
@@ -169,7 +170,6 @@ def training_loop(
                     # Finally found a way to average along the splits/device/partition/shard axis: jax.tree_util.tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
                     unreplicate(tree=unet_training_state.params)
                 )
-
 
             if is_compilation_step:
                 is_compilation_step = False
