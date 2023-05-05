@@ -5,6 +5,7 @@ from jax.random import split
 from flax.training.common_utils import shard
 from flax.jax_utils import replicate, unreplicate
 from jax.profiler import start_trace, stop_trace, save_device_memory_profile, device_memory_profile
+from jaxlib.xla_extension import XlaRuntimeError
 
 from monitoring import get_wandb_log_batch_lambda
 from batch import setup_dataloader
@@ -102,11 +103,26 @@ def training_loop(
 
             # training step
             # TODO: Fix this jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXHAUSTED: Error loading program: Attempting to allocate 1.28G. That was not possible. There are 785.61M free.; (0x0x0_HBM0): while running replica 0 and partition 0 of a replicated computation (other replicas may have failed as well).
-            unet_training_state, rng, loss = jax_pmapped_training_step(
-                unet_training_state,
-                rng,
-                shard(batch),
-            )
+            try:
+
+                unet_training_state, rng, loss = jax_pmapped_training_step(
+                    unet_training_state,
+                    rng,
+                    shard(batch),
+                )
+
+            except XlaRuntimeError as e:
+
+                if is_compilation_step:
+                    stop_trace()
+                    save_device_memory_profile(filename="./profiling/compilation_step/pprof_memory_profile_error.pb")
+                    print("compilation batch error...")
+                elif is_first_compiled_step:
+                    stop_trace()
+                    save_device_memory_profile(filename="./profiling/first_compiled_step/pprof_memory_profile_error.pb")
+                    print("first compiled batch error...")
+
+                raise(e)
 
             # block until train step has completed
             loss.block_until_ready()
