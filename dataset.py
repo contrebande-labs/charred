@@ -153,14 +153,14 @@ def setup_dataset(n):
             },
             split="train[:%d]" % n,
             cache_dir="/data/cache",
-            num_proc=4,
+            num_proc=32,
         )
         .with_format("torch")
         .map(
             get_compute_intermediate_values_lambda(),
             batched=True,
             batch_size=16,
-            num_proc=4,
+            num_proc=32,
         )
         .select_columns(["input_ids", "pixel_values"])
     )
