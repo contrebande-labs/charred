@@ -101,6 +101,9 @@ Make the most of cheap Kubernetes clusters: https://github.com/murphye/cheap-gke
 
 DONE: Implement JAX/FLAX SD 2.1 training pipeline with ByT5-Base instead of CLIP: https://github.com/patil-suraj/stable-diffusion-jax https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image_flax.py https://huggingface.co/google/byt5-base https://huggingface.co/blog/stable_diffusion_jax
 DONE: WandB monitoring
+Use CPU offloading more/better: https://github.com/google/jax/issues/1408 https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html https://jax.readthedocs.io/en/latest/notebooks/xmap_tutorial.html
+Better to use ByT5 XXL float32 (51.6GB), XXL bfloat16 (26GB), or XL float32 (15GB) ?
+Redo ByT5 with innovations on models from the T5 family or other character-aware models: Switch/MOE (https://arxiv.org/abs/2101.03961), FLAN (https://arxiv.org/abs/2210.11416, https://arxiv.org/abs/2301.13688, https://arxiv.org/abs/2109.01652), UL2 (https://arxiv.org/abs/2205.05131v3), T5 v1.1 (https://arxiv.org/abs/2002.05202), CANINE-C (https://arxiv.org/abs/2103.06874, https://github.com/google-research/language/tree/master/language/canine, https://huggingface.co/google/canine-c, https://huggingface.co/vicl/canine-c-finetuned-cola)
 OpenTelemetry monitoring including JAX profiler tracing artifact uploading
 Implement Mini-SNR loss rebalancing: https://arxiv.org/abs/2303.09556
 Implement on-the-fly validation: https://huggingface.co/docs/diffusers/en/conceptual/evaluation
