@@ -171,8 +171,8 @@ def training_loop(
                 )
 
 
-        if is_compilation_step:
-            is_compilation_step = False
-            is_first_compiled_step = True
-        elif is_first_compiled_step:
-            is_first_compiled_step = False
+            if is_compilation_step:
+                is_compilation_step = False
+                is_first_compiled_step = True
+            elif is_first_compiled_step:
+                is_first_compiled_step = False
