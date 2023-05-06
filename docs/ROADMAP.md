@@ -140,3 +140,4 @@ https://huggingface.co/mesolitica/finetune-dependency-t5-base-standard-bahasa-ca
 https://arxiv.org/abs/2208.14536
 https://github.com/Alibaba-NLP/KB-NER https://github.com/modelscope/AdaSeq
 https://github.com/mckysse/gain
+https://github.com/lm-sys/FastChat
