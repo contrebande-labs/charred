@@ -5,6 +5,8 @@
 OCR
 Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing characters, ex MARI)
 
+Low-resource languages, low-resource domains.
+
 ## MlOps
 https://airflow.apache.org/
 https://github.com/confluentinc/confluent-kafka-python
@@ -71,10 +73,8 @@ https://github.com/apache/parquet-mr
 https://github.com/strategicblue/parquet-floor
 https://github.com/apache/iceberg
 
-### Testing
-https://github.com/deepmind/chex
-
 ### HA & Telemetry
+OpenTelemetry/Graphana monitoring instead of WandB, Perfetto or Tensorbord, attach JAX profiler artifacts
 https://github.com/resilience4j/resilience4j https://resilience4j.readme.io/docs/micrometer https://vertx.io/docs/vertx-micrometer-metrics/java/
 https://github.com/open-telemetry/opentelemetry-java-instrumentation
 https://github.com/grafana/JPProf https://jax.readthedocs.io/en/latest/device_memory_profiling.html https://jax.readthedocs.io/en/latest/_autosummary/jax.profiler.device_memory_profile.html https://github.com/google/pprof/tree/main/proto https://github.com/grafana/pyroscope https://github.com/grafana/otel-profiling-go https://github.com/grafana/metrictank https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/pprofextension
@@ -104,21 +104,19 @@ DONE: Implement JAX/FLAX SD 2.1 training pipeline with ByT5-Base instead of CLIP
 DONE: WandB monitoring
 DONE: Implement Mini-SNR loss rebalancing: https://arxiv.org/abs/2303.09556
 DONE: Implement on-the-fly validation: https://huggingface.co/docs/diffusers/en/conceptual/evaluation
-Use CPU offloading more/better: https://github.com/google/jax/issues/1408 https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html https://jax.readthedocs.io/en/latest/notebooks/xmap_tutorial.html
-Better to use ByT5 XXL float32 (51.6GB), XXL bfloat16 (26GB), or XL float32 (15GB) ? https://huggingface.co/google/byt5-xxl https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints https://github.com/google-research/t5x/blob/main/t5x/scripts/convert_tf_checkpoint.py
-Redo ByT5 with innovations on models from the T5 family or other character-aware models: Switch/MOE (https://arxiv.org/abs/2101.03961, https://github.com/google-research/t5x/tree/main/t5x/contrib/moe, https://towardsdatascience.com/understanding-googles-switch-transformer-904b8bf29f66, https://huggingface.co/google/switch-c-2048, https://towardsdatascience.com/the-switch-transformer-59f3854c7050, https://arxiv.org/abs/2208.02813), FLAN (https://arxiv.org/abs/2210.11416, https://arxiv.org/abs/2301.13688, https://arxiv.org/abs/2109.01652), UL2 (https://arxiv.org/abs/2205.05131v3, https://github.com/google-research/google-research/tree/master/ul2, https://ai.googleblog.com/2022/10/ul2-20b-open-source-unified-language.html), T5 v1.1 (https://arxiv.org/abs/2002.05202), CANINE-C (https://arxiv.org/abs/2103.06874, https://github.com/google-research/language/tree/master/language/canine, https://huggingface.co/google/canine-c, https://huggingface.co/vicl/canine-c-finetuned-cola), CALM (
-https://github.com/google-research/t5x/tree/main/t5x/contrib/calm, https://arxiv.org/abs/2207.07061), FlashAttention (https://github.com/HazyResearch/flash-attention, https://arxiv.org/abs/2205.14135), Gradient Checkpointing (https://arxiv.org/abs/1604.06174), FastT5 (https://github.com/Ki6an/fastT5), T5x & Seqio (https://arxiv.org/abs/2203.17189), LongT5 (https://github.com/google-research/longt5), WT5 (https://github.com/google-research/google-research/tree/master/wt5)
-OpenTelemetry monitoring including JAX profiler tracing artifact uploading
-Integrate Big Vision optimizations: https://github.com/google-research/big_vision
+Offload to CPU more and better (ByT5 and Encoder) and explore using ByT5 XXL float32 (51.6GB), XXL bfloat16 (26GB), or XL float32 (15GB): https://github.com/google/jax/issues/1408 https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html https://jax.readthedocs.io/en/latest/notebooks/xmap_tutorial.html https://huggingface.co/google/byt5-xxl https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints https://github.com/google-research/t5x/blob/main/t5x/scripts/convert_tf_checkpoint.py
+Tests: https://github.com/deepmind/chex
 Implement streaming, mini-batching and gradient accumulation with image aspect ratio and tokenized caption size bucketing: https://github.com/NovelAI/novelai-aspect-ratio-bucketing https://optax.readthedocs.io/en/latest/gradient_accumulation.html https://optax.readthedocs.io/en/latest/api.html#optax.MultiSteps
-
-Port to JAX and Integrate Imagen, SDXL and Deep Floyd improvements: https://github.com/lucidrains/imagen-pytorch https://github.com/deep-floyd/IF https://stable-diffusion-art.com/sdxl-beta/ https://huggingface.co/docs/diffusers/api/pipelines/if https://huggingface.co/spaces/DeepFloyd/IF https://huggingface.co/DeepFloyd/IF-I-XL-v1.0 https://huggingface.co/DeepFloyd/IF-II-L-v1.0 https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler https://huggingface.co/DeepFloyd/IF-notebooks/tree/main https://huggingface.co/blog/if https://huggingface.co/docs/diffusers/main/en/api/pipelines/if https://stability.ai/blog/deepfloyd-if-text-to-image-model https://deepfloyd.ai/ https://www.assemblyai.com/blog/how-imagen-actually-works/ https://www.youtube.com/watch?v=af6WPqvzjjk https://www.youtube.com/watch?v=xqDeAz0U-R4 https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-model/
+Integrate and port to JAX improvements from Imagen, SDXL, Deep Floyd and Big Vision : https://github.com/lucidrains/imagen-pytorch https://github.com/deep-floyd/IF https://stable-diffusion-art.com/sdxl-beta/ https://huggingface.co/docs/diffusers/api/pipelines/if https://huggingface.co/spaces/DeepFloyd/IF https://huggingface.co/DeepFloyd/IF-I-XL-v1.0 https://huggingface.co/DeepFloyd/IF-II-L-v1.0 https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler https://huggingface.co/DeepFloyd/IF-notebooks/tree/main https://huggingface.co/blog/if https://huggingface.co/docs/diffusers/main/en/api/pipelines/if https://stability.ai/blog/deepfloyd-if-text-to-image-model https://deepfloyd.ai/ https://www.assemblyai.com/blog/how-imagen-actually-works/ https://www.youtube.com/watch?v=af6WPqvzjjk https://www.youtube.com/watch?v=xqDeAz0U-R4 https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-model/ https://github.com/google-research/big_vision
 Save checkpoints using JAX-native methods: https://flax.readthedocs.io/en/latest/api_reference/flax.training.html https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#save-checkpoints
+Pretrain a better ByT5 with innovations from the T5 family and character-aware models: Switch/MOE (https://arxiv.org/abs/2101.03961, https://github.com/google-research/t5x/tree/main/t5x/contrib/moe, https://towardsdatascience.com/understanding-googles-switch-transformer-904b8bf29f66, https://huggingface.co/google/switch-c-2048, https://towardsdatascience.com/the-switch-transformer-59f3854c7050, https://arxiv.org/abs/2208.02813), FLAN (https://arxiv.org/abs/2210.11416, https://arxiv.org/abs/2301.13688, https://arxiv.org/abs/2109.01652), UL2 (https://arxiv.org/abs/2205.05131v3, https://github.com/google-research/google-research/tree/master/ul2, https://ai.googleblog.com/2022/10/ul2-20b-open-source-unified-language.html), T5 v1.1 (https://arxiv.org/abs/2002.05202), CANINE-C (https://arxiv.org/abs/2103.06874, https://github.com/google-research/language/tree/master/language/canine, https://huggingface.co/google/canine-c, https://huggingface.co/vicl/canine-c-finetuned-cola), CALM (https://github.com/google-research/t5x/tree/main/t5x/contrib/calm, https://arxiv.org/abs/2207.07061), FlashAttention (https://github.com/HazyResearch/flash-attention, https://arxiv.org/abs/2205.14135), Gradient Checkpointing (https://arxiv.org/abs/1604.06174), FastT5 (https://github.com/Ki6an/fastT5), T5x & Seqio (https://arxiv.org/abs/2203.17189), LongT5 (https://github.com/google-research/longt5), WT5 (https://github.com/google-research/google-research/tree/master/wt5)
+
 
 
 ## Inference
 
-DONE: Implement JAX/FLAX text-to-image inference pipeline with ByT5-Base instead of CLIP: https://huggingface.co/docs/diffusers/training/text2image https://github.com/patil-suraj/stable-diffusion-jax
+DONE: Implement JAX/FLAX text-to-image inference pipeline and Gradio demo with ByT5-Base instead of CLIP: https://huggingface.co/docs/diffusers/training/text2image https://github.com/patil-suraj/stable-diffusion-jax
+Implement AUTOMATIC1111 gui: https://github.com/AUTOMATIC1111/stable-diffusion-webui
 Production AOT with IREE over Java JNI/JNA/Panama: https://github.com/openxla/iree https://github.com/iree-org/iree-jax https://jax.readthedocs.io/en/latest/aot.html https://jax.readthedocs.io/en/latest/_autosummary/jax.make_jaxpr.html https://jax.readthedocs.io/en/latest/_autosummary/jax.xla_computation.html https://github.com/openxla/stablehlo https://github.com/openxla/xla https://github.com/openxla/openxla-pjrt-plugin https://github.com/iml130/iree-template-cpp
 Load checkpoints using JAX-native methods https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#id1
 Implement OCR and Document understanging inference pipeline with ByT5 text decoder
@@ -141,3 +139,5 @@ https://arxiv.org/abs/2208.14536
 https://github.com/Alibaba-NLP/KB-NER https://github.com/modelscope/AdaSeq
 https://github.com/mckysse/gain
 https://github.com/lm-sys/FastChat
+https://github.com/tesseract-ocr/tesseract
+https://github.com/Significant-Gravitas/Auto-GPT
