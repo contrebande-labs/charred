@@ -7,6 +7,8 @@ Statistical reconstitution of damaged textual artifacts. (inpainting to predict 
 
 Low-resource languages, low-resource domains.
 
+Separate ByT5 encoder weights from the rest to lower the memory requirements.
+
 ## MlOps
 https://airflow.apache.org/
 https://github.com/confluentinc/confluent-kafka-python
