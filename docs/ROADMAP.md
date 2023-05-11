@@ -8,8 +8,8 @@ Low-resource languages, low-resource domains. Ex: perfumery
 
 Separate ByT5 encoder weights from the rest to lower the memory requirements.
 
-
 ### XLA, IREE, HLO, MLIR
+
 https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-with-gradient-descent-a4ba9faefcea
 https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
 https://github.com/kingoflolz/mesh-transformer-jax
@@ -38,17 +38,15 @@ https://mlir.llvm.org/docs/Tutorials/Toy/
 https://mlir.llvm.org/getting_started/
 
 ### Java pipeline
-https://kafka.apache.org/ https://github.com/provectus/kafka-ui
 
+https://kafka.apache.org/ https://github.com/provectus/kafka-ui
+https://github.com/eclipse-vertx/vertx-openapi https://github.com/OpenAPITools/openapi-generator https://github.com/OpenAPITools/openapi-diff https://github.com/apisyouwonthate/openapi.tools https://github.com/Endava/cats
 https://kogito.kie.org/trustyai/ https://www.optaplanner.org/ https://www.drools.org/
 https://vertx.io/docs/vertx-web-api-service/java/
-https://github.com/vert-x3/vertx-infinispan
+https://github.com/vert-x3/vertx-infinispan https://github.com/infinispan/infinispan
 https://github.com/eclipse-vertx/vertx-grpc
-https://github.com/vert-x3/vertx-kafka-client
 https://github.com/vert-x3/vertx-service-discovery
 https://github.com/vert-x3/vertx-service-proxy
-
-
 
 https://github.com/vert-x3/vertx-cassandra-client
 https://github.com/ArcadeData/arcadedb
@@ -74,8 +72,7 @@ https://github.com/orientechnologies/orientdb
 https://github.com/ShiftLeftSecurity/overflowdb
 https://github.com/apache/accumulo
 
-
-
+https://github.com/vert-x3/vertx-kafka-client
 https://github.com/vert-x3/vertx-stomp https://github.com/stomp-js/stompjs https://activemq.apache.org/ https://developers.cloudflare.com/queues/
 https://github.com/apache/pulsar
 https://github.com/datastax/kafka-examples
@@ -85,8 +82,11 @@ https://github.com/datastax/starlight-for-kafka
 https://openjdk.org/jeps/442
 https://openjdk.org/jeps/448
 
-
 https://github.com/apache/lucene
+https://github.com/opensearch-project/ml-commons
+https://github.com/opensearch-project/anomaly-detection
+https://github.com/opensearch-project/k-NN
+https://github.com/opensearch-project/neural-search
 https://github.com/deepjavalibrary/djl
 https://github.com/stanfordnlp/CoreNLP https://github.com/stardog-union/bites-corenlp
 https://github.com/neuml/txtai.java
@@ -98,7 +98,6 @@ https://github.com/apache/uima-ruta
 https://github.com/ClearTK/cleartk
 https://github.com/dkpro/dkpro-core
 https://github.com/JULIELab/jcore-base
-
 
 https://github.com/apache/arrow/tree/main/java
 https://github.com/apache/thrift
@@ -116,6 +115,7 @@ https://github.com/delta-io/delta
 https://github.com/apache/pinot
 
 ### HA & Telemetry
+
 OpenTelemetry/Graphana monitoring instead of WandB, Perfetto or Tensorbord, attach JAX profiler artifacts
 https://github.com/resilience4j/resilience4j https://resilience4j.readme.io/docs/micrometer https://vertx.io/docs/vertx-micrometer-metrics/java/
 https://github.com/open-telemetry/opentelemetry-java-instrumentation
@@ -132,13 +132,13 @@ Make the most of cheap Kubernetes clusters: https://github.com/murphye/cheap-gke
 2. Dataset merging: synthetic data, LAION-HR: https://huggingface.co/datasets/laion/laion-high-resolution, WiT dataset: https://huggingface.co/datasets/google/wit, handwritten and printed documents scans, graphemes-in-the-wild, etc.
 3. Language augmentation and sampling to match ByT5's C4 training distribution so as not to loose the multilingual balance: https://huggingface.co/datasets/allenai/c4 https://huggingface.co/datasets/mc4
 4. Complementary downloads from dataset URLs (mostly images) and JPEG XL archiving (see IIIF)
-5. Deduplication of images with fingerprinting and of captions with sentence embeddings (all the sentence-transformers disappeared on May 8 2023): https://github.com/google-research/t5x_retrieval https://huggingface.co/sentence-transformers/sentence-t5-base https://huggingface.co/sentence-transformers/sentence-t5-xl https://tfhub.dev/google/collections/sentence-t5 https://www.sbert.net/examples/training/multilingual/README.html https://arxiv.org/abs/2108.08877 
+5. Deduplication of images with fingerprinting and of captions with sentence embeddings (all the sentence-transformers disappeared on May 8 2023): https://github.com/google-research/t5x_retrieval https://huggingface.co/sentence-transformers/sentence-t5-base https://huggingface.co/sentence-transformers/sentence-t5-xl https://tfhub.dev/google/collections/sentence-t5 https://www.sbert.net/examples/training/multilingual/README.html https://arxiv.org/abs/2108.08877
 6. Scene segmentation, document layout understanding and caption NER. Because NER is to text what segmentation is to a scene and what layout understanding is to a document, we need to annotate all of these to be able to detect captions-within-a-caption (captions that spell out text within the image, for instance) and also score captions based on how exhaustive is the "coverage" of the scene or document they describe: https://github.com/google-research/t5x/blob/main/docs/usage/finetune.md https://huggingface.co/dbmdz/t5-base-conll03-english https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887 https://github.com/SairamNaragoni/named-entity-recognition-T5 https://github.com/MarSanTeam/Complex_NER_SemEval https://huggingface.co/docs/transformers/tasks/token_classification https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc https://github.com/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://www.kaggle.com/code/prithvijaunjale/t5-multi-label-classification https://pytorch.org/text/main/tutorials/t5_demo.html https://github.com/pedro-r-marques/tutorial-t5-fine-tune https://towardsdatascience.com/guide-to-fine-tuning-text-generation-models-gpt-2-gpt-neo-and-t5-dc5de6b3bc5e https://github.com/monologg/EncT5 https://colab.research.google.com/github/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://colab.research.google.com/github/enzoampil/t5-intro/blob/master/t5_qa_training_pytorch_span_extraction.ipynb https://programming-review.com/machine-learning/t5/ https://colab.research.google.com/drive/1syXmhEQ5s7C59zU8RtHVru0wAvMXTSQ8 https://github.com/ttengwang/Caption-Anything https://github.com/facebookresearch/segment-anything https://github.com/facebookresearch/detectron2 https://huggingface.co/datasets/wikiann https://huggingface.co/datasets/xtreme https://huggingface.co/datasets/joelito/lextreme https://huggingface.co/datasets/polyglot_ner https://huggingface.co/datasets/xglue https://huggingface.co/datasets/euronews https://huggingface.co/datasets/Babelscape/wikineural https://huggingface.co/datasets/Babelscape/multinerd https://huggingface.co/datasets/tner/multinerd https://huggingface.co/datasets/tner/wikineural https://huggingface.co/datasets/universal_dependencies
-https://huggingface.co/datasets/MultiCoNER/multiconer_v2 https://surfacesyntacticud.github.io https://registry.opendata.aws/fast-ai-nlp https://registry.opendata.aws/lowcontext-ner-gaz https://registry.opendata.aws/code-mixed-ner https://registry.opendata.aws/lei/
-7. Image aesthetics and caption exhaustiveness (based on #5) meaningfulness (CoLa) evaluation and filtering: https://github.com/google-research/google-research/tree/master/vila https://github.com/google-research/google-research/tree/master/musiq https://github.com/christophschuhmann/improved-aesthetic-predictor https://www.mdpi.com/2313-433X/9/2/30 https://paperswithcode.com/dataset/aesthetic-visual-analysis https://www.tandfonline.com/doi/full/10.1080/09540091.2022.2147902 https://github.com/bcmi/Awesome-Aesthetic-Evaluation-and-Cropping https://github.com/rmokady/CLIP_prefix_caption https://github.com/google-research-datasets/Image-Caption-Quality-Dataset https://github.com/gchhablani/multilingual-image-captioning https://ai.googleblog.com/2022/10/crossmodal-3600-multilingual-reference.html https://www.cl.uni-heidelberg.de/statnlpgroup/wikicaps/ https://huggingface.co/docs/transformers/main/tasks/image_captioning https://www.mdpi.com/2076-3417/13/4/2446 https://arxiv.org/abs/2201.12723 https://laion.ai/blog/laion-aesthetics/ 
+   https://huggingface.co/datasets/MultiCoNER/multiconer_v2 https://surfacesyntacticud.github.io https://registry.opendata.aws/fast-ai-nlp https://registry.opendata.aws/lowcontext-ner-gaz https://registry.opendata.aws/code-mixed-ner https://registry.opendata.aws/lei/
+7. Image aesthetics and caption exhaustiveness (based on #5) meaningfulness (CoLa) evaluation and filtering: https://github.com/google-research/google-research/tree/master/vila https://github.com/google-research/google-research/tree/master/musiq https://github.com/christophschuhmann/improved-aesthetic-predictor https://www.mdpi.com/2313-433X/9/2/30 https://paperswithcode.com/dataset/aesthetic-visual-analysis https://www.tandfonline.com/doi/full/10.1080/09540091.2022.2147902 https://github.com/bcmi/Awesome-Aesthetic-Evaluation-and-Cropping https://github.com/rmokady/CLIP_prefix_caption https://github.com/google-research-datasets/Image-Caption-Quality-Dataset https://github.com/gchhablani/multilingual-image-captioning https://ai.googleblog.com/2022/10/crossmodal-3600-multilingual-reference.html https://www.cl.uni-heidelberg.de/statnlpgroup/wikicaps/ https://huggingface.co/docs/transformers/main/tasks/image_captioning https://www.mdpi.com/2076-3417/13/4/2446 https://arxiv.org/abs/2201.12723 https://laion.ai/blog/laion-aesthetics/
 8. Bucketing and batching (similar caption lengths for padding and truncating, similar image ratio for up/downsampling)
 9. Images preprocessing with JAX-native methods: https://jax.readthedocs.io/en/latest/jax.image.html https://dm-pix.readthedocs.io/ https://github.com/4rtemi5/imax https://github.com/rolandgvc/flaxvision
-10.  Freezed models caption text embeddings (ByT5) and image embeddings (VAE) caching
+10. Freezed models caption text embeddings (ByT5) and image embeddings (VAE) caching
 
 ## Training
 
@@ -152,8 +152,6 @@ Implement streaming, mini-batching and gradient accumulation with image aspect r
 Integrate and port to JAX improvements from Imagen, SDXL, Deep Floyd and Big Vision : https://github.com/lucidrains/imagen-pytorch https://github.com/deep-floyd/IF https://stable-diffusion-art.com/sdxl-beta/ https://huggingface.co/docs/diffusers/api/pipelines/if https://huggingface.co/spaces/DeepFloyd/IF https://huggingface.co/DeepFloyd/IF-I-XL-v1.0 https://huggingface.co/DeepFloyd/IF-II-L-v1.0 https://huggingface.co/stabilityai/stable-diffusion-x4-upscaler https://huggingface.co/DeepFloyd/IF-notebooks/tree/main https://huggingface.co/blog/if https://huggingface.co/docs/diffusers/main/en/api/pipelines/if https://stability.ai/blog/deepfloyd-if-text-to-image-model https://deepfloyd.ai/ https://www.assemblyai.com/blog/how-imagen-actually-works/ https://www.youtube.com/watch?v=af6WPqvzjjk https://www.youtube.com/watch?v=xqDeAz0U-R4 https://www.assemblyai.com/blog/minimagen-build-your-own-imagen-text-to-image-model/ https://github.com/google-research/big_vision
 Save checkpoints using JAX-native methods: https://flax.readthedocs.io/en/latest/api_reference/flax.training.html https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#save-checkpoints
 Pretrain a better ByT5 with innovations from the T5 family and character-aware models: Switch/MOE (https://arxiv.org/abs/2101.03961, https://github.com/google-research/t5x/tree/main/t5x/contrib/moe, https://towardsdatascience.com/understanding-googles-switch-transformer-904b8bf29f66, https://huggingface.co/google/switch-c-2048, https://towardsdatascience.com/the-switch-transformer-59f3854c7050, https://arxiv.org/abs/2208.02813), FLAN (https://arxiv.org/abs/2210.11416, https://arxiv.org/abs/2301.13688, https://arxiv.org/abs/2109.01652), UL2 (https://arxiv.org/abs/2205.05131v3, https://github.com/google-research/google-research/tree/master/ul2, https://ai.googleblog.com/2022/10/ul2-20b-open-source-unified-language.html), T5 v1.1 (https://arxiv.org/abs/2002.05202), CANINE-C (https://arxiv.org/abs/2103.06874, https://github.com/google-research/language/tree/master/language/canine, https://huggingface.co/google/canine-c, https://huggingface.co/vicl/canine-c-finetuned-cola), CALM (https://github.com/google-research/t5x/tree/main/t5x/contrib/calm, https://arxiv.org/abs/2207.07061), FlashAttention (https://github.com/HazyResearch/flash-attention, https://arxiv.org/abs/2205.14135), Gradient Checkpointing (https://arxiv.org/abs/1604.06174), FastT5 (https://github.com/Ki6an/fastT5), T5x & Seqio (https://arxiv.org/abs/2203.17189), LongT5 (https://github.com/google-research/longt5), WT5 (https://github.com/google-research/google-research/tree/master/wt5)
-
-
 
 ## Inference
 
