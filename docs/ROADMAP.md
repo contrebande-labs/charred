@@ -2,33 +2,18 @@
 
 ## Use cases
 
-OCR
-Statistical reconstitution of damaged textual artifacts. (inpainting to predict the missing characters, ex MARI)
+Artistic rendition of missing, loss, or stolen textual artifacts (text-to-image), OCR (image-to-text), statistical reconstitution of damaged textual artifacts (image-to-image, inpainting to predict the missing characters, ex MARI).
 
-Low-resource languages, low-resource domains.
+Low-resource languages, low-resource domains. Ex: perfumery
 
 Separate ByT5 encoder weights from the rest to lower the memory requirements.
 
-## MlOps
-https://airflow.apache.org/
-https://github.com/confluentinc/confluent-kafka-python
-https://cloud.google.com/tpu/docs/preemptible
-https://cloud.google.com/tpu/docs/kubernetes-engine-setup
+
+### XLA, IREE, HLO, MLIR
 https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-with-gradient-descent-a4ba9faefcea
 https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
 https://github.com/kingoflolz/mesh-transformer-jax
-https://www.kubeflow.org/
-https://mlflow.org/
-https://metaflow.org/
-https://kedro.org/
-https://zenml.io/
-https://www.iguazio.com/open-source/mlrun/
-https://cml.dev/
-https://www.seldon.io/solutions/open-source-projects/core
-https://h2o.ai/platform/h2o-automl/
-https://github.com/pachyderm/pachyderm
-
-### XLA, IREE, HLO, MLIR
+https://github.com/kingoflolz/swarm-jax
 https://github.com/openxla/iree https://openxla.github.io/iree/
 https://github.com/openxla/xla/blob/main/xla/xla.proto
 https://github.com/openxla/xla/blob/main/xla/xla_data.proto
@@ -54,19 +39,67 @@ https://mlir.llvm.org/getting_started/
 
 ### Java pipeline
 https://kafka.apache.org/ https://github.com/provectus/kafka-ui
-https://kogito.kie.org/trustyai/
-https://www.optaplanner.org/
-https://www.drools.org/
+
+https://kogito.kie.org/trustyai/ https://www.optaplanner.org/ https://www.drools.org/
 https://vertx.io/docs/vertx-web-api-service/java/
-https://vertx.io/docs/vertx-web-proxy/java/
-https://vertx.io/docs/vertx-infinispan/java/
-https://vertx.io/docs/vertx-stomp/java/ https://github.com/stomp-js/stompjs https://activemq.apache.org/ https://developers.cloudflare.com/queues/
-https://vertx.io/docs/vertx-service-proxy/java/
-https://vertx.io/docs/vertx-grpc/java/
-https://vertx.io/docs/vertx-service-discovery/java/
-https://github.com/deepjavalibrary/djl
+https://github.com/vert-x3/vertx-infinispan
+https://github.com/eclipse-vertx/vertx-grpc
+https://github.com/vert-x3/vertx-kafka-client
+https://github.com/vert-x3/vertx-service-discovery
+https://github.com/vert-x3/vertx-service-proxy
+
+
+
+https://github.com/vert-x3/vertx-cassandra-client
+https://github.com/ArcadeData/arcadedb
+https://github.com/blazegraph/database
+https://github.com/apache/cassandra
+https://github.com/datastax/cdc-apache-cassandra
+https://github.com/datastax/cassandra-quarkus
+https://github.com/datastax/cassandra-data-migrator
+https://github.com/datastax/java-driver
+https://github.com/datastax/sstable-to-arrow
+https://github.com/apache/bookkeeper
+https://github.com/diennea/herddb
+https://github.com/pravega/pravega
+https://github.com/datastax/graph-examples
+https://github.com/datastax/graph-book
+https://github.com/datastax/metric-collector-for-apache-cassandra
+https://github.com/datastax/native-protocol
+https://github.com/datastax/starlight-for-grpc
+https://github.com/datastax/cassandra-reactive-demo
+https://github.com/apache/incubator-hugegraph
+https://github.com/JanusGraph/janusgraph
+https://github.com/orientechnologies/orientdb
+https://github.com/ShiftLeftSecurity/overflowdb
+https://github.com/apache/accumulo
+
+
+
+https://github.com/vert-x3/vertx-stomp https://github.com/stomp-js/stompjs https://activemq.apache.org/ https://developers.cloudflare.com/queues/
+https://github.com/apache/pulsar
+https://github.com/datastax/kafka-examples
+https://github.com/datastax/kafka-sink
+https://github.com/datastax/starlight-for-kafka
+
 https://openjdk.org/jeps/442
 https://openjdk.org/jeps/448
+
+
+https://github.com/apache/lucene
+https://github.com/deepjavalibrary/djl
+https://github.com/stanfordnlp/CoreNLP https://github.com/stardog-union/bites-corenlp
+https://github.com/neuml/txtai.java
+https://github.com/stanfordnlp/phrasal
+https://github.com/apache/uima-uimaj
+https://github.com/apache/ctakes
+https://github.com/apache/opennlp
+https://github.com/apache/uima-ruta
+https://github.com/ClearTK/cleartk
+https://github.com/dkpro/dkpro-core
+https://github.com/JULIELab/jcore-base
+
+
 https://github.com/apache/arrow/tree/main/java
 https://github.com/apache/thrift
 https://github.com/apache/avro
@@ -74,6 +107,13 @@ https://github.com/apache/orc
 https://github.com/apache/parquet-mr
 https://github.com/strategicblue/parquet-floor
 https://github.com/apache/iceberg
+https://github.com/foogaro/change-data-capture https://github.com/debezium/debezium https://github.com/debezium/debezium-ui
+https://github.com/eclipse/jnosql
+https://github.com/trinodb/trino
+https://github.com/apache/druid/
+https://github.com/apache/hudi
+https://github.com/delta-io/delta
+https://github.com/apache/pinot
 
 ### HA & Telemetry
 OpenTelemetry/Graphana monitoring instead of WandB, Perfetto or Tensorbord, attach JAX profiler artifacts
