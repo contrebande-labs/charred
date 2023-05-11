@@ -9,7 +9,8 @@ Low-resource languages, low-resource domains. (ex: perfumery)
 Are we generating the input embeddings correctly?
 
 FlaxT5PreTrainedModel.encode(): input_ids=jnp.array(input_ids, dtype="i4") ? uint32 Unicode char or uint8 UTF-8 byte ?
-bytes.decode(encoding="UTF-8", errors="ignore"), string.encode(encoding="UTF-8", errors="ignore")
+array = np.frombuffer(string.encode("UTF-8", errors="ignore"), dtype=np.uint8) + 3
+string = (ndarray - 3).tobytes().decode("UTF-8")
 
 Use T5x lib instead of "transformers"
 
