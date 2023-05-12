@@ -2,9 +2,12 @@
 
 ## Use cases
 
+
 Artistic rendition of missing, loss, or stolen textual artifacts (text-to-image), OCR (image-to-text), statistical reconstitution of damaged textual artifacts (image-to-image, inpainting to predict the missing characters, ex: MARI).
 
 Low-resource languages, low-resource domains. (ex: perfumery)
+
+## Training
 
 Are we generating the input embeddings correctly?
 
@@ -18,11 +21,34 @@ Should the shape of the latents in the VAE/UNet be bigger to accomodate for more
 
 Would it be possible to have a vocab-less, raw UTF-8 byte character aware decoder-only language model ?
 
+Write the tests first: https://github.com/deepmind/chex
+
+VAE/U-Net hyperparameters to accommodate byt5's character-awareness better
+
+Try to run original code
+
+1. DONE: Implement JAX/FLAX SD 2.1 training pipeline with ByT5-Base instead of CLIP: https://github.com/patil-suraj/stable-diffusion-jax https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image_flax.py https://huggingface.co/google/byt5-base https://huggingface.co/blog/stable_diffusion_jax
+2. DONE: WandB monitoring
+3. DONE: Implement Mini-SNR loss rebalancing: https://arxiv.org/abs/2303.09556
+4. DONE: Implement on-the-fly validation: https://huggingface.co/docs/diffusers/en/conceptual/evaluation
+5. DONE: save checkpoints to disk
+6. Get rid of PytorchDataloader Flax Linen and HF libraries (transformers, diffusers, datasets), use JAX's new Array code, and write pure functions
+8. Make the code independent from device topology (might be hardcoded to 8xTPUv4 at the moment)
+9. Implement streaming from the network (instead of from the disk), mini-batching and gradient accumulation with image aspect ratio and tokenized caption size bucketing. Freezed models caption text embeddings (ByT5) and image embeddings (VAE) caching with bfloat16 half-precision (ByT5 and VAE) and explore using ByT5 XXL float32 (51.6GB), XXL bfloat16 (26GB), or XL float32 (15GB) and discard anything unnecessary from the freezed models (eg: ByT5 decoder weights) to lower the memory requirements: https://github.com/google/jax/issues/1408 https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html https://jax.readthedocs.io/en/latest/notebooks/xmap_tutorial.html https://huggingface.co/google/byt5-xxl https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints https://github.com/google-research/t5x/blob/main/t5x/scripts/convert_tf_checkpoint.py https://optax.readthedocs.io/en/latest/gradient_accumulation.html https://optax.readthedocs.io/en/latest/api.html#optax.MultiSteps
+10. Better strategy to load and save checkpoints using JAX-native methods: https://flax.readthedocs.io/en/latest/api_reference/flax.training.html https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#save-checkpoints https://arxiv.org/abs/1604.06174
+
+## Inference
+
+1. DONE: Implement JAX/FLAX text-to-image inference pipeline and Gradio demo with ByT5-Base instead of CLIP: https://huggingface.co/docs/diffusers/training/text2image https://github.com/patil-suraj/stable-diffusion-jax
+2. Implement AUTOMATIC1111 and Gradio UIs: https://github.com/AUTOMATIC1111/stable-diffusion-webui
+3. Load checkpoints using JAX-native methods https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html
+4. Implement OCR and Document understanging inference pipeline with ByT5 text decoder
+5. Implement text encoding CPU offloading with int8 precision and GPU-accelerated U-Net prediction and VAE decoding with int8 precision https://jax.readthedocs.io/en/latest/multi_process.html https://github.com/TimDettmers/bitsandbytes https://huggingface.co/blog/hf-bitsandbytes-integration
+
 ## MLOps
 
 ### XLA, IREE, HLO, MLIR
 
-https://github.com/deepmind/chex
 https://medium.com/@shivvidhyut/a-brief-introduction-to-distributed-training-with-gradient-descent-a4ba9faefcea
 https://www.kaggle.com/code/grez911/tutorial-efficient-gradient-descent-with-jax/notebook
 https://github.com/kingoflolz/mesh-transformer-jax
@@ -100,32 +126,10 @@ Make the most of cheap Kubernetes clusters: https://github.com/murphye/cheap-gke
 2. Dataset merging: synthetic data, LAION-HR: https://huggingface.co/datasets/laion/laion-high-resolution, WiT dataset: https://huggingface.co/datasets/google/wit, handwritten and printed documents scans, graphemes-in-the-wild, etc. with language re-sampling to match ByT5's C4 training distribution so as not to loose the multilingual balance: https://huggingface.co/datasets/allenai/c4 https://huggingface.co/datasets/mc4
 3. Complementary downloads from dataset URLs (mostly images) and JPEG XL archiving (see IIIF)
 4. Deduplication of images with fingerprinting and of captions with sentence embeddings (all the sentence-transformers disappeared on May 8 2023): https://github.com/google-research/t5x_retrieval https://huggingface.co/sentence-transformers/sentence-t5-base https://huggingface.co/sentence-transformers/sentence-t5-xl https://tfhub.dev/google/collections/sentence-t5 https://www.sbert.net/examples/training/multilingual/README.html https://arxiv.org/abs/2108.08877
-5. Scene segmentation, document layout understanding and caption NER. Because NER is to text what segmentation is to a scene and what layout understanding is to a document, we need to annotate all of these to be able to detect captions-within-a-caption (captions that spell out text within the image, for instance) and also score captions based on how exhaustive is the "coverage" of the scene or document they describe: https://github.com/google-research/t5x/blob/main/docs/usage/finetune.md https://huggingface.co/dbmdz/t5-base-conll03-english https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887 https://github.com/SairamNaragoni/named-entity-recognition-T5 https://github.com/MarSanTeam/Complex_NER_SemEval https://huggingface.co/docs/transformers/tasks/token_classification https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc https://huggingface.co/docs/transformers/model_doc/flan-ul2 https://github.com/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://www.kaggle.com/code/prithvijaunjale/t5-multi-label-classification https://pytorch.org/text/main/tutorials/t5_demo.html https://github.com/pedro-r-marques/tutorial-t5-fine-tune https://towardsdatascience.com/guide-to-fine-tuning-text-generation-models-gpt-2-gpt-neo-and-t5-dc5de6b3bc5e https://github.com/monologg/EncT5 https://colab.research.google.com/github/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://colab.research.google.com/github/enzoampil/t5-intro/blob/master/t5_qa_training_pytorch_span_extraction.ipynb https://programming-review.com/machine-learning/t5/ https://colab.research.google.com/drive/1syXmhEQ5s7C59zU8RtHVru0wAvMXTSQ8 https://github.com/ttengwang/Caption-Anything https://github.com/facebookresearch/segment-anything https://github.com/facebookresearch/detectron2 https://huggingface.co/datasets/wikiann https://huggingface.co/datasets/xtreme https://huggingface.co/datasets/joelito/lextreme https://huggingface.co/datasets/polyglot_ner https://huggingface.co/datasets/xglue https://huggingface.co/datasets/euronews https://huggingface.co/datasets/Babelscape/wikineural https://huggingface.co/datasets/Babelscape/multinerd https://huggingface.co/datasets/tner/multinerd https://huggingface.co/datasets/tner/wikineural https://huggingface.co/datasets/universal_dependencies
-   https://huggingface.co/datasets/MultiCoNER/multiconer_v2 https://surfacesyntacticud.github.io https://registry.opendata.aws/fast-ai-nlp https://registry.opendata.aws/lowcontext-ner-gaz https://registry.opendata.aws/code-mixed-ner https://registry.opendata.aws/lei/
-6. Image aesthetics and caption exhaustiveness (based on #5) meaningfulness (CoLa) evaluation and filtering: https://github.com/google-research/google-research/tree/master/vila https://github.com/google-research/google-research/tree/master/musiq https://github.com/christophschuhmann/improved-aesthetic-predictor https://www.mdpi.com/2313-433X/9/2/30 https://paperswithcode.com/dataset/aesthetic-visual-analysis https://www.tandfonline.com/doi/full/10.1080/09540091.2022.2147902 https://github.com/bcmi/Awesome-Aesthetic-Evaluation-and-Cropping https://github.com/rmokady/CLIP_prefix_caption https://github.com/google-research-datasets/Image-Caption-Quality-Dataset https://github.com/gchhablani/multilingual-image-captioning https://ai.googleblog.com/2022/10/crossmodal-3600-multilingual-reference.html https://www.cl.uni-heidelberg.de/statnlpgroup/wikicaps/ https://huggingface.co/docs/transformers/main/tasks/image_captioning https://www.mdpi.com/2076-3417/13/4/2446 https://arxiv.org/abs/2201.12723 https://laion.ai/blog/laion-aesthetics/
+5. Scene segmentation, document layout understanding and caption NER. Because NER is to text what segmentation is to a scene and what layout understanding is to a document, we need to annotate all of these to be able to detect captions-within-a-caption (captions that spell out text within the image, for instance) and also score captions based on how exhaustive is the "coverage" of the scene or document they describe: https://github.com/google-research/t5x/blob/main/docs/usage/finetune.md https://huggingface.co/dbmdz/t5-base-conll03-english https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887 https://github.com/SairamNaragoni/named-entity-recognition-T5 https://github.com/MarSanTeam/Complex_NER_SemEval https://huggingface.co/docs/transformers/tasks/token_classification https://colab.research.google.com/drive/1obr78FY_cBmWY5ODViCmzdY6O1KB65Vc https://huggingface.co/docs/transformers/model_doc/flan-ul2 https://github.com/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://www.kaggle.com/code/prithvijaunjale/t5-multi-label-classification https://pytorch.org/text/main/tutorials/t5_demo.html https://github.com/pedro-r-marques/tutorial-t5-fine-tune https://towardsdatascience.com/guide-to-fine-tuning-text-generation-models-gpt-2-gpt-neo-and-t5-dc5de6b3bc5e https://github.com/monologg/EncT5 https://colab.research.google.com/github/patil-suraj/exploring-T5/blob/master/t5_fine_tuning.ipynb https://colab.research.google.com/github/enzoampil/t5-intro/blob/master/t5_qa_training_pytorch_span_extraction.ipynb https://programming-review.com/machine-learning/t5/ https://colab.research.google.com/drive/1syXmhEQ5s7C59zU8RtHVru0wAvMXTSQ8 https://github.com/ttengwang/Caption-Anything https://github.com/facebookresearch/segment-anything https://github.com/facebookresearch/detectron2 https://huggingface.co/datasets/wikiann https://huggingface.co/datasets/xtreme https://huggingface.co/datasets/joelito/lextreme https://huggingface.co/datasets/polyglot_ner https://huggingface.co/datasets/xglue https://huggingface.co/datasets/euronews https://huggingface.co/datasets/Babelscape/wikineural https://huggingface.co/datasets/Babelscape/multinerd https://huggingface.co/datasets/tner/multinerd https://huggingface.co/datasets/tner/wikineural https://huggingface.co/datasets/universal_dependencies https://huggingface.co/datasets/MultiCoNER/multiconer_v2 https://surfacesyntacticud.github.io https://registry.opendata.aws/fast-ai-nlp https://registry.opendata.aws/lowcontext-ner-gaz https://registry.opendata.aws/code-mixed-ner https://registry.opendata.aws/lei/
+6. Image aesthetics and caption exhaustiveness (based on #5) meaningfulness (CoLa) evaluation and filtering: https://github.com/google-research/google-research/tree/master/vila https://github.com/google-research/google-research/tree/master/musiq https://github.com/christophschuhmann/improved-aesthetic-predictor https://www.mdpi.com/2313-433X/9/2/30 https://paperswithcode.com/dataset/aesthetic-visual-analysis https://www.tandfonline.com/doi/full/10.1080/09540091.2022.2147902 https://github.com/bcmi/Awesome-Aesthetic-Evaluation-and-Cropping https://github.com/rmokady/CLIP_prefix_caption https://github.com/google-research-datasets/Image-Caption-Quality-Dataset https://github.com/gchhablani/multilingual-image-captioning https://ai.googleblog.com/2022/10/crossmodal-3600-multilingual-reference.html https://www.cl.uni-heidelberg.de/statnlpgroup/wikicaps/ https://huggingface.co/docs/transformers/main/tasks/image_captioning https://www.mdpi.com/2076-3417/13/4/2446 https://arxiv.org/abs/2201.12723 https://laion.ai/blog/laion-aesthetics/ https://github.com/JD-P/simulacra-aesthetic-captions
 7. Bucketing and batching (similar caption lengths for padding and truncating, similar image ratio for up/downsampling): https://github.com/NovelAI/novelai-aspect-ratio-bucketing
 8. Images preprocessing with JAX-native methods: https://jax.readthedocs.io/en/latest/jax.image.html https://dm-pix.readthedocs.io/ https://github.com/4rtemi5/imax https://github.com/rolandgvc/flaxvision
-9. Freezed models caption text embeddings (ByT5) and image embeddings (VAE) caching with bfloat16 half-precision (ByT5 and VAE) and explore using ByT5 XXL float32 (51.6GB), XXL bfloat16 (26GB), or XL float32 (15GB) and discard anything unnecessary from the freezed models (eg: ByT5 decoder weights) to lower the memory requirements: https://github.com/google/jax/issues/1408 https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html https://jax.readthedocs.io/en/latest/notebooks/xmap_tutorial.html https://huggingface.co/google/byt5-xxl https://github.com/google-research/t5x/blob/main/docs/models.md#byt5-checkpoints https://github.com/google-research/t5x/blob/main/t5x/scripts/convert_tf_checkpoint.py
-
-## Training
-
-1. DONE: Implement JAX/FLAX SD 2.1 training pipeline with ByT5-Base instead of CLIP: https://github.com/patil-suraj/stable-diffusion-jax https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image_flax.py https://huggingface.co/google/byt5-base https://huggingface.co/blog/stable_diffusion_jax
-2. DONE: WandB monitoring
-3. DONE: Implement Mini-SNR loss rebalancing: https://arxiv.org/abs/2303.09556
-4. DONE: Implement on-the-fly validation: https://huggingface.co/docs/diffusers/en/conceptual/evaluation
-5. DONE: save checkpoints to disk
-6. Continue training from latest checkpoints
-7. Make the code independent from device topology (might be hardcoded to 8xTPUv4 at the moment)
-8. Implement streaming from the network (instead of from the disk), mini-batching and gradient accumulation with image aspect ratio and tokenized caption size bucketing: https://optax.readthedocs.io/en/latest/gradient_accumulation.html https://optax.readthedocs.io/en/latest/api.html#optax.MultiSteps
-9. Better strategy to save checkpoints using JAX-native methods: https://flax.readthedocs.io/en/latest/api_reference/flax.training.html https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html#save-checkpoints https://arxiv.org/abs/1604.06174
-
-## Inference
-
-1. DONE: Implement JAX/FLAX text-to-image inference pipeline and Gradio demo with ByT5-Base instead of CLIP: https://huggingface.co/docs/diffusers/training/text2image https://github.com/patil-suraj/stable-diffusion-jax
-2. Implement AUTOMATIC1111 and Gradio UIs: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-3. Load checkpoints using JAX-native methods https://flax.readthedocs.io/en/latest/guides/use_checkpointing.html
-4. Implement OCR and Document understanging inference pipeline with ByT5 text decoder
-5. Implement text encoding CPU offloading with int8 precision and GPU-accelerated U-Net prediction and VAE decoding with int8 precision https://jax.readthedocs.io/en/latest/multi_process.html https://github.com/TimDettmers/bitsandbytes https://huggingface.co/blog/hf-bitsandbytes-integration
 
 ## CharT5 (ByT5 v2)
 
