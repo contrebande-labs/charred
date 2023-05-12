@@ -3,19 +3,12 @@ import os
 from threading import Thread
 
 # hugging face
-from huggingface_hub import create_repo, upload_folder
+from huggingface_hub import upload_folder
 
 
-def create_repository(output_dir, hub_model_id):
+def create_output_dir(output_dir):
     if output_dir is not None:
         os.makedirs(output_dir, exist_ok=True)
-
-    repo_id = create_repo(
-        repo_id=hub_model_id,
-        exist_ok=True,
-    ).repo_id
-
-    return repo_id
 
 
 def save_to_local_directory(

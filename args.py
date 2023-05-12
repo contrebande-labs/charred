@@ -4,21 +4,9 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
     parser.add_argument(
-        "--tokenizer_max_length",
-        type=int,
-        default=1024,
-        help="Maximum length of tokenized string. Longer strings will be truncated. Shorter strings will be padded.",
-    )
-    parser.add_argument(
         "--output_dir",
         type=str,
         default="/data/output",
-        help="The output directory where the model predictions and checkpoints will be written.",
-    )
-    parser.add_argument(
-        "--dataset_dir",
-        type=str,
-        default="/data/dataset/output/charred",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
@@ -81,29 +69,6 @@ def parse_args():
     )
     parser.add_argument(
         "--max_grad_norm", default=1.0, type=float, help="Max gradient norm."
-    )
-    parser.add_argument(
-        "--push_to_hub",
-        type=bool,
-        default=True,
-        help="Whether or not to push the model to the Hub.",
-    )
-    parser.add_argument(
-        "--hub_model_id",
-        type=str,
-        default="character-aware-diffusion/charred",
-        help="The name of the repository to keep in sync with the local `output_dir`.",
-    )
-    parser.add_argument(
-        "--mixed_precision",
-        type=str,
-        default="no",
-        choices=["no", "fp16", "bf16"],
-        help=(
-            "Whether to use mixed precision. Choose"
-            "between fp16 and bf16 (bfloat16). Bf16 requires PyTorch >= 1.10."
-            "and an Nvidia Ampere GPU."
-        ),
     )
     parser.add_argument(
         "--log_wandb",

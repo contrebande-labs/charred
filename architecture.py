@@ -9,30 +9,22 @@ from diffusers import FlaxAutoencoderKL, FlaxUNet2DConditionModel
 
 def setup_model(
     seed,
-    mixed_precision,
     load_pretrained,
     output_dir,
     training_from_scratch_rng_params,
 ):
     set_seed(seed)
 
-    if mixed_precision == "fp16":
-        weight_dtype = jnp.float16
-    elif mixed_precision == "bf16":
-        weight_dtype = jnp.bfloat16
-    else:
-        weight_dtype = jnp.float32
-
     # Load models and create wrapper for stable diffusion
 
     language_model = FlaxT5ForConditionalGeneration.from_pretrained(
         "/data/byt5-base",
-        dtype=weight_dtype,
+        dtype=jnp.float32,
     )
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
         "/data/stable-diffusion-2-1-vae",
-        dtype=weight_dtype,
+        dtype=jnp.float32,
     )
 
     if load_pretrained:
@@ -48,7 +40,7 @@ def setup_model(
 
         unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
             pretrained_dir,
-            dtype=weight_dtype,
+            dtype=jnp.float32,
         )
 
         print("loaded unet from pre-trained...")
@@ -81,7 +73,7 @@ def setup_model(
                 ],
                 "use_linear_projection": True,
             },
-            dtype=weight_dtype,
+            dtype=jnp.float32,
         )
         unet_params = unet.init_weights(rng=training_from_scratch_rng_params)
         print("training unet from scratch...")

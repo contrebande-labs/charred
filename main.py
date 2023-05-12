@@ -38,7 +38,6 @@ def main():
     # Pretrained/freezed and training model setup
     text_encoder, text_encoder_params, vae, vae_params, unet, unet_params = setup_model(
         seed,
-        args.mixed_precision,
         load_pretrained,
         output_dir,
         training_from_scratch_rng_params,
