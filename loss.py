@@ -6,6 +6,7 @@ from diffusers import FlaxDDPMScheduler
 # Min-SNR
 snr_gamma = 5.0  # SNR weighting gamma to be used when rebalancing the loss with Min-SNR. Recommended value is 5.0.
 
+
 def compute_snr_loss_weights(noise_scheduler_state, timesteps):
     """
     Computes SNR as per https://github.com/TiankaiHang/Min-SNR-Diffusion-Training/blob/521b624bd70c67cee4bdf49225915f5945a872e3/guided_diffusion/gaussian_diffusion.py#L847-L849
@@ -16,12 +17,13 @@ def compute_snr_loss_weights(noise_scheduler_state, timesteps):
 
     alpha = sqrt_alphas_cumprod[timesteps]
     sigma = sqrt_one_minus_alphas_cumprod[timesteps]
- 
+
     # Compute SNR.
     snr = jnp.array((alpha / sigma) ** 2)
 
     # Compute SNR loss weights
     return jnp.where(snr < snr_gamma, snr, jnp.ones_like(snr) * snr_gamma) / snr
+
 
 def get_vae_latent_distribution_samples(
     latents,
@@ -54,42 +56,47 @@ def get_vae_latent_distribution_samples(
 
     return noisy_latents, timesteps, noise
 
-def get_cacheable_samples(text_encoder, text_encoder_params, input_ids, vae, vae_params, pixel_values, rng):
 
-        # Get the text embedding
-        # TODO: Cache this
-        # TODO: use t5x library
-        text_encoder_hidden_states = text_encoder(
-            input_ids,
-            params=text_encoder_params,
-            train=False,
-        )[0]
+def get_cacheable_samples(
+    text_encoder, text_encoder_params, input_ids, vae, vae_params, pixel_values, rng
+):
 
-        # Get the image embedding
-        vae_outputs = vae.apply(
-            {"params": vae_params},
-            sample=pixel_values,
-            deterministic=True,
-            method=vae.encode,
-        )
+    # Get the text embedding
+    # TODO: Cache this
+    # TODO: use t5x library
+    text_encoder_hidden_states = text_encoder(
+        input_ids,
+        params=text_encoder_params,
+        train=False,
+    )[0]
 
-        # Sample the image embedding
-        # TODO: Cache this
-        image_latent_distribution_sampling = (
-            # (NHWC) -> (NCHW)
-            jnp.transpose(vae_outputs.latent_dist.sample(rng), (0, 3, 1, 2)) * vae.config.scaling_factor 
-        )
+    # Get the image embedding
+    vae_outputs = vae.apply(
+        {"params": vae_params},
+        sample=pixel_values,
+        deterministic=True,
+        method=vae.encode,
+    )
 
-        return text_encoder_hidden_states, image_latent_distribution_sampling
+    # Sample the image embedding
+    # TODO: Cache this
+    image_latent_distribution_sampling = (
+        # (NHWC) -> (NCHW)
+        jnp.transpose(vae_outputs.latent_dist.sample(rng), (0, 3, 1, 2))
+        * vae.config.scaling_factor
+    )
+
+    return text_encoder_hidden_states, image_latent_distribution_sampling
+
 
 def get_compute_losses_lambda(
-    text_encoder, # <-- TODO: take this out of here
-    text_encoder_params, # <-- TODO: take this out of here
-    vae, # <-- TODO: take this out of here
-    vae_params, # <-- TODO: take this out of here
+    text_encoder,  # <-- TODO: take this out of here
+    text_encoder_params,  # <-- TODO: take this out of here
+    vae,  # <-- TODO: take this out of here
+    vae_params,  # <-- TODO: take this out of here
     unet,
 ):
- 
+
     # Instanciate training noise scheduler
     # TODO: write pure function
     noise_scheduler = FlaxDDPMScheduler(
@@ -105,16 +112,19 @@ def get_compute_losses_lambda(
         batch,
         sample_rng,
     ):
-        
+
         # TODO: take this out of here
-        text_encoder_hidden_states, image_latent_distribution_sampling = get_cacheable_samples(
-             text_encoder,
-             text_encoder_params,
-             batch["input_ids"],
-             vae,
-             vae_params,
-             batch["pixel_values"],
-             sample_rng,
+        (
+            text_encoder_hidden_states,
+            image_latent_distribution_sampling,
+        ) = get_cacheable_samples(
+            text_encoder,
+            text_encoder_params,
+            batch["input_ids"],
+            vae,
+            vae_params,
+            batch["pixel_values"],
+            sample_rng,
         )
 
         # initialize scheduler state

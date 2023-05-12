@@ -4,7 +4,12 @@ from jax import pmap
 from jax.random import split
 from flax.training.common_utils import shard
 from flax.jax_utils import replicate, unreplicate
-from jax.profiler import start_trace, stop_trace, save_device_memory_profile, device_memory_profile
+from jax.profiler import (
+    start_trace,
+    stop_trace,
+    save_device_memory_profile,
+    device_memory_profile,
+)
 from jaxlib.xla_extension import XlaRuntimeError
 
 from monitoring import get_wandb_log_batch_lambda
@@ -90,17 +95,25 @@ def training_loop(
         for batch in train_dataloader:
 
             # getting batch start time
-            batch_walltime = time.monotonic()   
+            batch_walltime = time.monotonic()
 
             if is_compilation_step:
                 print("computing compilation batch...")
                 # TODO: fix this: 2023-05-05 16:34:23.937383: E external/xla/xla/python/profiler/internal/python_hooks.cc:398] Can't import tensorflow.python.profiler.trace
                 device_memory_profile()
-                start_trace(log_dir="./profiling/compilation_step", create_perfetto_link=False, create_perfetto_trace=True)
+                start_trace(
+                    log_dir="./profiling/compilation_step",
+                    create_perfetto_link=False,
+                    create_perfetto_trace=True,
+                )
             elif is_first_compiled_step:
                 print("computing first compiled batch...")
                 device_memory_profile()
-                start_trace(log_dir="./profiling/first_compiled_step", create_perfetto_link=False, create_perfetto_trace=True)
+                start_trace(
+                    log_dir="./profiling/first_compiled_step",
+                    create_perfetto_link=False,
+                    create_perfetto_trace=True,
+                )
 
             # training step
             # TODO: Fix this jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXHAUSTED: Error loading program: Attempting to allocate 1.28G. That was not possible. There are 785.61M free.; (0x0x0_HBM0): while running replica 0 and partition 0 of a replicated computation (other replicas may have failed as well).
@@ -116,25 +129,33 @@ def training_loop(
 
                 if is_compilation_step:
                     stop_trace()
-                    save_device_memory_profile(filename="./profiling/compilation_step/pprof_memory_profile_error.pb")
+                    save_device_memory_profile(
+                        filename="./profiling/compilation_step/pprof_memory_profile_error.pb"
+                    )
                     print("compilation batch error...")
                 elif is_first_compiled_step:
                     stop_trace()
-                    save_device_memory_profile(filename="./profiling/first_compiled_step/pprof_memory_profile_error.pb")
+                    save_device_memory_profile(
+                        filename="./profiling/first_compiled_step/pprof_memory_profile_error.pb"
+                    )
                     print("first compiled batch error...")
 
-                raise(e)
+                raise (e)
 
             # block until train step has completed
             loss.block_until_ready()
 
             if is_compilation_step:
                 stop_trace()
-                save_device_memory_profile(filename="./profiling/compilation_step/pprof_memory_profile.pb")
+                save_device_memory_profile(
+                    filename="./profiling/compilation_step/pprof_memory_profile.pb"
+                )
                 print("computed compilation batch...")
             elif is_first_compiled_step:
                 stop_trace()
-                save_device_memory_profile(filename="./profiling/first_compiled_step/pprof_memory_profile.pb")
+                save_device_memory_profile(
+                    filename="./profiling/first_compiled_step/pprof_memory_profile.pb"
+                )
                 print("computed first compiled batch...")
 
             global_training_steps += num_devices
@@ -168,7 +189,7 @@ def training_loop(
                     # and then, also: jax.device_get(state.params)
                     # and then, again: unreplicate(state.params)
                     # Finally found a way to average along the splits/device/partition/shard axis: jax.tree_util.tree_map(f=lambda x: x.mean(axis=0), tree=unet_training_state.params),
-                    unreplicate(tree=unet_training_state.params)
+                    unreplicate(tree=unet_training_state.params),
                 )
 
             if is_compilation_step:
