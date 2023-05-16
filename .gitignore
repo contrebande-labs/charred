@@ -4,3 +4,4 @@ dataset-cache
 wandb
 Pipfile.lock
 Pipfile
+.DS_Store
